@@ -68,7 +68,7 @@ public class XmlParseInputContext implements ParseInputContext {
    * @param startPosition a single element array holding the return value
    *        of the start position -- only set when returning 'true'.
    *
-   * @result true and startPosition[0] holds the value or false.
+   * @return true and startPosition[0] holds the value or false.
    */
   public boolean getPosition(InputContext other, int[] startPosition) {
     boolean result = false;

@@ -32,7 +32,7 @@ public interface Tokenizer {
    * Get the token that starts at the given position. To get the first
    * token, use GetToken(0).
    *
-   * @returns The token at the positioni or null.
+   * @return The token at the positioni or null.
    */
   public Token getToken(int startPosition);
 
@@ -49,14 +49,14 @@ public interface Tokenizer {
   /**
    * Get the delimiter text immediately following the token.
    *
-   * @returns A non-null but possibly empty string.
+   * @return A non-null but possibly empty string.
    */
   public String getPostDelim(Token token);
 
   /**
    * Get the delimiter text preceding the given token.
    *
-   * @returns A non-null but possibly empty string.
+   * @return A non-null but possibly empty string.
    */
   public String getPreDelim(Token token);
 
@@ -72,7 +72,7 @@ public interface Tokenizer {
   /**
    * Revise the token if possible.
    *
-   * @returns A revised token or null.
+   * @return A revised token or null.
    */
   public Token revise(Token token);
 
@@ -85,21 +85,21 @@ public interface Tokenizer {
   /**
    * Get the next token after the given token if possible.
    *
-   * @returns The next token or null.
+   * @return The next token or null.
    */
   public Token getNextToken(Token token);
 
   /**
    * Get the token preceding the given token if possible.
    *
-   * @returns The prior token or null.
+   * @return The prior token or null.
    */
   public Token getPriorToken(Token token);
 
   /**
    * Get the full text being tokenized.
    *
-   * @returns The full text, possibly empty but not null.
+   * @return The full text, possibly empty but not null.
    */
   public String getText();
 
@@ -117,14 +117,14 @@ public interface Tokenizer {
   /**
    * Get the full text after the given token if possible.
    *
-   * @returns The full following text, possibly empty but not null.
+   * @return The full following text, possibly empty but not null.
    */
   public String getNextText(Token token);
 
   /**
    * Get the full text preceding the token.
    *
-   * @returns The full prior text, possibly empty but not null.
+   * @return The full prior text, possibly empty but not null.
    */
   public String getPriorText(Token token);
 

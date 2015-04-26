@@ -131,7 +131,7 @@ public class DomUtil {
    *  @param newStartPos The starting position of text within result[0].
    *  @param newEndPos The ending position of text within result[N-1].
    *
-   *  @returns The list of consecutive non-empty text nodes encompassing the text.
+   *  @return The list of consecutive non-empty text nodes encompassing the text.
    */
   public static List<DomText> getTextNodes(DomNode topNode, int startPos, int endPos, int[] newStartPos, int[] newEndPos) {
     final DomTextWalker textWalker = new DomTextWalker(topNode);

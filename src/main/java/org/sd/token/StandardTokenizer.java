@@ -392,7 +392,7 @@ public class StandardTokenizer implements Tokenizer {
    * Note that this method presents a way to change breaks initialized through CreateBreaks
    * and is not to be used by the implementation of CreateBreaks!
    *
-   * @returns The previous break at the position.
+   * @return The previous break at the position.
    */
   public Break changeBreak(int pos, Break theBreak) {
     Break result = getBreak(pos);

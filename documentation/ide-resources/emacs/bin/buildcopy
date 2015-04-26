@@ -1,0 +1,13 @@
+#!/bin/sh
+
+CLASSES=`_build-find-classes "$1"`;
+
+test -z "$base" && base=`expr match "$1" ".*\(/com/.*\)"`
+test -z "$base" && base=`expr match "$1" ".*\(/org/.*\)"`
+test -z "$base" && base=`expr match "$1" ".*\(/net/.*\)"`
+test -z "$base" && base=`expr match "$1" ".*/java/\(.*\)"`
+
+dest=`dirname $CLASSES$base`;
+echo "[buildcopy] Copying $1 to $dest"
+mkdir -p $dest;
+cp -r $1 $dest;

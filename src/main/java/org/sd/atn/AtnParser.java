@@ -94,7 +94,7 @@ public class AtnParser {
    * skip a word (smallest token) and try again until a valid full parse
    * is found or the input is exhausted.
    *
-   * @returns The first valid full parse or null
+   * @return The first valid full parse or null
    */
   public AtnParseResult seekParse(Tokenizer tokenizer, AtnParseOptions options, Set<Integer> stopList,
                                   DataProperties overrides, AtomicBoolean die) {
@@ -108,7 +108,7 @@ public class AtnParser {
    * skip a word (smallest token) and try again until a valid full parse
    * is found or the input is exhausted.
    *
-   * @returns The first valid full parse or null
+   * @return The first valid full parse or null
    */
   public AtnParseResult seekParse(Token firstToken, AtnParseOptions options, Set<Integer> stopList,
                                   DataProperties overrides, AtomicBoolean die) {

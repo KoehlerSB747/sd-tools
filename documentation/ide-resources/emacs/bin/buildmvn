@@ -1,0 +1,8 @@
+#!/bin/sh
+
+TOP=`pwd | sed "s/^\(.*\)\/src\/.*$/\1/1"`;
+
+echo "building from '$TOP' target(s)=$@";
+cd $TOP;
+
+mvn $@

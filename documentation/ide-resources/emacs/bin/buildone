@@ -1,0 +1,13 @@
+#!/bin/bash
+
+CLASSES=`_build-find-classes "$1"`;
+
+if ! test -e "$CLASSES"; then mkdir -p $CLASSES; fi;
+
+echo "[buildone] Building to output path=$CLASSES"
+base=`basename $1 .java`
+echo "[buildone] removing $base.class..."
+find $CLASSES -name "$base.class" -exec rm -f '{}' ';'
+echo "[buildone] compiling $1 to $CLASSES..."
+
+javac -cp "`cpgen-uni -b $1`" -source "1.7" -Xlint:-path -Xlint:unchecked -Xlint:deprecation -g -d $CLASSES $1

@@ -142,7 +142,7 @@ public class Features {
   /**
    * Get all features matching the constraint.
    *
-   * @returns The features matching the constraint, or null if none do.
+   * @return The features matching the constraint, or null if none do.
    */
   public List<Feature> getFeatures(FeatureConstraint constraint) {
     List<Feature> result = null;

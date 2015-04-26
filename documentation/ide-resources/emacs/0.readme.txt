@@ -1,0 +1,48 @@
+- This document describes a minimal set of commands to start using emacs with bash in a linux environment as your IDE
+
+  - Initial one-time setup and configuration:
+    - Set-up your linux environment with the necessary tools
+        - emacs
+        - java
+        - maven
+        - etc.
+      - Add symlinks in /etc/opt
+        - see sd-tools/documentation/ide-resources/emacs/.profile
+
+    - Install elements into your bash environment
+      - see sd-tools/documentation/ide-resources/emacs/.profile, but the essential elements are:
+        - export AUTHOR=<Your Name and/or e-mail address>
+          - (for javadoc @author tags)
+        - export SANDBOX_NAME=<path to root of your development sandbox>
+          - (should be the parent of sd-tools)
+        - export DISABLE_ATN_LOAD_VERBOSITY=true;
+          - (if needed/desired)
+    - Install scripts from sd-tools/documentation/ide-resources/emacs/bin into your path
+      - e.g., add path or copy files into your ~/bin folder
+    - Install elements into your ~/.emacs environment
+      - see (using as-is, or incorporating into your own .emacs)
+        - sd-tools/documentation/ide-resources/emacs/.emacs
+        - sd-tools/documentation/ide-resources/emacs/emacs-ide.el  (e.g., copy to ~/)
+
+  - Development cycle (emacs keystroke command examples)
+      - NOTE: see (grep) "global-set-key" in emacs-ide.el for more commands and details
+    - Create a new class
+      - C-c J  -- (notation for Control-c J) in a new empty .java file buffer,
+                  - this creates Java package, class javadoc, and class skeleton text
+    - Insert balanced braces
+      - C-c C-b -- (add-braces after point)
+    - Insert import for a class (at current point)
+      - C-c i  -- (import-classes) choose the appropriate import if ambiguous
+    - Compile one class
+      - C-c b  -- (build) usually guesses the right build,
+                  - but you may edit the compile command if desired/needed
+    - Copy one resource
+      - C-c b  -- in the context of a non-source code file
+    - Do a full compile
+      - C-c b  -- edit compile command to e.g., buildmvn clean compile
+    - Execute a class
+      - C-c e  -- executes the class of the current buffer; manually add args.
+    - Prepare for check-in: ensure changes are non-breaking
+      - Note that you may want to check for any updates to pull before proceeding.
+      - Execute a full build including tests.
+      - Commit and push changes as long as everything successfully compiles and all tests pass.

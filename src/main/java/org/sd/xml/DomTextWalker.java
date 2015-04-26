@@ -144,7 +144,7 @@ public class DomTextWalker {
    * @param newStartPos The starting position of text withing result[0].
    * @param newEndPos The ending position of text within result[N-1].
    *
-   * @returns The list of consecutive non-empy text nodes encompassing the text or null.
+   * @return The list of consecutive non-empy text nodes encompassing the text or null.
    */
   public List<DomText> getTextNodes(int startPos, int endPos, int[] newStartPos, int[] newEndPos) {
     List<DomText> result = null;

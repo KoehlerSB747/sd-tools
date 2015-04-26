@@ -1,0 +1,24 @@
+To build and use this project:
+
+(1) Clone/pull from git repository
+    - git clone git@github.com:KoehlerSB747/sd-tools.git
+
+(2) Build
+    - mvn clean package javadoc:javadoc
+
+(3) Execute
+    - To execute a class without any dependencies (for example):
+      - using the built jar:
+        - java -classpath ./target/sd-tools-1.0-SNAPSHOT.jar org.sd.util.AsciiTable
+      - using the compiled classes:
+        - java -classpath ./target/classes org.sd.util.AsciiTable
+    - To execute any class with or without dependencies (for example):
+      - java -classpath ./target/classes:`mvn -o dependency:build-classpath | grep ^/ | head -n1` org.sd.util.AsciiTable
+    - Note that to include all dependencies in an "uber" jar, you could build using maven's "shade" packaging type in the pom.
+      - Since the classes here are intended for use as tools in other projects, this has intentionally been omitted.
+      - For running and/or testing utilities more conveniently, see the develop notes below which include helper scripts.
+
+(4) Develop and Contribute
+    - Feel free to add the necessary resources for your favorite IDE.
+    - IDEs:
+      - emacs -- See sd-tools/documentation/ide-resources/emacs/0.readme.txt

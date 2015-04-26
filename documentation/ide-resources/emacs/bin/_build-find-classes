@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# _build-find-classes
+# by Spence Koehler
+#
+# Auxiliary script (for build* scripts) to find the output "classes" dir for
+# a java build.
+#
+# arg1 : path to source file
+#
+
+TOP=`echo $1 | sed "s/^\(.*\)\/src\/.*$/\1/1"`;
+
+mflag=0
+test -e "$TOP/pom.xml" && mflag=1;
+
+target=build
+if test $mflag -eq 1; then target=target; fi
+
+# for $TOP/$target/$dest, default to "dest=classes"
+dest=classes;
+
+# fix dest for tests
+if test -d "$1"; then
+  cd "$1";
+else
+  cd `dirname $1`;
+fi
+curpath=`pwd`;
+curdir=`basename $curpath`;
+while ! test "$curdir" == "src" && ! test "$curdir" == "/"; do
+  case "$curdir" in
+    junit)
+      dest="junit-classes";
+      break;
+      ;;
+    depunit)
+      dest="dunit-classes";
+      break;
+      ;;
+    unit)
+      dest="unit-test-classes";
+      break;
+      ;;
+    test)
+      dest="test-classes";
+      break;
+      ;;
+    iutest)
+      dest="iutest-classes";
+      break;
+      ;;
+  esac
+
+  cd ..
+  curpath=`pwd`;
+  curdir=`basename $curpath`;
+done
+
+CLASSES=$TOP/$target/$dest;
+
+echo -n "$CLASSES";
