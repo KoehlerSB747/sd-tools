@@ -25,7 +25,7 @@ for x in $@; do
     cpcmdant=print-classpath-build;
     arg="";
   elif test "$x" == "-r"; then
-    cpcmdand=print-classpath;
+    cpcmdant=print-classpath;
     arg="";
   else
     arg="$x";
@@ -42,6 +42,9 @@ fi
 # search for parent dir w/pom.xml or build.xml
 while ! test -e "./pom.xml" && ! test -e "./build.xml" && test `pwd` != "/"; do cd ..; done
 
+# move up to highest consecutive dir w/pom.xml
+while test -e "./pom.xml" && test -e "../pom.xml" && test `pwd` != "/"; do cd ..; done
+
 # get project classpath
 if test -e "./pom.xml"; then
 
@@ -49,13 +52,14 @@ if test -e "./pom.xml"; then
   curdir=`pwd`;
   active="";
   for x in `find $curdir -name "*classes*"`; do
-    active="${active}/$x:";
+    test -n "$active" && active="${active}:";
+    active="${active}$x";
   done
 
   # get maven classpath
   cp=`mvn -o dependency:build-classpath | grep ^/ | head -n1`
 
-  echo ${active}${cp}
+  echo ${active}:${cp}
 elif test -e "./build.xml"; then
   ant "$cpcmdant" | grep CLASSPATH | sed 's/.* \(.*\)/\1/; s/\\/\//g' | dedup.pl | sed 's/:$//';
 else
