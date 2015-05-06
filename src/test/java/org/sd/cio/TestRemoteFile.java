@@ -96,12 +96,14 @@ public class TestRemoteFile extends TestCase {
     final String remoteName = RemoteFile.getRemoteName(file);
     final String localHandle = RemoteFile.getLocalHandle(file).toString();
 
+    final String home = System.getenv("HOME");
+
     assertEquals("miradorn:/data/crawl/sd836.row/67/83/aesl.com.pk-Njc0ZDUwMD", filename);
     assertEquals("miradorn", machine);
     assertEquals("/data/crawl/sd836.row/67/83/aesl.com.pk-Njc0ZDUwMD", path);
-    assertEquals("/home/" + ExecUtil.getUser() + "/cluster/cache/miradorn/data/crawl/sd836.row/67/83/aesl.com.pk-Njc0ZDUwMD", localPath);
+    assertEquals(home + "/cluster/cache/miradorn/data/crawl/sd836.row/67/83/aesl.com.pk-Njc0ZDUwMD", localPath);
     assertEquals("miradorn:/data/crawl/sd836.row/67/83/aesl.com.pk-Njc0ZDUwMD", remoteName);
-    assertEquals("/home/" + ExecUtil.getUser() + "/cluster/cache/miradorn/data/crawl/sd836.row/67/83/aesl.com.pk-Njc0ZDUwMD", localHandle);
+    assertEquals(home + "/cluster/cache/miradorn/data/crawl/sd836.row/67/83/aesl.com.pk-Njc0ZDUwMD", localHandle);
   }
 
   public void testGetLocalHandleWithAbsolutePath() {
@@ -118,7 +120,9 @@ public class TestRemoteFile extends TestCase {
     final File localHandle = RemoteFile.getLocalHandle(file);
     final String remoteName = RemoteFile.getRemoteName(file);
 
-    assertEquals("/home/" + ExecUtil.getUser() + "/cluster/cache/hunter/data/crawl/ks.recrawl/00/29/advancedrc.com-A2MWUxOTY0", localHandle.getAbsolutePath());
+    final String home = System.getenv("HOME");
+
+    assertEquals(home + "/cluster/cache/hunter/data/crawl/ks.recrawl/00/29/advancedrc.com-A2MWUxOTY0", localHandle.getAbsolutePath());
     assertEquals("hunter:/data/crawl/ks.recrawl/00/29/advancedrc.com-A2MWUxOTY0", remoteName);
   }
 
