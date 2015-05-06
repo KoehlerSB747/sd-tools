@@ -111,7 +111,9 @@ public class TestRemoteFile extends TestCase {
     final File localHandle = RemoteFile.getLocalHandle(file);
     final String remoteName = RemoteFile.getRemoteName(file);
 
-    assertEquals("/home/" + ExecUtil.getUser() + "/cluster/cache/hunter/data/crawl/ks.recrawl/00/29/advancedrc.com-A2MWUxOTY0", localHandle.getAbsolutePath());
+    final String home = System.getenv("HOME");
+
+    assertEquals(home + "/cluster/cache/hunter/data/crawl/ks.recrawl/00/29/advancedrc.com-A2MWUxOTY0", localHandle.getAbsolutePath());
     assertEquals("hunter:/data/crawl/ks.recrawl/00/29/advancedrc.com-A2MWUxOTY0", remoteName);
   }
 
