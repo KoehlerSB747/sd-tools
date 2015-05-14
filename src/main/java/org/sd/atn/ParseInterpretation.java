@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import org.sd.cio.MessageHelper;
 import org.sd.io.Publishable;
+import org.sd.token.CategorizedToken;
+import org.sd.token.Token;
 import org.sd.util.Usage;
 import org.sd.util.tree.Tree;
 import org.sd.xml.DomElement;
@@ -109,6 +111,51 @@ public class ParseInterpretation implements Publishable, Serializable {
    */
   public AtnParse getSourceParse() {
     return _sourceParse;
+  }
+
+  /**
+   * Determine, if possible, whether the underlying parse required "scanning"
+   * (or skipping tokens) before being found. Note that if the sourceParse
+   * is unavailable, this cannot be determined.
+   *
+   * @return null if unable to determine, false if no scanning was necessary,
+   *         or true if scanning was necessary.
+   */
+  public Boolean getScanFlag() {
+    Boolean result = null;
+
+    if (_sourceParse != null) {
+      final AtnParseResult parseResult = _sourceParse.getParseResult();
+      if (parseResult != null) {
+        final Token firstToken = parseResult.getFirstToken();
+        if (firstToken != null) {
+          result = (firstToken.getPrevToken() == null);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Determine, if possible, whether the underlying parse completely consumed
+   * the input. Note that if the sourceParse is unavailable, this cannot be
+   * determined.
+   *
+   * @return null if unable to determine, true if the input was completely
+   *         consumed, or false if the input was only partially consumed.
+   */
+  public boolean getCompleteFlag() {
+    Boolean result = null;
+
+    if (_sourceParse != null) {
+      final CategorizedToken ctoken = _sourceParse.getLastCategorizedToken();
+      if (ctoken != null && ctoken.token != null) {
+        result = (ctoken.token.getNextToken() == null);
+      }
+    }
+
+    return result;
   }
 
   /**
