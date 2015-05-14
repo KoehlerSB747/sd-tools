@@ -129,7 +129,7 @@ public class ParseInterpretation implements Publishable, Serializable {
       if (parseResult != null) {
         final Token firstToken = parseResult.getFirstToken();
         if (firstToken != null) {
-          result = (firstToken.getPrevToken() == null);
+          result = (firstToken.getPrevToken() != null);
         }
       }
     }
