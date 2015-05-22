@@ -94,6 +94,7 @@ public class AtnRule {
     popSteps.add(popStep);
   }
 
+  private boolean verbose;
 
   AtnRule(AtnGrammar grammar, DomElement ruleElement, ResourceManager resourceManager) {
     this.grammar = grammar;
@@ -105,6 +106,7 @@ public class AtnRule {
     this.tokenLimit = ruleElement.getAttributeInt("tokenLimit", 0);
     this.fromFirstTokenOnly = ruleElement.getAttributeBoolean("fromFirstTokenOnly", false);
     this.permuted = ruleElement.getAttributeBoolean("permuted", false);
+    this.verbose = ruleElement.getAttributeBoolean("verbose", false);
 
     //
     // RuleElement is of the form:
@@ -185,12 +187,19 @@ public class AtnRule {
 
     if (permuted) {
       result = verifyPermutedPop(token, curState);
+
+      if (verbose && !result) {
+        System.out.println("POP FAIL : Rule " + ruleName + "[" + ruleId + "] verifyPermutedPop(" + curState + ")");
+      }
     }
 
     if (result && popSteps != null) {
       for (AtnRuleStep popStep : popSteps) {
         result = popStep.verify(token, curState);
         if (!result) {
+          if (verbose) {
+            System.out.println("POP FAIL : Rule " + ruleName + "[" + ruleId + "] popStep=" + popStep + " curState=" + curState);
+          }
           break;
         }
       }

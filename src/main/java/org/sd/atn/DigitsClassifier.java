@@ -76,6 +76,7 @@ public class DigitsClassifier extends RoteListClassifier {
   private boolean acceptUnknowns;
   private boolean requireTrueDigit;
   private int minLength;
+  private int maxLength;
   private boolean ignoreLetters;
 
   public DigitsClassifier(DomElement classifierIdElement, ResourceManager resourceManager, Map<String, Normalizer> id2Normalizer) {
@@ -96,6 +97,7 @@ public class DigitsClassifier extends RoteListClassifier {
     this.requireTrueDigit = classifierIdElement.getAttributeBoolean("requireTrueDigit", true);
 
     this.minLength = classifierIdElement.getAttributeInt("minLength", 0);
+    this.maxLength = classifierIdElement.getAttributeInt("maxLength", Integer.MAX_VALUE);
 
     this.ignoreLetters = classifierIdElement.getAttributeBoolean("ignoreLetters", false);
   }
@@ -103,13 +105,16 @@ public class DigitsClassifier extends RoteListClassifier {
   public boolean doClassify(Token token, AtnState atnState) {
     boolean result = false;
 
-    final String text = token.getText();
+    TextAndFeatures textAndFeatures = null;
 
     if (!doClassifyStopword(token, atnState)) {
       result = doClassifyTerm(token, atnState);
 
       if (!result) {
-        if (text.length() >= minLength) {
+        textAndFeatures = getDigitsTextAndFeatures(token, atnState);
+        final String text = textAndFeatures.getText();
+
+        if (text != null && text.length() >= minLength && text.length() <= maxLength) {
           result = verify(text);
 
           if (!result && acceptUnknowns) {
@@ -122,13 +127,31 @@ public class DigitsClassifier extends RoteListClassifier {
       }
     }
 
-    if (result && featureName != null && !"".equals(featureName)) {
-      if (!token.hasFeatures() || !token.getFeatures().hasFeatureType(featureName)) {
-        token.setFeature(featureName, text, this);
+    if (result && featureName != null && !"".equals(featureName) && textAndFeatures != null) {
+      // set the digits text as "featureName" feature
+      if (textAndFeatures.hasText() && !token.hasFeatures() || !token.getFeatures().hasFeatureType(featureName)) {
+        token.setFeature(featureName, textAndFeatures.getText(), this);
+      }
+      // set other features if present
+      if (textAndFeatures.hasFeatures()) {
+        for (Map.Entry<String, String> feature : textAndFeatures.getFeatures().entrySet()) {
+          final String key = feature.getKey();
+          final String value = feature.getValue();
+          token.setFeature(key, value, this);
+        }
       }
     }
 
     return result;
+  }
+
+  /**
+   * Get the text from the token for digit testing along with any
+   * features that should be added (above and beyond the "featureName" for
+   * the digits text) if the test is successful.
+   */
+  protected TextAndFeatures getDigitsTextAndFeatures(Token token, AtnState atnState) {
+    return new TextAndFeatures(token.getText(), null);
   }
 
   private final boolean verify(String text) {
@@ -167,12 +190,53 @@ public class DigitsClassifier extends RoteListClassifier {
     for (int i = 0; i < len; ++i) {
       char c = text.charAt(i);
       if (c == '?') {
-        foundUnknown = true;
-        c = '1';
+        // If a single question mark is at the end of the string,
+        // then ignore it but report that we found an unknown.
+        // (e.g., "1869?")
+
+        // Conversely, if a question mark is embedded in the text or multiple
+        // question marks exist, then pretend the '?' is a '1'
+        // for digit verification purposes.
+        // (e.g. "18??")
+
+        if (foundUnknown || i == 0 || i < len - 1) {
+          c = '1';
+          foundUnknown = true;
+        }
+        else {
+          foundUnknown = true;
+          break;
+        }
       }
       result.append(c);
     }
 
     return foundUnknown ? result.toString() : null;
+  }
+
+  public static class TextAndFeatures {
+    private String text;
+    private Map<String, String> features;
+
+    public TextAndFeatures(String text, Map<String, String> features) {
+      this.text = text;
+      this.features = features;
+    }
+
+    public boolean hasText() {
+      return text != null && !"".equals(text);
+    }
+    
+    public String getText() {
+      return text;
+    }
+
+    public boolean hasFeatures() {
+      return features != null && features.size() > 0;
+    }
+
+    public Map<String, String> getFeatures() {
+      return features;
+    }
   }
 }
