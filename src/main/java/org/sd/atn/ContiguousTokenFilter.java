@@ -19,12 +19,15 @@
 package org.sd.atn;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.sd.token.Token;
 import org.sd.util.Usage;
 import org.sd.xml.DomElement;
 import org.sd.xml.DomNode;
+import org.w3c.dom.NodeList;
 
 /**
  * A generic parameter-driven TokenFilter implementation.
@@ -45,21 +48,35 @@ import org.sd.xml.DomNode;
   )
 public class ContiguousTokenFilter implements TokenFilter {
   
+  private String id;
   private DelimTest delimTest;
   private String tokenreg;
   private Pattern tokenpattern;
+  private List<FeatureContainer> features;
+  private boolean verbose;
 
   public ContiguousTokenFilter(DomElement domElement, ResourceManager resourceManager) {
+    this.id = domElement.getAttributeValue("id", "");
+    this.verbose = domElement.getAttributeBoolean("verbose", false);
+
     final DomNode innerdelimNode = (DomNode)domElement.selectSingleNode("innerdelim");
     if (innerdelimNode != null) {
       this.delimTest = new DelimTest(true, innerdelimNode, resourceManager);
       this.delimTest.setIgnoreConstituents(true);
     }
 
-    DomNode tokenregNode = (DomNode)domElement.selectSingleNode("tokenreg");
+    final DomNode tokenregNode = (DomNode)domElement.selectSingleNode("tokenreg");
     if (tokenregNode != null) {
       this.tokenreg = tokenregNode.getTextContent();
       this.tokenpattern = Pattern.compile(tokenreg);
+    }
+
+    final NodeList featureNodes = domElement.selectNodes("feature");
+    final int numFeatureNodes = featureNodes.getLength();
+    for (int featureNodeNum = 0; featureNodeNum < numFeatureNodes; ++featureNodeNum) {
+      final DomNode featureNode = (DomNode)featureNodes.item(featureNodeNum);
+      if (features == null) features = new ArrayList<FeatureContainer>();
+      features.add(new FeatureContainer(featureNode));
     }
   }
 
@@ -70,15 +87,58 @@ public class ContiguousTokenFilter implements TokenFilter {
       final Matcher m = tokenpattern.matcher(token.getText());
       if (!m.matches()) {
         result = TokenFilterResult.HALT;
+
+        if (verbose) {
+          report("tokenpattern", "MISMATCH", token, curState);
+        }
+      }
+      else if (verbose) {
+        report("tokenpattern", "MATCH", token, curState);
       }
     }
 
     if (delimTest != null && result == TokenFilterResult.ACCEPT && prevToken != null) {
       if (!delimTest.accept(token, curState).accept()) {
         result = TokenFilterResult.HALT;
+
+        if (verbose) {
+          report("delimTest", "MISMATCH", token, curState);
+        }
+      }
+      else if (verbose) {
+        report("delimTest", "MATCH", token, curState);
+      }
+    }
+
+    if (features != null && result == TokenFilterResult.ACCEPT && prevToken != null) {
+      result = TokenFilterResult.HALT;
+      for (FeatureContainer feature : features) {
+        if (feature.doClassify(token)) {
+          result = TokenFilterResult.ACCEPT;
+
+          if (verbose) {
+            report("feature(" + feature.getFeatureName() + ")", "MATCH", token, curState);
+          }
+          break;
+        }
+        else if (verbose) {
+          report("feature(" + feature.getFeatureName() + ")", "MISMATCH", token, curState);
+        }
       }
     }
 
     return result;
+  }
+
+  private final void report(String phase, String result, Token token, AtnState curState) {
+    final StringBuilder builder = new StringBuilder("***ContiguousTokenFilter(");
+
+    builder.
+      append(id).append(")").
+      append(phase).append(" ").append(result).
+      append(" token=").append(token).
+      append(" state=").append(curState);
+    
+    System.out.println(builder);
   }
 }

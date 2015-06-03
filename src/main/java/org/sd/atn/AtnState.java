@@ -815,7 +815,7 @@ public class AtnState {
         for (AtnStateTokenClassifier classifier : grammar.getCat2Classifiers().get(category)) {
           final MatchResult matchResult = classifier.classify(inputToken, this);
           if (matchResult.matched()) {
-            if (applyTests()) {
+            if (ruleStep.verify(inputToken, this)) {
               result = matchResult;
               break;
             }
@@ -826,22 +826,27 @@ public class AtnState {
         }
       }
       else {
+        boolean constituent = true;
         if (!grammar.getCat2Rules().containsKey(category)) {
           // use an "identity" classifier for literal grammar tokens.
           matched = category.equals(inputToken.getText());
+          constituent = false;
         }
 
         // check for a feature that matches the category
         if (!matched) {
           matched = inputToken.getFeature(category, null) != null;
-
-          if (matched) {
-            AtnStateUtil.setFeatureMatch(inputToken, category, this);
-          }
+          AtnStateUtil.setFeatureMatch(inputToken, category, this);
         }
 
         if (matched) {
           matched = ruleStep.verify(inputToken, this);
+
+          if (ruleStep.getVerbose() && !matched) {
+            System.out.println("*** " + this.toString() + " token matched " +
+                               (constituent ? "constituent" : "literal") +
+                               " but tests failed.");
+          }
         }
       }
     }
@@ -919,6 +924,7 @@ public class AtnState {
 
   private final boolean applyAllPops(Tree<AtnState> nextStateNode, LinkedList<AtnState> states, LinkedList<AtnState> skipStates, Set<Integer> stopList) {
     boolean result = true;
+    boolean matches = true;
 
     if (isRuleEnd()) {
       int statesSize = states.size();
@@ -937,6 +943,9 @@ public class AtnState {
           popVerified = popState.verifyPop();
         }
         else {
+          // tests failed, so matches=false
+          matches = false;
+
           // back out of popping
           while (states.size() > statesSize) {
             if (trace || getRuleStep().getVerbose() || popState.getRuleStep().getVerbose()) {
@@ -946,42 +955,6 @@ public class AtnState {
           }
           while (skipStates.size() > skipStatesSize) skipStates.removeLast();
         }
-
-/*
-        if (!result) {
-          popState.popFailed = true;
-          popStateNode.addChild(popState);
-
-          if (trace || getRuleStep().getVerbose() || popState.getRuleStep().getVerbose()) {
-            System.out.println("POP tests FAILED\t" + popState.showStateContext());
-            popState.applyTests();  // NOTE: this is here for debug stepping when tests fail unexpectedly
-          }
-        }
-        else {
-          popVerified = popState.verifyPop();
-
-          if (!popVerified) {
-            // note: result is still true because match succeeded; only the pop failed
-            popState.popFailed = true;
-            popStateNode.addChild(popState);
-
-            if (trace || getRuleStep().getVerbose() || popState.getRuleStep().getVerbose()) {
-              System.out.println("POP verification FAILED\t" + popState.showStateContext());
-            }
-
-            if (popState.getPopCount() != 1) {
-              // first pop has popCount 1 and is same as matching token, which will have
-              // states added due to the match.
-              popStateNode = popStateNode.addChild(popState);  //NOTE: this looks redundant, but isn't!
-
-              // After the first pop, we need to consider forward states from each pop.
-              addNextStates(grammar, states, skipStates, popState, popStateNode, true, true, stopList, true);
-            }
-
-            break;
-          }
-        }
-*/
 
         if (!result || !popVerified) {
             // note: result is still true because match succeeded; only the pop failed
@@ -1061,7 +1034,7 @@ public class AtnState {
       }
     }
 
-    return result;
+    return result && matches;
   }
 
   // private final void backOutOfPopping(int statesSize, int skipStatesSize) {

@@ -434,8 +434,6 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
     if (token != null) {
       final TokenInfoContainer<MyTokenInfo> tic = pos2tokenInfoContainer.get(token.getStartIndex());
       if (tic != null) {
-        final MyTokenInfo first = tic.getFirst(token.getEndIndex());
-
         final List<MyTokenInfo> tokenInfos = tic.getAll(token.getEndIndex());
         if (tokenInfos != null) {
           for (MyTokenInfo tokenInfo : tokenInfos) {
