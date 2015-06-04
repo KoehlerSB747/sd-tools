@@ -76,6 +76,9 @@ import org.w3c.dom.NodeList;
        "            type of 'exact' and 'substr' operates the same as described above for 'allow'.\n" +
        "        <require type='substr|exact'>...delims-to-require...</require>\n" +
        "            when encountered, denotes that the identified delimiters *must* be present for the test to pass.\n" +
+       "            type of 'exact' and 'substr' operates the same as described above for 'allow'.\n" +
+       "        <prohibit type='substr|exact'>...delims-to-prohibit...</prohibit>\n" +
+       "            when encountered, denotes that the identified delimiters *must not* be present for the test to pass.\n" +
        "            type of 'exact' and 'substr' operates the same as described above for 'allow'."
   )
 public class DelimTest extends BaseClassifierTest {
@@ -137,6 +140,11 @@ public class DelimTest extends BaseClassifierTest {
     return requiredDelimStrings;
   }
 
+  private List<DelimString> prohibitedDelimStrings;
+  List<DelimString> getProhibitedDelimStrings() {
+    return prohibitedDelimStrings;
+  }
+
   // used only in conjunction with postDelim
   private boolean remainingText;
   boolean getRemainingText() {
@@ -166,6 +174,7 @@ public class DelimTest extends BaseClassifierTest {
     this.disallowAll = false;
     this.delimStrings = new ArrayList<DelimString>();
     this.requiredDelimStrings = null;
+    this.prohibitedDelimStrings = null;
 
     this.ignoreConstituents = delimNode.getAttributeBoolean("ignoreConstituents", false);
     this.remainingText = delimNode.getAttributeBoolean("remainingText", false);
@@ -179,6 +188,7 @@ public class DelimTest extends BaseClassifierTest {
     //   <allow type='substr|exact'>delims-to-allow</allow>
     //   <disallow type='substr|exact'>delims-to-disallow</disallow>
     //   <require type='substr|exact'>delims-to-require</require>
+    //   <prohibit type='substr|exact'>delims-to-prohibit</prohibit>
     //   <condition>
     //     <pre-or-post-delim>...</pre-or-post-delim>
     //     ...
@@ -221,6 +231,10 @@ public class DelimTest extends BaseClassifierTest {
             if (requiredDelimStrings == null) requiredDelimStrings = new ArrayList<DelimString>();
             requiredDelimStrings.add(new DelimString(true, exact, childNode.getTextContent()));
           }
+          else if ("prohibit".equalsIgnoreCase(childName)) {
+            if (prohibitedDelimStrings == null) prohibitedDelimStrings = new ArrayList<DelimString>();
+            prohibitedDelimStrings.add(new DelimString(true, exact, childNode.getTextContent()));
+          }
         }
       }
     }
@@ -234,6 +248,10 @@ public class DelimTest extends BaseClassifierTest {
     return requiredDelimStrings != null && requiredDelimStrings.size() > 0;
   }
 
+  private final boolean hasProhibitedDelimStrings() {
+    return prohibitedDelimStrings != null && prohibitedDelimStrings.size() > 0;
+  }
+
   protected boolean doAccept(Token token, AtnState curState) {
 
     final String delim = getDelim(token, curState);
@@ -241,13 +259,20 @@ public class DelimTest extends BaseClassifierTest {
     final boolean onlyWhite = "".equals(delim.trim());
 
     if (!meetsRequiredConstraints(delim)) return false;
+    else if (!meetsProhibitedConstraints(delim)) return false;
     else if (delimStrings.size() == 0) {
-      if (!disallowAll || onlyWhite || hasRequiredDelimStrings()) {
+      if (!disallowAll || onlyWhite || hasRequiredDelimStrings() || hasProhibitedDelimStrings()) {
         return true;
       }
     }
 
-    // ignore (always accept) purely whitespace (unless there are requiredDelimStrings)
+    else if (delimStrings.size() == 0) {
+      if (!disallowAll || onlyWhite || hasProhibitedDelimStrings()) {
+        return true;
+      }
+    }
+
+    // ignore (always accept) purely whitespace (unless there are requiredDelimStrings or prohibitedDelimStrings)
     if (onlyWhite) return true;
 
     boolean result = allowAll;
@@ -290,6 +315,22 @@ public class DelimTest extends BaseClassifierTest {
     }
     else {
       result = true;
+    }
+
+    return result;
+  }
+
+  private boolean meetsProhibitedConstraints(String delim) {
+    boolean result = true;
+
+    // prohibite only one of the prohibited constraints, not all
+    if (prohibitedDelimStrings != null) {
+      for (DelimString delimString : prohibitedDelimStrings) {
+        if (delimString.matches(delim)) {
+          result = false;
+          break;
+        }
+      }
     }
 
     return result;
