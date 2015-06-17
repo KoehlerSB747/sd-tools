@@ -154,6 +154,27 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
     init(classifierIdElement, resourceManager);
   }
 
+  /**
+   * Construct a simple instance with the given text file.
+   */
+  public RoteListClassifier(File textfile, boolean caseSensitive) {
+    super();
+
+    this.resourceManager = new ResourceManager();
+    this.roteListType = textfile.getName();
+    this.termsAndStopwords = null;
+    this.defaultCaseSensitivity = caseSensitive;
+    this.classFeature = null;
+    this.trace = false;
+
+    if (textfile != null && textfile.exists()) {
+      this.termsAndStopwords = new TermsWithStopwords();
+      final TermsBundle termsBundle = new TermsBundle(false, super.getTokenClassifierHelper());
+      termsBundle.loadTextFile(textfile, caseSensitive);
+      this.termsAndStopwords.setTerms(termsBundle);
+    }
+  }
+
   private final void init(DomElement classifierIdElement, ResourceManager resourceManager) {
     this.resourceManager = resourceManager;
     this.roteListType = classifierIdElement.getLocalName();
@@ -832,6 +853,14 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
 
       final File textfile = resourceManager.getWorkingFile(textfileElement);
 
+      loadTextFile(textfile, minChars, keyFeature, classifierName);
+
+      if (term2attributes != null && term2attributes.size() > 0) {
+        hasOnlyTests = false;
+      }
+    }
+
+    protected final void loadTextFile(File textfile, int minChars, String keyFeature, String classifierName) {
       try {
         final BufferedReader reader = FileUtil.getReader(textfile);
 
@@ -868,10 +897,6 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
       }
       catch (IOException e) {
         throw new IllegalStateException(e);
-      }
-
-      if (term2attributes != null && term2attributes.size() > 0) {
-        hasOnlyTests = false;
       }
     }
 
@@ -1113,6 +1138,21 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
       final Terms theTerms = getTheTerms(textfileElement, defaultCaseSensitivity, classFeature);
       theTerms.loadTextFile(textfileElement, resourceManager, classifierName);
       adjustMaxWordCount(theTerms.getMaxWordCount());
+    }
+
+    protected final void loadTextFile(File textfile, boolean caseSensitive) {
+      Terms theTerms = null;
+
+      if (caseSensitive) {
+        if (this.caseSensitiveTerms == null) this.caseSensitiveTerms = new Terms(true, null, false, 0, tokenClassifierHelper);
+        theTerms = this.caseSensitiveTerms;
+      }
+      else {
+        if (this.caseInsensitiveTerms == null) this.caseInsensitiveTerms = new Terms(false, null, false, 0, tokenClassifierHelper);
+        theTerms = this.caseInsensitiveTerms;
+      }
+
+      theTerms.loadTextFile(textfile, 1, null, null);
     }
 
     protected final void loadRegexes(DomElement regexesElement, boolean defaultCaseSensitivity, String classFeature) {
