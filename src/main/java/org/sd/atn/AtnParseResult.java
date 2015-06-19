@@ -210,7 +210,7 @@ public class AtnParseResult {
     return parse;
   }
 
-  List<AtnParse> getParses() {
+  public List<AtnParse> getParses() {
     if (_parses == null) {
       _parses = new ArrayList<AtnParse>();
 

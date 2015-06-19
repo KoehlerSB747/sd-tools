@@ -23,6 +23,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.sd.io.DataHelper;
 import org.sd.io.Publishable;
 
@@ -84,6 +86,24 @@ public class Feature implements Publishable {
     this.sourceType = sourceType;
   }
 
+  private Map<String, Serializable> attributes;
+  /**
+   * User-defined attributes attached to the feature.
+   */
+  public Map<String, Serializable> getAttributes() {
+    return attributes;
+  }
+  public boolean hasAttributes() {
+    return attributes != null && attributes.size() > 0;
+  }
+  public void setAttributes(Map<String, Serializable> attributes) {
+    this.attributes = attributes;
+  }
+  public void setAttribute(String key, Serializable value) {
+    if (attributes == null) attributes = new LinkedHashMap<String, Serializable>();
+    this.attributes.put(key, value);
+  }
+
 
   /**
    * Empty constructor for publishable reconstruction.
@@ -117,6 +137,16 @@ public class Feature implements Publishable {
     DataHelper.writeSerializable(dataOutput, value);
     dataOutput.writeDouble(p);
     DataHelper.writeString(dataOutput, sourceType.getName());
+    if (attributes == null) {
+      dataOutput.writeInt(0);
+    }
+    else {
+      dataOutput.writeInt(attributes.size());
+      for (Map.Entry<String, Serializable> entry : attributes.entrySet()) {
+        DataHelper.writeString(dataOutput, entry.getKey());
+        DataHelper.writeSerializable(dataOutput, entry.getValue());
+      }
+    }
   }
 
   /**
@@ -143,6 +173,14 @@ public class Feature implements Publishable {
         throw new IllegalStateException(e);
       }
     }
+
+    final int numAtts = dataInput.readInt();
+    if (numAtts > 0) {
+      this.attributes = new LinkedHashMap<String, Serializable>();
+      for (int i = 0; i < numAtts; ++i) {
+        attributes.put(DataHelper.readString(dataInput), DataHelper.readSerializable(dataInput));
+      }
+    }
   }
 
   public String toString() {
@@ -152,7 +190,13 @@ public class Feature implements Publishable {
       append("Feature(").
       append(type).
       append(',').
-      append(value).
+      append(value);
+
+    if (hasAttributes()) {
+      result.append(attributes.toString());
+    }
+
+    result.
       append(")");
 
     return result.toString();
