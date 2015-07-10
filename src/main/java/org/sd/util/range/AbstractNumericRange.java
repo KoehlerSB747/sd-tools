@@ -133,6 +133,7 @@ public abstract class AbstractNumericRange implements NumericRange {
    * Shift all range end points by the given value.
    */
   public void shift(double value) {
+    string = null;
     for (SimpleRange range : ranges) {
       range.shift(value);
     }
