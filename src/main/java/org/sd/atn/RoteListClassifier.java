@@ -141,6 +141,12 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
   //   </stopwords>
   // </roteListType>
   //
+  // ADDITIONAL NOTES:
+  //
+  // - if a term within a "case-insensitive" set of terms needs to be case-sensitive,
+  //   - then add an attribute/value pair: _literal=<TERM> to the term, where <TERM>
+  //     is the case-sensitive version of the term that must be matched.
+  //
 
   private String roteListType;
   private TermsWithStopwords termsAndStopwords;
@@ -563,7 +569,8 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
       }
 
       boolean hasClassAttribute = false;
-      String key = tokenClassifierHelper.getNormalizedText(token);
+      final String actualKey = tokenClassifierHelper.getNormalizedText(token);
+      String key = actualKey;
 
       if (!exceedsMaxWordCount) {
         if (!caseSensitive) {
@@ -572,6 +579,18 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
 
         if (term2attributes.containsKey(key)) {
           result = true;
+
+          if (!caseSensitive) {
+            // check for override to case insensitivity ("_literal" attribute)
+            // note that "_literal" will not work with pluralize and genitivize flags
+            final Map<String, String> attributes = term2attributes.get(key);
+            if (attributes != null) {
+              final String literal = attributes.get("_literal");
+              if (literal != null && !"".equals(literal)) {
+                result = literal.equals(actualKey);
+              }
+            }
+          }
         }
 
         if (!result && pluralize) {
