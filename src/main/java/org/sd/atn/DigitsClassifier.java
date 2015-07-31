@@ -102,6 +102,63 @@ public class DigitsClassifier extends RoteListClassifier {
     this.ignoreLetters = classifierIdElement.getAttributeBoolean("ignoreLetters", false);
   }
   
+  protected final String getFeatureName() {
+    return featureName;
+  }
+
+  protected final void setFeatureName(String featureName) {
+    this.featureName = featureName;
+  }
+
+  protected final IntegerRange getRange() {
+    return range;
+  }
+
+  protected final void setRange(String rangeString) {
+    this.range = new IntegerRange(rangeString);
+  }
+
+  protected final boolean acceptUnknowns() {
+    return acceptUnknowns;
+  }
+
+  protected final void setAcceptUnknowns(boolean acceptUnknowns) {
+    this.acceptUnknowns = acceptUnknowns;
+  }
+
+  protected final boolean requireTrueDigit() {
+    return requireTrueDigit;
+  }
+
+  protected final void setRequireTrueDigit(boolean requireTrueDigit) {
+    this.requireTrueDigit = requireTrueDigit;
+  }
+
+  protected final int getMinLength() {
+    return minLength;
+  }
+
+  protected final void setMinLength(int minLength) {
+    this.minLength = minLength;
+  }
+
+  protected final int getMaxLength() {
+    return maxLength;
+  }
+
+  protected final void setMaxLength(int maxLength) {
+    this.maxLength = maxLength;
+  }
+
+  protected final boolean ignoreLetters() {
+    return ignoreLetters;
+  }
+
+  protected final void setIgnoreLetters(boolean ignoreLetters) {
+    this.ignoreLetters = ignoreLetters;
+  }
+
+
   public boolean doClassify(Token token, AtnState atnState) {
     boolean result = false;
 
@@ -112,15 +169,20 @@ public class DigitsClassifier extends RoteListClassifier {
 
       if (!result) {
         textAndFeatures = getDigitsTextAndFeatures(token, atnState);
-        final String text = textAndFeatures.getText();
+        if (textAndFeatures == null || textAndFeatures.fail()) {
+          result = false;
+        }
+        else {
+          final String text = textAndFeatures.getText();
 
-        if (text != null && text.length() >= minLength && text.length() <= maxLength) {
-          result = verify(text);
+          if (text != null && text.length() >= minLength && text.length() <= maxLength) {
+            result = verify(text);
 
-          if (!result && acceptUnknowns) {
-            final String unknownEnhancedText = enhanceUnknowns(text);
-            if (unknownEnhancedText != null) {
-              result = verify(unknownEnhancedText);
+            if (!result && acceptUnknowns) {
+              final String unknownEnhancedText = enhanceUnknowns(text);
+              if (unknownEnhancedText != null) {
+                result = verify(unknownEnhancedText);
+              }
             }
           }
         }
@@ -217,10 +279,12 @@ public class DigitsClassifier extends RoteListClassifier {
   public static class TextAndFeatures {
     private String text;
     private Map<String, String> features;
+    private boolean fail;
 
     public TextAndFeatures(String text, Map<String, String> features) {
       this.text = text;
       this.features = features;
+      this.fail = false;
     }
 
     public boolean hasText() {
@@ -237,6 +301,14 @@ public class DigitsClassifier extends RoteListClassifier {
 
     public Map<String, String> getFeatures() {
       return features;
+    }
+
+    public void setFail(boolean fail) {
+      this.fail = fail;
+    }
+
+    public boolean fail() {
+      return fail;
     }
   }
 }
