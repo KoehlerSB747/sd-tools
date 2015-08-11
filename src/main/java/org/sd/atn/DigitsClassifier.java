@@ -173,15 +173,20 @@ public class DigitsClassifier extends RoteListClassifier {
           result = false;
         }
         else {
-          final String text = textAndFeatures.getText();
+          if (textAndFeatures.done()) {
+            result = true;
+          }
+          else { // !textAndFeatures.done()
+            final String text = textAndFeatures.getText();
 
-          if (text != null && text.length() >= minLength && text.length() <= maxLength) {
-            result = verify(text);
+            if (text != null && text.length() >= minLength && text.length() <= maxLength) {
+              result = verify(text);
 
-            if (!result && acceptUnknowns) {
-              final String unknownEnhancedText = enhanceUnknowns(text);
-              if (unknownEnhancedText != null) {
-                result = verify(unknownEnhancedText);
+              if (!result && acceptUnknowns) {
+                final String unknownEnhancedText = enhanceUnknowns(text);
+                if (unknownEnhancedText != null) {
+                  result = verify(unknownEnhancedText);
+                }
               }
             }
           }
@@ -211,6 +216,16 @@ public class DigitsClassifier extends RoteListClassifier {
    * Get the text from the token for digit testing along with any
    * features that should be added (above and beyond the "featureName" for
    * the digits text) if the test is successful.
+   * <p>
+   * Note that this is triggered after checking for rote list stopwords and
+   * terms, but before applying primary digit classification, including:
+   * <ul>
+   * <li>text length (min/max) constraints</li>
+   * <li>verifying digit and range constraints</li>
+   * <li>accepting/enhancing unknowns (e.g., "?" chars)</li>
+   * </ul>
+   * The primary digit classification can be overridden (or bypassed)
+   * by an extending classifier by setting textAndFeatures.done(true).
    */
   protected TextAndFeatures getDigitsTextAndFeatures(Token token, AtnState atnState) {
     return new TextAndFeatures(token.getText(), null);
@@ -280,11 +295,13 @@ public class DigitsClassifier extends RoteListClassifier {
     private String text;
     private Map<String, String> features;
     private boolean fail;
+    private boolean done;
 
     public TextAndFeatures(String text, Map<String, String> features) {
       this.text = text;
       this.features = features;
       this.fail = false;
+      this.done = false;
     }
 
     public boolean hasText() {
@@ -309,6 +326,22 @@ public class DigitsClassifier extends RoteListClassifier {
 
     public boolean fail() {
       return fail;
+    }
+
+    /**
+     * Mark classification as finished, bypassing:
+     * <ul>
+     * <li>text length (min/max) constraints</li>
+     * <li>verifying digit and range constraints</li>
+     * <li>accepting/enhancing unknowns (e.g., "?" chars)</li>
+     * </ul>
+     */
+    public void setDone(boolean done) {
+      this.done = done;
+    }
+
+    public boolean done() {
+      return done;
     }
   }
 }

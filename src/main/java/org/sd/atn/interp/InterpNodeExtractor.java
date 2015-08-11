@@ -27,7 +27,7 @@ import org.sd.atn.ParseInterpretationUtil;
 import org.sd.util.tree.Tree;
 import org.sd.xml.DataProperties;
 import org.sd.xml.DomElement;
-import org.sd.xml.XPath;
+import org.sd.xml.XPathApplicator;
 import org.sd.xml.XmlLite;
 
 /**
@@ -37,25 +37,56 @@ import org.sd.xml.XmlLite;
  */
 public class InterpNodeExtractor extends AbstractNodeExtractor {
   
+  private enum SubType {
+    TREE(true), TOSTRING(false), INPUTTEXT(false);
+
+    private boolean useInterpTree;
+
+    private SubType(boolean useInterpTree) {
+      this.useInterpTree = useInterpTree;
+    }
+
+    boolean useInterpTree() { return useInterpTree; }
+  };
+
+
   private String classification;
-  private String subType;
-  private XPath xpath;
+  private SubType subType;
+
+  private String xpathText;
+  private String[] xpathPatternAndAttribute;
+  private boolean getAttribute;
+  private XPathApplicator xpathApplicator;
   private String select;
+  private boolean selectFirst;
+  private boolean selectLast;
 
   InterpNodeExtractor(FieldTemplate fieldTemplate, InnerResources resources, DomElement extractElement, String classification) {
     super(fieldTemplate, resources);
     this.classification = classification;
 
-    // subTypes 'tree' (default), 'toString' (future: attribute)
-    this.subType = extractElement.getAttributeValue("subType", "tree");
-    this.xpath = null;
-    this.select = null;
+    // subTypes: 'tree' (default), 'toString', 'inputText'
+    final String subTypeText = extractElement.getAttributeValue("subType", "tree");
+    this.subType = SubType.valueOf(subTypeText.toUpperCase());
 
-    if ("tree".equals(subType)) {
-      final String xpathText = extractElement.getAttributeValue("xpath", null);
+    this.xpathText = null;
+    this.xpathPatternAndAttribute = null;
+    this.getAttribute = false;
+    this.xpathApplicator = null;
+    this.select = null;
+    this.selectFirst = false;
+    this.selectLast = false;
+
+    if (subType.useInterpTree()) {
+      this.xpathText = extractElement.getAttributeValue("xpath", null);
       if (xpathText != null) {
-        this.xpath = new XPath(xpathText);
+        this.xpathPatternAndAttribute = XPathApplicator.splitPatternAttribute(xpathText);
+        this.getAttribute = (xpathPatternAndAttribute.length > 1);
+        this.xpathApplicator = new XPathApplicator();
         this.select = extractElement.getAttributeValue("select", "first");
+
+        this.selectFirst = "first".equals(select);
+        this.selectLast = "last".equals(select);
       }
     }
   }
@@ -88,24 +119,49 @@ public class InterpNodeExtractor extends AbstractNodeExtractor {
     List<Tree<XmlLite.Data>> result = null;
     Tree<XmlLite.Data> singleResult = null;
 
-    if ("tree".equals(subType)) {
+    if (subType.useInterpTree()) {
       singleResult = interp.getInterpTree();
 
-      if (singleResult != null && xpath != null) {
-        final List<Tree<XmlLite.Data>> matches = xpath.getNodes(singleResult);
-        if (matches != null && matches.size() > 0) {
-          if ("first".equals(select)) {
-            singleResult = matches.get(0);
-          }
-          else if ("last".equals(select)) {
-            singleResult = matches.get(matches.size() - 1);
+      if (singleResult != null && xpathText != null) {
+        if (getAttribute) {  // get the attribute value(s)
+          final List<String> values =
+            xpathApplicator.getXPath(xpathPatternAndAttribute[0]).getText(singleResult, xpathPatternAndAttribute[1], true, false);
+
+          if (values != null && values.size() > 0) {
+            if (selectFirst) {
+              singleResult = buildSingleResult(xpathPatternAndAttribute[1], values.get(0), null);
+            }
+            else if (selectLast) {
+              singleResult = buildSingleResult(xpathPatternAndAttribute[1], values.get(values.size() - 1), null);
+            }
+            else {
+              result = new ArrayList<Tree<XmlLite.Data>>();
+              for (String value : values) {
+                result.add(buildSingleResult(xpathPatternAndAttribute[1], value, null));
+              }
+            }
           }
           else {
-            result = matches;
+            singleResult = null;
           }
         }
-        else {
-          singleResult = null;
+        else {  // get interp node(s)
+          final List<Tree<XmlLite.Data>> matches = xpathApplicator.getNodes(xpathText, singleResult);
+
+          if (matches != null && matches.size() > 0) {
+            if (selectFirst) {
+              singleResult = matches.get(0);
+            }
+            else if (selectLast) {
+              singleResult = matches.get(matches.size() - 1);
+            }
+            else {
+              result = matches;
+            }
+          }
+          else {
+            singleResult = null;
+          }
         }
       }
     }
@@ -113,27 +169,30 @@ public class InterpNodeExtractor extends AbstractNodeExtractor {
       final String inputText = interp.getInputText();
       final String toString = interp.toString();
 
-      if ("toString".equals(subType)) {
-        singleResult = XmlLite.createTagNode(interp.getClassification());
-        singleResult.addChild(XmlLite.createTextNode(toString));
-
-        if (inputText != null && !"".equals(inputText)) {
-          singleResult.getData().asTag().setAttribute("altText", inputText);
-        }
-      }
-      else if ("inputText".equals(subType)) {
-        singleResult = XmlLite.createTagNode(interp.getClassification());
-        singleResult.addChild(XmlLite.createTextNode(inputText));
-
-        if (!"".equals(toString)) {
-          singleResult.getData().asTag().setAttribute("altText", toString);
-        }
+      switch (subType) {
+        case TOSTRING :
+          singleResult = buildSingleResult(interp.getClassification(), toString, inputText);
+          break;
+        case INPUTTEXT :
+          singleResult = buildSingleResult(interp.getClassification(), inputText, toString);
+          break;
       }
     }
 
     if (result == null && singleResult != null) {
       result = new ArrayList<Tree<XmlLite.Data>>();
       result.add(singleResult);
+    }
+
+    return result;
+  }
+
+  private final Tree<XmlLite.Data> buildSingleResult(String tag, String text, String altText) {
+    final Tree<XmlLite.Data> result = XmlLite.createTagNode(tag);
+    result.addChild(XmlLite.createTextNode(text));
+
+    if (altText != null && !"".equals(altText)) {
+      result.getData().asTag().setAttribute("altText", altText);
     }
 
     return result;

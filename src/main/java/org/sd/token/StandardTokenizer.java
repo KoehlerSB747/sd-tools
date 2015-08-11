@@ -740,12 +740,12 @@ public class StandardTokenizer implements Tokenizer {
     return result;
   }
 
-  private Token doGetToken(TokenRevisionStrategy revisionStrategy, int startPosition, int sequenceNumber) {
+  private final Token doGetToken(TokenRevisionStrategy revisionStrategy, int startPosition, int sequenceNumber) {
     final BreakType breakToFind = getBreakToFind(revisionStrategy);
     return doGetNextToken(startPosition, breakToFind, revisionStrategy, 0, sequenceNumber);
   }
 
-  private BreakType getBreakToFind(TokenRevisionStrategy revisionStrategy) {
+  private final BreakType getBreakToFind(TokenRevisionStrategy revisionStrategy) {
     BreakType breakToFind = BreakType.HARD;
     switch (revisionStrategy) {
       case LSL:
@@ -761,7 +761,7 @@ public class StandardTokenizer implements Tokenizer {
     return breakToFind;
   }
 
-  private Token doGetNextToken(int startPosition, BreakType breakToFind, TokenRevisionStrategy revisionStrategy, int revisionNumber, int sequenceNumber) {
+  private final Token doGetNextToken(int startPosition, BreakType breakToFind, TokenRevisionStrategy revisionStrategy, int revisionNumber, int sequenceNumber) {
     Token result = null;
 
     final int[] nextBreak = findNextBreak(startPosition + 1, breakToFind, 0);
@@ -778,7 +778,7 @@ public class StandardTokenizer implements Tokenizer {
     return result;
   }
 
-  private Token buildToken(int startPosition, int endPosition, TokenRevisionStrategy revisionStrategy, int revisionNumber, int sequenceNumber, int wordCount, int breakCount) {
+  private final Token buildToken(int startPosition, int endPosition, TokenRevisionStrategy revisionStrategy, int revisionNumber, int sequenceNumber, int wordCount, int breakCount) {
     Token result = null;
 
     if (endPosition > startPosition) {
@@ -795,7 +795,7 @@ public class StandardTokenizer implements Tokenizer {
    *
    * @return {nextBreakPos, totalBreakCount}
    */
-  private int[] findNextBreak(int startPosition, BreakType breakTypeToFind, int breakCount) {
+  private final int[] findNextBreak(int startPosition, BreakType breakTypeToFind, int breakCount) {
     int result = text.length();
 
     final boolean enforceBreakLimit = (breakCount >= 0);
@@ -823,7 +823,7 @@ public class StandardTokenizer implements Tokenizer {
     return new int[]{result, breakCount};
   }
 
-  private int findPriorBreak(int endPosition) {
+  private final int findPriorBreak(int endPosition) {
     int result = -1;
 
     final Map<Integer, Break> pos2break = getPos2Break();
@@ -843,7 +843,7 @@ public class StandardTokenizer implements Tokenizer {
   /**
    * Find the first non-break position from startPosition (inclusive).
    */
-  private int skipImmediateBreaks(int startPosition) {
+  private final int skipImmediateBreaks(int startPosition) {
     int result = startPosition;
     final Map<Integer, Break> pos2break = getPos2Break();
 
@@ -866,9 +866,14 @@ public class StandardTokenizer implements Tokenizer {
    * indicate that the sequence of breaks should be considered as
    * hard.
    */
-  private int findEndBreakForward(int startPosition, boolean softOnly) {
-    int result = startPosition;
+  private final int findEndBreakForward(int startPosition, boolean softOnly) {
     final Map<Integer, Break> pos2break = getPos2Break();
+    return doFindEndBreakForward(pos2break, startPosition, softOnly);
+  }
+
+  /** Auxiliary to findEndBreakForward */
+  protected final int doFindEndBreakForward(Map<Integer, Break> pos2break, int startPosition, boolean softOnly) {
+    int result = startPosition;
     if (pos2break == null) return result;  // still initializing
 
     while (result < text.length()) {
@@ -933,7 +938,7 @@ public class StandardTokenizer implements Tokenizer {
   /**
    * Find the position of the start of breaks ending before startPosition.
    */
-  private int findEndBreakReverse(int startPosition) {
+  private final int findEndBreakReverse(int startPosition) {
     int result = startPosition;
     final Map<Integer, Break> pos2break = getPos2Break();
     if (pos2break == null) return result;  // still initializing

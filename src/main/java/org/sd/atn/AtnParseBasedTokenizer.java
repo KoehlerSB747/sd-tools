@@ -274,6 +274,7 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
 
   protected Map<Integer, Break> createBreaks() {
     final Map<Integer, Break> result = super.createBreaks();
+    final Map<Integer, Break> standardBreaks = retainEndBreaks ? new HashMap<Integer, Break>(result) : null;
     final Set<Integer> tokenEnds = getTokenEnds();
 
     // set hard breaks, if any
@@ -307,14 +308,22 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
 
     // get the ranges covered by parses
     final IntegerRange parseSpans = getParseSpans();
-
-    final Map<Integer, Break> standardBreaks = retainEndBreaks ? super.createBreaks() : null;
+    Map<Integer, Integer> p2ticAdjustments = null;
 
     // turn boundaries between parses into hard breaks; within parse alternatives as soft breaks; clearing other breaks
     for (Map.Entry<Integer, TokenInfoContainer<MyTokenInfo>> mapEntry : pos2tokenInfoContainer.entrySet()) {
       int pos = mapEntry.getKey();
       final TokenInfoContainer<MyTokenInfo> tic = mapEntry.getValue();
       Map<Integer, Integer> ticEndAdjustments = null;
+
+      // Record adjustments for old tokens (parses) that start on a new break
+      if (result.containsKey(pos)) {
+        final int nextStartPos = doFindEndBreakForward(result, pos, false);
+        if (nextStartPos > pos) {
+          if (p2ticAdjustments == null) p2ticAdjustments = new HashMap<Integer, Integer>();
+          p2ticAdjustments.put(pos, nextStartPos);
+        }
+      }
 
       // Set LHS break as Hard (or soft if contained w/in another parse)
       final boolean isHard = !parseSpans.includes(pos);
@@ -362,6 +371,32 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
       if (ticEndAdjustments != null) {
         for (Map.Entry<Integer, Integer> entry : ticEndAdjustments.entrySet()) {
           tic.adjustEnd(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
+    // make (copy) adjustments
+    if (p2ticAdjustments != null) {
+      for (Map.Entry<Integer, Integer> adjustmentEntry : p2ticAdjustments.entrySet()) {
+        final Integer fromPos = adjustmentEntry.getKey();
+        final Integer toPos = adjustmentEntry.getValue();
+        final TokenInfoContainer<MyTokenInfo> fromContainer = pos2tokenInfoContainer.get(fromPos);
+        final TokenInfoContainer<MyTokenInfo> toContainer = pos2tokenInfoContainer.get(toPos);
+
+        if (fromContainer == null) continue;
+        if (toContainer == null) {
+          pos2tokenInfoContainer.put(toPos, fromContainer);
+        }
+        else {  // need to merge fromContainer into toContainer
+          final List<MyTokenInfo> myTis = new ArrayList<MyTokenInfo>();
+          for (List<MyTokenInfo> tiList : fromContainer.getTokenInfoList().values()) {
+            for (MyTokenInfo ti : tiList) {
+              myTis.add(ti);
+            }
+          }
+          for (MyTokenInfo ti : myTis) {
+            toContainer.add(ti, fromPos);
+          }
         }
       }
     }
