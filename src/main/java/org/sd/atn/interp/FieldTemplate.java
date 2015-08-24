@@ -154,6 +154,9 @@ public class FieldTemplate {
         if (result == null) {
           System.out.println("\t" + parseNode + " [attributes:" + parseNode.getAttributes() + "]");
         }
+        else {
+          System.out.println("\t" + parseNode + " [result: " + result + "]");
+        }
       }
     }
 

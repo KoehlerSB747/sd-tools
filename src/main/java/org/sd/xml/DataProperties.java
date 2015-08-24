@@ -155,6 +155,10 @@ public class DataProperties extends BaseDataProperties {
     ddp.getDomElement().setDataProperties(this);
   }
 
+  public boolean isEmpty() {
+    return (properties == null || properties.size() == 0) && domDataProperties.size() == 0;
+  }
+
   public String[] getRemainingArgs() {
     return remainingArgs;
   }
@@ -169,6 +173,10 @@ public class DataProperties extends BaseDataProperties {
 
   public DomDataProperties getDomDataProperties() {
     return domDataProperties.size() > 0 ? domDataProperties.getFirst() : null;
+  }
+
+  public LinkedList<DomDataProperties> getAllDomDataProperties() {
+    return domDataProperties;
   }
 
   /**

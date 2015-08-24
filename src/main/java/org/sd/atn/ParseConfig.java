@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -160,6 +161,7 @@ public class ParseConfig {
   private String description;
   private boolean traceflow;
   private List<DomElement> supplementElements;
+  private Map<String, Integer> _compoundParserId2RankMap;
 
   private DataProperties parseConfigProperties;
   public DataProperties getParseConfigProperties() {
@@ -231,7 +233,7 @@ public class ParseConfig {
     if (cparserNodes != null && cparserNodes.getLength() > 0) {
       for (int i = 0; i < cparserNodes.getLength(); ++i) {
         final Node curNode = cparserNodes.item(i);
-        if (curNode.getNodeType() != DomElement.ELEMENT_NODE) continue;
+        if (curNode.getNodeType() != DomElement.ELEMENT_NODE || !curNode.hasChildNodes()) continue;
         final DomElement cparserNode = (DomElement)curNode;
         final CompoundParser cparser = new CompoundParser(cparserNode, resourceManager);
         this.id2CompoundParser.put(cparser.getId(), cparser);
@@ -441,6 +443,23 @@ public class ParseConfig {
     }
 
     return result;
+  }
+
+  /**
+   * Get the each compoundParserId mapped to its rank (=order of application)
+   * or null if there are no compoundParserIds.
+   */
+  public Map<String, Integer> getCompoundParserId2RankMap() {
+    if (_compoundParserId2RankMap == null) {
+      final String[] compoundParserIds = getCompoundParserIds();
+      if (compoundParserIds != null && compoundParserIds.length > 0) {
+        _compoundParserId2RankMap = new HashMap<String, Integer>();
+        for (int i = 0; i < compoundParserIds.length; ++i) {
+          _compoundParserId2RankMap.put(compoundParserIds[i], i);
+        }
+      }
+    }
+    return _compoundParserId2RankMap;
   }
 
 

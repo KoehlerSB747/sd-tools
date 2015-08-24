@@ -210,9 +210,14 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
 
   /**
    * Scan this tokenizer's token's for Parses, collecting those that are most
-   * inclusive.
+   * inclusive:
+   * <ul>
+   * <li>The longest parse</li>
+   * <li>With the latest compoundParserId</li>
+   * <li>And the most complexity (parseTree node count)</li>
+   * </ul>
    */
-  public List<AtnParse> getParses() {
+  public List<AtnParse> getParses(Map<String, Integer> compoundParserId2Rank) {
     final List<AtnParse> result = new ArrayList<AtnParse>();
 
     final int textlen = text.length();
@@ -226,13 +231,16 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
         MyTokenInfo ti = null;
         AtnParse parse = null;
         int complexity = 0;
+        int rank = 0;
         for (MyTokenInfo curti : lastEntry.getValue()) {
           final AtnParse curParse = curti.getParse();
           if (curParse != null) {
             final int curComplexity = curParse.getParseTree().countNodes();
-            if (ti == null || curComplexity > complexity) {
+            final int curRank = getRank(curParse, compoundParserId2Rank);
+            if (ti == null || curRank > rank || (curRank == rank && curComplexity > complexity)) {
               ti = curti;
               complexity = curComplexity;
+              rank = curRank;
             }
           }
         }
@@ -240,6 +248,19 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
           result.add(ti.getParse());
           i = ti.getTokenEnd();
         }
+      }
+    }
+
+    return result;
+  }
+
+  private final int getRank(AtnParse curParse, Map<String, Integer> compoundParserId2Rank) {
+    int result = 0;
+
+    if (compoundParserId2Rank != null) {
+      final Integer rank = compoundParserId2Rank.get(curParse.getParseResult().getCompoundParserId());
+      if (rank != null) {
+        result = rank;
       }
     }
 

@@ -29,6 +29,7 @@ import java.util.TreeMap;
 import org.sd.token.TokenInfo;
 import org.sd.xml.DomElement;
 import org.sd.xml.DomNode;
+import org.sd.xml.EntityConverter;
 import org.sd.xml.XmlFactory;
 import org.w3c.dom.NodeList;
 
@@ -132,7 +133,7 @@ public class XmlInputDecoder {
     }
 
     if (!handled) {
-      paragraphs.add(new Paragraph(oneLine, inputString, null));
+      paragraphs.add(new Paragraph(oneLine, EntityConverter.unescape(inputString), null));
     }
   }
 

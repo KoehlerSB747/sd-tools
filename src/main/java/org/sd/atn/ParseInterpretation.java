@@ -362,7 +362,20 @@ public class ParseInterpretation implements Publishable, Serializable {
 
     if (result == null) {
       if (interpretation != null) {
-        result = interpretation.toString();
+        final Object o = interpretation;
+        if (o.getClass().isArray()) {
+          final Object[] os = (Object[])o;
+          final StringBuilder builder = new StringBuilder();
+          String delim = "";
+          for (Object object : os) {
+            builder.append(delim).append(object.toString());
+            delim = "\n";
+          }
+          result = builder.toString();
+        }
+        else {
+          result = o.toString();
+        }
       }
       else {
         final Tree<XmlLite.Data> interpTree = getInterpTree();
