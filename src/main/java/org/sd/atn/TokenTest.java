@@ -87,12 +87,14 @@ import org.w3c.dom.NodeList;
        "   <wordPattern key='..........' onChange='fail|succeed' prevToken='true|false' curToken='true|false' nextToken='true|false'/>\n" +
        "   <hardBreak onExists='fail|succeed' prevToken='true|false' nextToken='true|false'/>\n" +
        "   <interp onExists='fail|succeed' type='featureKey' xpath='xpath'/>\n" +
+       "   <matches prevToken='true|false' nextToken='false|true' caseSensitive='true|false' />\n" +
        " </test>\n" +
        "\n" +
        " - wordPattern clauses are based on a KeyLabelMatcher with a key that identifies equivalence classes between keyLabels for token words.\n" +
        "   - it will test for pattern changes (or matches) between prevToken and curToken, curToken and nextToken, or prevToken and nextToken.\n" +
        " - hardBreak clauses are based on finding tokenizer hard breaks between the prevToken and curToken and/or curToken and nextToken.\n" +
-       " - interp clauses are based on finding an interp with the given featureKey and, optionally, finding the given xpath in the interp on the curToken.\n"
+       " - interp clauses are based on finding an interp with the given featureKey and, optionally, finding the given xpath in the interp on the curToken.\n" +
+       " - a matches clause succeeds when the current state token text equals the identified (e.g., next and/or prev) token text.\n"
   )
 public class TokenTest extends BaseClassifierTest {
   
@@ -159,6 +161,16 @@ public class TokenTest extends BaseClassifierTest {
       }
     }
 
+    final NodeList matchesNodes = testNode.selectNodes("matches");
+    if (matchesNodes != null && matchesNodes.getLength() > 0) {
+      for (int nodeNum = 0; nodeNum < matchesNodes.getLength(); ++nodeNum) {
+        final DomElement iElt = (DomElement)matchesNodes.item(nodeNum);
+        final MatchesClause matchesClause = new MatchesClause(iElt);
+        if (tokenClauses == null) tokenClauses = new ArrayList<TokenClause>();
+        tokenClauses.add(matchesClause);
+      }
+    }
+
     //
     // under token node, setup allowed and disallowed tokens
     //
@@ -198,12 +210,14 @@ public class TokenTest extends BaseClassifierTest {
     //   <wordPattern key='..........' onChange='fail|succeed' prevToken='true|false' curToken='true|false' nextToken='true|false'/>
     //   <hardBreak onExists='fail|succeed' prevToken='true|false' nextToken='true|false'/>
     //   <interp onExists='fail|succeed' type='featureKey' xpath='xpath'/>
+    //   <matches prevToken="true|false" nextToken="false|true" caseSensitive="true|false" />
     // </test>
     //
     // - wordPattern clauses are based on a KeyLabelMatcher with a key that identifies equivalence classes between keyLabels for token words.
     //   - it will test for pattern changes (or matches) between prevToken and curToken, curToken and nextToken, or prevToken and nextToken.
     // - hardBreak clauses are based on finding tokenizer hard breaks between the prevToken and curToken and/or curToken and nextToken.
-    // - interp clauses are based on finding an interp with the given featureKey and, optionally, finding the given xpath in the interp on the curToken.\n"
+    // - interp clauses are based on finding an interp with the given featureKey and, optionally, finding the given xpath in the interp on the curToken.
+    // - a matches clause succeeds when the current state token text equals the identified (e.g., next and/or prev) token text.
     //
   }
 			
@@ -524,6 +538,32 @@ public class TokenTest extends BaseClassifierTest {
             }
           }
         }
+      }
+
+      return result;
+    }
+  }
+
+  private static final class MatchesClause extends TokenClause {
+
+    private boolean caseSensitive;
+
+    public MatchesClause(DomElement mcElt) {
+      super(mcElt, "onExists", false);
+      super.curToken = true;  // always compare against current
+      this.caseSensitive = mcElt.getAttributeBoolean("caseSensitive", true);
+      this.nextToken = mcElt.getAttributeBoolean("nextToken", false); // flip default
+    }
+
+    protected boolean doCompare(Token token1, Token token2, boolean verbose) {
+      boolean result = false;
+
+      // return true if token texts match
+      if (caseSensitive) {
+        result = token1.getText().equals(token2.getText());
+      }
+      else {
+        result = token1.getText().equalsIgnoreCase(token2.getText());
       }
 
       return result;
