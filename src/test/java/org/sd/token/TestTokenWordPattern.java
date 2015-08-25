@@ -46,7 +46,7 @@ public class TestTokenWordPattern extends TestCase {
   }
 
   public void doPatternTest(Tokenizer input, String[] flags, String[] expectedPatterns) {
-    final TokenWordPattern wordPattern = new TokenWordPattern(input);
+    final TokenWordPattern wordPattern = new TokenWordPattern(input, null);
 
     for (int i = 0; i < flags.length; ++i) {
       final String squashFlags = flags[i];

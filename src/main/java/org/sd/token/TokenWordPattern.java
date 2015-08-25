@@ -52,26 +52,32 @@ public class TokenWordPattern {
 
 
   private Tokenizer tokenizer;
+  private Normalizer normalizer;
   private StringBuilder pattern;
   private PatternKey patternKey;
 
-  public TokenWordPattern(Tokenizer tokenizer) {
-    this(tokenizer, null);
+  public TokenWordPattern(Tokenizer tokenizer, Normalizer normalizer) {
+    this(tokenizer, normalizer, null);
   }
 
-  public TokenWordPattern(Tokenizer tokenizer, PatternKey patternKey) {
+  public TokenWordPattern(Tokenizer tokenizer, Normalizer normalizer, PatternKey patternKey) {
     this.tokenizer = tokenizer;
+    this.normalizer = normalizer;
     this.patternKey = patternKey;
     this.pattern = new StringBuilder();
     buildPattern(tokenizer);
   }
   
-  public TokenWordPattern(Tokenizer tokenizer, String keyLabels, String labelChars) {
-    this(tokenizer, keyLabels != null && labelChars != null ? new PatternKey(keyLabels, labelChars) : null);
+  public TokenWordPattern(Tokenizer tokenizer, Normalizer normalizer, String keyLabels, String labelChars) {
+    this(tokenizer, normalizer, keyLabels != null && labelChars != null ? new PatternKey(keyLabels, labelChars) : null);
   }
 
   public Tokenizer getTokenizer() {
     return tokenizer;
+  }
+
+  public Normalizer getNormalizer() {
+    return normalizer;
   }
 
   public String getPattern() {
@@ -148,7 +154,7 @@ public class TokenWordPattern {
     pattern.append(firstToken.getPreDelim());
 
     for (Token token = firstToken; token != null; token = token.getNextSmallestToken()) {
-      final TokenPattern tokenPattern = new TokenPattern(token, patternKey);
+      final TokenPattern tokenPattern = new TokenPattern(token, normalizer, patternKey);
       pattern.append(tokenPattern.getKey()).append(token.getPostDelim());
     }
   }
@@ -156,8 +162,10 @@ public class TokenWordPattern {
 
   private static final class TokenPattern {
     private String key;
+    private Normalizer  normalizer;
 
-    public TokenPattern(Token token, PatternKey patternKey) {
+    public TokenPattern(Token token, Normalizer normalizer, PatternKey patternKey) {
+      this.normalizer = normalizer;
       this.key = buildKey(token.getSoftWords(), patternKey);
     }
 
@@ -177,6 +185,7 @@ public class TokenWordPattern {
     }
 
     private final char buildKey(String text, PatternKey patternKey) {
+      if (normalizer != null) text = normalizer.normalize(text);
       final WordCharacteristics wc = new WordCharacteristics(text);
       final KeyLabel keyLabel = wc.getKeyLabel();
       final char result = getChar(patternKey, keyLabel);
@@ -313,7 +322,7 @@ public class TokenWordPattern {
 
     final StandardTokenizerOptions options = new StandardTokenizerOptions();
     final Tokenizer t = StandardTokenizerFactory.getTokenizer(input);
-    final TokenWordPattern wordPattern = new TokenWordPattern(t, keyLabels, labelChars);
+    final TokenWordPattern wordPattern = new TokenWordPattern(t, null, keyLabels, labelChars);
     System.out.println(input + ":\t" + wordPattern.getPattern(squashFlags));
   }
 }

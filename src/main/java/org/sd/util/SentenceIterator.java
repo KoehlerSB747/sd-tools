@@ -112,7 +112,7 @@ public class SentenceIterator extends BaseTextIterator {
       // scan backwards to first letter or digit
       for (--end; end >= start; --end) {
         final char curC = text.charAt(end);
-        if (Character.isLetterOrDigit(curC)) break;
+        if (isLetterOrDigit(curC)) break;
       }
 
       if (end > 0) {
@@ -122,12 +122,12 @@ public class SentenceIterator extends BaseTextIterator {
 
         for (; lastWordStart > start; --lastWordStart) {
           final char curC = text.charAt(lastWordStart - 1);
-          if (Character.isWhitespace(curC)) break;
+          if (isWhitespace(curC)) break;
           if (curC == '.') hasEmbeddedDot = true;
         }
 
         // reject capitalized abbreviations as a sentence boundary
-        if ((hasEmbeddedDot || Character.isUpperCase(text.charAt(lastWordStart))) &&
+        if ((hasEmbeddedDot || isUpperCase(text.charAt(lastWordStart))) &&
             StringUtil.isLikelyAbbreviation(text.substring(lastWordStart, end))) {
           result = false;
         }
@@ -142,8 +142,8 @@ public class SentenceIterator extends BaseTextIterator {
           // skip forward over white to Letter, failing if encounter non-White/Letter
           for (; ptr < len; ++ptr) {
             final char curC = text.charAt(ptr);
-            if (!Character.isWhitespace(curC)) {
-              if (!Character.isLetter(curC)) {
+            if (!isWhitespace(curC)) {
+              if (!isLetter(curC)) {
                 result = false; //fail
               }
               break;
@@ -155,11 +155,11 @@ public class SentenceIterator extends BaseTextIterator {
             final int startPtr = ptr;
             for (ptr = ptr + 1; ptr < len; ++ptr) {
               final char curC = text.charAt(ptr);
-              if (!Character.isLetter(curC) && curC != '-') {
-                if (!Character.isWhitespace(curC)) {
+              if (!isLetter(curC) && curC != '-') {
+                if (!isWhitespace(curC)) {
                   if (greedy /*||
                       (curC == '.' &&
-                       Character.isUpperCase(text.charAt(startPtr)) &&
+                       isUpperCase(text.charAt(startPtr)) &&
                        StringUtil.isLikelyAbbreviation(text.substring(startPtr, ptr)))*/) {
                     result = false;
                   }
@@ -175,11 +175,27 @@ public class SentenceIterator extends BaseTextIterator {
     return result;
   }
 
+  protected boolean isLetterOrDigit(char c) {
+    return Character.isLetterOrDigit(c);
+  }
+
+  protected boolean isWhitespace(char c) {
+    return Character.isWhitespace(c);
+  }
+
+  protected boolean isUpperCase(char c) {
+    return Character.isUpperCase(c);
+  }
+
+  protected boolean isLetter(char c) {
+    return Character.isLetter(c);
+  }
+
 
   /**
    * Show segmentation of each argument.
    */
-  public static final void main(String[] args) {
+  public static void main(String[] args) {
     for (String arg : args) {
       System.out.println(arg + " --> ");
       for (SentenceIterator iter = new SentenceIterator(arg, true); iter.hasNext(); ) {

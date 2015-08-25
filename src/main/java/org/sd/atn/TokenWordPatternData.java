@@ -20,8 +20,10 @@ package org.sd.atn;
 
 
 import java.util.List;
+import org.sd.token.Normalizer;
 import org.sd.token.TokenWordPattern;
 import org.sd.token.Tokenizer;
+import org.sd.util.ReflectUtil;
 import org.sd.util.Usage;
 import org.sd.xml.DomElement;
 import org.sd.xml.DomNode;
@@ -36,6 +38,7 @@ import org.w3c.dom.NodeList;
 public class TokenWordPatternData {
 
   //    <wordPattern keyLabels="" labelChars="" squashFlags="">
+  //      <normalizer>...classpath...</normalizer>
   //      <regexes>
   //        <regex type='find'>...</regex>
   //      </regexes>
@@ -44,6 +47,7 @@ public class TokenWordPatternData {
   private boolean verbose;
   private String squashFlags;
   private TokenWordPattern.PatternKey patternKey;
+  private Normalizer normalizer;
   private RegexDataContainer regexes;
 
   public TokenWordPatternData(DomNode domNode) {
@@ -52,6 +56,7 @@ public class TokenWordPatternData {
     this.verbose = domElement.getAttributeBoolean("verbose", false);
     this.squashFlags = domElement.getAttributeValue("squashFlags", null);
     this.patternKey = null;
+    this.normalizer = null;
     this.regexes = null;
 
     final String keyLabels = domElement.getAttributeValue("keyLabels", null);
@@ -69,19 +74,35 @@ public class TokenWordPatternData {
       final DomElement childElement = (DomElement)childNode;
       final String childNodeName = childNode.getLocalName();
 
-      if ("regexes".equalsIgnoreCase(childNodeName)) {
+      if ("normalizer".equalsIgnoreCase(childNodeName)) {
+        this.normalizer = buildNormalizer(childElement.getTextContent());
+      }
+      else if ("regexes".equalsIgnoreCase(childNodeName)) {
         this.regexes = new RegexDataContainer(childElement);
       }
     }
   }
   
+  private final Normalizer buildNormalizer(String classname) {
+    Normalizer result = null;
+
+    try {
+      result = (Normalizer)ReflectUtil.buildInstance(classname);
+    }
+    catch (Exception e) {
+      throw new IllegalArgumentException(e);
+    }
+
+    return result;
+  }
+
   public boolean prequalify(Tokenizer tokenizer) {
     boolean result = false;
 
     String text = null;
 
     if (regexes != null) {
-      final TokenWordPattern wordPattern = new TokenWordPattern(tokenizer, patternKey);
+      final TokenWordPattern wordPattern = new TokenWordPattern(tokenizer, normalizer, patternKey);
       text = wordPattern.getPattern(squashFlags);
 
       if (regexes.matches(text) != null) {

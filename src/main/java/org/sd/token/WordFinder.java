@@ -71,6 +71,7 @@ public class WordFinder extends BaseSegmentPointerFinder {
 
     if (endPtr > startPtr) {
       result = new SegmentPointer(input, WORD_LABEL, seqNum, startPtr, endPtr);
+      result.setNormalizer(super.getNormalizer());
     }
 
     return result;

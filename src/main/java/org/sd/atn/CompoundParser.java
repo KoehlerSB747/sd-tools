@@ -272,7 +272,9 @@ public class CompoundParser {
 
       currentTokenizer = getCurrentTokenizer(currentTokenizer, output, input, parserWrapper);
 
-      if (verbose) System.out.println("\nParser '" + this.id + ":" + id + "' parsing '" + input.getText() + "'...");
+      if (verbose) {
+        System.out.println("\nParser '" + this.id + ":" + id + "' parsing '" + input.getText() + "'...");
+      }
 
       if (traceflow) {
         System.out.println("traceflow--CompoundParser[" + this.id + ":" + id + "].collectOutput(" +

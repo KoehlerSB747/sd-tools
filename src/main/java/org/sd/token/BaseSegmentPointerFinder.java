@@ -28,10 +28,12 @@ public abstract class BaseSegmentPointerFinder implements SegmentPointerFinder {
   
   protected final String input;
   protected final int len;
+  private Normalizer normalizer;
 
   protected BaseSegmentPointerFinder(String input) {
     this.input = input;
     this.len = input.length();
+    this.normalizer = null;
   }
 
   /** Get the input */
@@ -42,6 +44,16 @@ public abstract class BaseSegmentPointerFinder implements SegmentPointerFinder {
   /** Get the input length */
   public int length() {
     return len;
+  }
+
+  /** Get the normalizer (possibly null). */
+  public Normalizer getNormalizer() {
+    return normalizer;
+  }
+
+  /** Set the normalizer. */
+  public void setNormalizer(Normalizer normalizer) {
+    this.normalizer = normalizer;
   }
 
   /**

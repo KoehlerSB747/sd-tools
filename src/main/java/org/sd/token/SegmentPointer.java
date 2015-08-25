@@ -31,6 +31,7 @@ import java.util.List;
 public class SegmentPointer implements Serializable {
 
   private String input;
+  private Normalizer normalizer;
   private String label;
   private int seqNum;
   private int startPtr;
@@ -42,9 +43,11 @@ public class SegmentPointer implements Serializable {
   private WordCharacteristics _wc;
   private Integer _textStart;
   private Integer _textEnd;
+  private String _normalizedInput;
 
   public SegmentPointer(String input, String label, int seqNum, int startPtr, int endPtr) {
     this.input = input;
+    this.normalizer = null;
     this.label = label;
     this.seqNum = seqNum;
     this.startPtr = startPtr;
@@ -58,8 +61,38 @@ public class SegmentPointer implements Serializable {
     this._textEnd = null;
   }
 
+  private final void resetLazyLoadedVars() {
+    this._text = null;
+    this._wordText = null;
+    this._wc = null;
+    this._textStart = null;
+    this._textEnd = null;
+    this._normalizedInput = null;
+  }
+
   public String getInput() {
     return input;
+  }
+
+  public Normalizer getNormalizer() {
+    return normalizer;
+  }
+
+  public void setNormalizer(Normalizer normalizer) {
+    this.normalizer = normalizer;
+    resetLazyLoadedVars();
+  }
+
+  public String getNormalizedInput() {
+    if (_normalizedInput == null) {
+      if (normalizer == null) {
+        _normalizedInput = input;
+      }
+      else {
+        _normalizedInput = normalizer.normalize(input);
+      }
+    }
+    return _normalizedInput;
   }
 
   public char getChar(int idx) {
@@ -121,6 +154,22 @@ public class SegmentPointer implements Serializable {
     }
     return _text;
   }
+
+  public String getNormalizedText() {
+    String result = null;
+
+    if (normalizer != null) {
+      final String normalizedInput = getNormalizedInput();
+      //NOTE: assuming normalized string has 1-1 mapping w/chars in input!
+      result = normalizedInput.substring(startPtr, endPtr);
+    }
+    else {
+      result = getText();
+    }
+
+    return result;
+  }
+
   public String getWordText() {
     if (_wordText == null) {
       final int textStart = getTextStart();
@@ -132,7 +181,7 @@ public class SegmentPointer implements Serializable {
 
   public WordCharacteristics getWordCharacteristics() {
     if (_wc == null) {
-      _wc = new WordCharacteristics(getText());
+      _wc = new WordCharacteristics(getNormalizedText());
     }
     return _wc;
   }

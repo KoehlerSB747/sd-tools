@@ -44,4 +44,11 @@ public interface SegmentPointerFinder {
    * @return the segment or null if there is no segment to be found.
    */
   public SegmentPointer findSegmentPointer(int startPtr);
+
+  /** Get the normalizer, or null. */
+  public Normalizer getNormalizer();
+
+  /** Set the normalizer (okay if null). */
+  public void setNormalizer(Normalizer normalizer);
+
 }
