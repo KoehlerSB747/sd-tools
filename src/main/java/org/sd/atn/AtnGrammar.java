@@ -611,7 +611,7 @@ public class AtnGrammar {
         // find and remove the rule being overridden or removed
         for (Iterator<AtnRule> ruleIter = rules.iterator(); ruleIter.hasNext(); ) {
           final AtnRule curRule = ruleIter.next();
-          if (id.equals(curRule.getRuleId())) {
+          if (id == null || id.equals(curRule.getRuleId())) {
             ruleIter.remove();
             startRules.remove(curRule);
             break;
