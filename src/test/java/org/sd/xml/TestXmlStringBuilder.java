@@ -93,6 +93,16 @@ public class TestXmlStringBuilder extends TestCase {
     assertEquals("<test b=\"it&apos;s 2\"><a a=\"1\"/></test>", got);
   }
 
+  public void testNoExplicitRootTag() {
+    final XmlStringBuilder xmlBuilder = new XmlStringBuilder();
+    xmlBuilder.addTagAndText("abc xyz='def'", "abracadabra");
+    final DomElement xmlElt = xmlBuilder.getXmlElement();
+    assertEquals("<abc xyz=\"def\">abracadabra</abc>", xmlElt.asFlatString(null).toString());
+
+    xmlElt.setAttribute("foo", "bar");
+    assertEquals("<abc xyz=\"def\" foo=\"bar\">abracadabra</abc>", xmlElt.asFlatString(null).toString());
+  }
+
   public void testEscape() 
   {
     String[] inputs = new String[] {
