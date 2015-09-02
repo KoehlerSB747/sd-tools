@@ -186,7 +186,9 @@ public class Histogram <T> {
 
     if (rank < map.size()) {
       final List<Frequency<T>> frequencies = getFrequencies();
-      result = frequencies.get((int)rank);
+      if (frequencies != null) {
+        result = frequencies.get((int)rank);
+      }
     }
 
     return result;

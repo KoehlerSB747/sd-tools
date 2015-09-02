@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,11 +22,14 @@ public class BatchProcessorFactory {
   public static interface ItemProcessor extends Runnable {
     public void setFuture(Future<?> future);
     public Future<?> getFuture();
+    public void setRejected(boolean rejected);
+    public boolean wasRejected();
 
     /**
      * Add this items' results to the given xml result.
      *
-     * @return true if processing was completed; false if future isn't done.
+     * @return true if processing was completed; false if future isn't done
+     *         or was rejected.
      */
     public boolean addXmlResult(XmlStringBuilder result);
   };
@@ -76,8 +80,13 @@ public class BatchProcessorFactory {
     /** Submit an item for processing. */
     public void submit(ItemProcessor itemProcessor) {
       if (itemProcessor != null) {
-        final Future<?> future = threadPool.submit(itemProcessor);
-        itemProcessor.setFuture(future);
+        try {
+          final Future<?> future = threadPool.submit(itemProcessor);
+          itemProcessor.setFuture(future);
+        }
+        catch (RejectedExecutionException ree) {
+          itemProcessor.setRejected(true);
+        }
         this.items.add(itemProcessor);
       }
     }
