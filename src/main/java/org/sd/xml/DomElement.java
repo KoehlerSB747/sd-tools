@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
 import org.sd.util.tree.Tree;
@@ -197,6 +198,80 @@ public class DomElement extends DomNode implements Element {
     }
 
     return result.toString();
+  }
+
+  /**
+   * Determine whether this element matches the other.
+   * <p>
+   * Two elements match if they have the same node name, text content,
+   * attributes (order agnostic) and matching child elements (in the same
+   * order).
+   */
+  public boolean matches(DomElement other) {
+    boolean result = (this == other);
+
+    if (!result && other != null) {
+      if (this.getNodeName().equals(other.getNodeName()) &&
+          this.getTextContent().equals(other.getTextContent())) {
+
+        // check that attributes match
+        final boolean hasAttributes = this.hasAttributes();
+        if (hasAttributes == other.hasAttributes()) {
+          result = true;
+
+          // attribute order doesn't matter
+          if (hasAttributes) {
+            for (Map.Entry<String, String> entry : this.getDomAttributes().getAttributes().entrySet()) {
+              final String att = entry.getKey();
+              final String val = entry.getValue();
+
+              if (!val.equals(other.getAttribute(att))) {
+                result = false;
+                break;
+              }
+            }
+          }
+        }
+
+        // check that children match
+        if (result) {
+          result = false;
+
+          final boolean hasChildNodes = this.hasChildNodes();
+          if (hasChildNodes == other.hasChildNodes()) {
+            result = true;
+
+            if (hasChildNodes) {
+              final NodeList myChildNodes = this.getChildNodes();
+              final NodeList otherChildNodes = other.getChildNodes();
+              final int numChildNodes = myChildNodes.getLength();
+
+              if (numChildNodes == otherChildNodes.getLength()) {
+                // for this method, child order DOES matter
+                for (int i = 0; i < numChildNodes; ++i) {
+                  final Node myChild = myChildNodes.item(i);
+                  if (myChild.getNodeType() != Node.ELEMENT_NODE) continue;
+                  final Node otherChild = otherChildNodes.item(i);
+                  if (otherChild.getNodeType() != Node.ELEMENT_NODE) {
+                    result = false;
+                    break;
+                  }
+                  else if (!((DomElement)myChild).matches((DomElement)otherChild)) {
+                    result = false;
+                    break;
+                  }
+                }
+              }
+              else {
+                result = false;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   public String getLocalName() {
