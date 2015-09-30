@@ -350,4 +350,11 @@ public class TreeUtil {
       return null;
     }
   }
+
+
+  public static void main(String[] args) {
+    final SimpleTreeBuilder<String> treeBuilder = TreeBuilderFactory.getStringTreeBuilder();
+    final Tree<String> tree = treeBuilder.buildTree(args[0]);
+    System.out.println(prettyPrint(tree));
+  }
 }

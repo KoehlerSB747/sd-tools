@@ -29,7 +29,7 @@ import java.util.Set;
 
 /**
  * Utility for storing/retrieving multi-word (phrase) sequences associated
-¤ * with one or more values (e.g., ambiguity allowed).
+ * with one or more values (e.g., ambiguity allowed).
  * <p>
  * @author Spence Koehler
  */
@@ -294,6 +294,10 @@ public class PhraseIndex <T> {
 
     public String[] getInputWords() {
       return inputWords;
+    }
+
+    public boolean isExactMatch() {
+      return matchedWords.length == inputWords.length && score == inputWords.length;
     }
   }
 
