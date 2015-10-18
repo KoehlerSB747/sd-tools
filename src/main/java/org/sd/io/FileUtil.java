@@ -589,7 +589,7 @@ public class FileUtil {
     else {
       final URL url = getUrl(clazz, resource);
       if (url != null) {
-        filename = url.toString();
+        filename = url.getFile();
       }
     }
 

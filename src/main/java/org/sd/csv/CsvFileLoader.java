@@ -13,3 +13,24 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+package org.sd.csv;
+
+
+import java.io.File;
+import java.io.IOException;
+
+/**
+ * Utility to load Csv Files.
+ * <p>
+ * @author Spencer Koehler
+ */
+public class CsvFileLoader {
+  
+  public static CsvRecordSet loadCsvFile(File csvFile) throws IOException {
+    return new CsvRecordSet(csvFile.getName()).load(csvFile);
+  }
+
+  public static CsvRecordSet loadCsvFile(File csvFile, String fieldDelimiter) throws IOException {
+    return new CsvRecordSet(csvFile.getName()).load(csvFile, fieldDelimiter);
+  }
+}

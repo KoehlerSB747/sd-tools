@@ -13,3 +13,20 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+package org.sd.csv;
+
+
+/**
+ * Interface for a data record.
+ * <p>
+ * @author Spencer Koehler
+ */
+public interface DataRecord {
+  
+  public void setFieldValue(String fieldName, String value);
+
+  public String getFieldValue(String fieldName);
+
+  public String getFieldValue(String fieldName, String defaultValue);
+
+}

@@ -140,6 +140,7 @@ public class PropertiesParser {
    * Taking the arguments in order, where later arguments override earlier
    * arguments, load
    * <ul>
+   * <li>stop analyzing args after "--", leaving as "remainingArgs"</li>
    * <li>the default .properties file of any argument that ends in ".default.properties"</li>
    * <li>the file of any argument that ends in ".properties"</li>
    * <li>any argument of the form "property=value"</li>
@@ -148,8 +149,15 @@ public class PropertiesParser {
   private final void parseArgs(String[] args, String workingDir) throws IOException {
     final List<String> remainingArgs = new ArrayList<String>();
 
+    boolean loadRemaining = false;
     for (String arg : args) {
-      if (arg.endsWith(".default.properties")) {
+      if (loadRemaining) {
+        remainingArgs.add(arg);
+      }
+      else if ("--".equals(arg)) {
+        loadRemaining = true;
+      }
+      else if (arg.endsWith(".default.properties")) {
         loadDefaultProperties(this.properties, arg, workingDir);
       }
       else if (arg.endsWith(".properties")) {

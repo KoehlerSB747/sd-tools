@@ -13,3 +13,16 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+package org.sd.analysis;
+
+
+/**
+ * Interface for an analysis function.
+ * <p>
+ * @author Spencer Koehler
+ */
+public interface AnalysisFunction {
+
+  public AnalysisObject execute(AnalysisObject[] args);
+  
+}

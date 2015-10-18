@@ -13,7 +13,7 @@
 #                                  added if missing
 #
 
-licdir="`dirname $0`";
+licdir=$(dirname $(readlink -f $0));
 srcdir="$licdir/../src";
 license="$1";
 shift 1;

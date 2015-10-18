@@ -13,3 +13,23 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+package org.sd.csv;
+
+
+import java.util.List;
+
+/**
+ * Interface for collecting values from records.
+ * <p>
+ * @author Spencer Koehler
+ */
+public interface RecordValueCollector <T> {
+  
+  /**
+   * Collect a value from the data record.
+   *
+   * @return true if a value was collected; otherwise, false.
+   */
+  public boolean collect(List<T> collector, DataRecord dataRecord);
+  
+}
