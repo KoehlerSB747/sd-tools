@@ -110,4 +110,13 @@ public interface EvaluatorEnvironment {
    */
   public void wrapUp(int lineNum, boolean handled);
 
+  /**
+   * Evaluate the given expression in this environment.
+   * <p>
+   * If the expr is an uncrecognized single token, then the token
+   * will be returned wrapped in a BasicAnalysisObject<String>.
+   * <p>
+   * Unrecognized multi-token expressions will yield a null result.
+   */
+  public AnalysisObject evaluateExpression(String expr);
 }

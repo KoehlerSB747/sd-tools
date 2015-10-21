@@ -23,11 +23,12 @@ import org.sd.util.StatsAccumulator;
  * <p>
  * @author Spencer Koehler
  */
-public class StatsAnalysisObject implements AnalysisObject {
+public class StatsAnalysisObject extends AbstractAnalysisObject {
   
   private StatsAccumulator stats;
 
   public StatsAnalysisObject(StatsAccumulator stats) {
+    super();
     this.stats = stats;
   }
 
@@ -56,10 +57,21 @@ public class StatsAnalysisObject implements AnalysisObject {
     return result.toString();
   }
 
-  /** Get a detailed string representation of this object's data. */
+  /** Customization for "help" access. */
   @Override
-  public String getDetailedString() {
-    return toString();
+  protected String getHelpString() {
+    final StringBuilder result = new StringBuilder();
+    result.
+      append("\"n\" -- get the number of items collected\n").
+      append("\"mean\" -- get the mean of the values.\n").
+      append("\"stddev\" -- get the standard deviation of the values.\n").
+      append("\"variance\" -- get the variance of the values.\n").
+      append("\"min\" -- get the min of the values.\n").
+      append("\"max\" -- get the max of the values.\n").
+      append("\"sum\" -- get the sum of the values.\n").
+      append("\"sumOfSquares\" -- get the sum of each value squared.");
+      
+    return result.toString();
   }
 
   /**
@@ -76,7 +88,7 @@ public class StatsAnalysisObject implements AnalysisObject {
    * </ul>
    */
   @Override
-  public AnalysisObject access(String ref) {
+  protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
     AnalysisObject result = null;
 
     if (stats != null) {

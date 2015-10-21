@@ -28,11 +28,8 @@ public interface AnalysisObject {
   /** Get a short/summary string representation of this object's data. */
   public String toString();
 
-  /** Get a detailed string representation of this object's data. */
-  public String getDetailedString();
-
   /** Access components of this object according to ref. */
-  public AnalysisObject access(String ref);
+  public AnalysisObject access(String ref, EvaluatorEnvironment env);
 
   /** Get a numeric object representing this instance's value if applicable, or null. */
   public NumericAnalysisObject asNumericAnalysisObject();

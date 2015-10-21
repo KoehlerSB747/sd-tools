@@ -23,11 +23,12 @@ import org.sd.util.range.IntegerRange;
  * <p>
  * @author Spencer Koehler
  */
-public class BasicAnalysisObject <T> implements AnalysisObject {
+public class BasicAnalysisObject <T> extends AbstractAnalysisObject {
 
   private T value;
 
   public BasicAnalysisObject(T value) {
+    super();
     this.value = value;
   }
 
@@ -36,9 +37,15 @@ public class BasicAnalysisObject <T> implements AnalysisObject {
     return value == null ? null : value.toString();  //todo: maybe limit the number of chars returned here and show its size?
   }
 
+  /** Customization for "help" access. */
   @Override
-  public String getDetailedString() {
-    return toString();
+  protected String getHelpString() {
+    final StringBuilder result = new StringBuilder();
+    result.
+      append("\"length\" -- string length of the value\n").
+      append("range -- substring of the string value");
+      
+    return result.toString();
   }
 
   /**
@@ -49,7 +56,7 @@ public class BasicAnalysisObject <T> implements AnalysisObject {
    * </ul>
    */
   @Override
-  public AnalysisObject access(String ref) {
+  protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
     AnalysisObject result = null;
     StringBuilder builder = null;
 

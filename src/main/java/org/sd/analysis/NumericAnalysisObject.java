@@ -21,7 +21,7 @@ package org.sd.analysis;
  * <p>
  * @author Spencer Koehler
  */
-public class NumericAnalysisObject implements AnalysisObject {
+public class NumericAnalysisObject extends AbstractAnalysisObject {
   
   private Integer intValue;
   private Long longValue;
@@ -33,6 +33,7 @@ public class NumericAnalysisObject implements AnalysisObject {
   }
 
   public NumericAnalysisObject(Integer intValue, String stringForm) {
+    super();
     this.intValue = intValue;
     this.stringForm = (stringForm == null) ? (intValue == null ? "" : intValue.toString()) : stringForm;
     this.doubleValue = null;
@@ -43,6 +44,7 @@ public class NumericAnalysisObject implements AnalysisObject {
   }
 
   public NumericAnalysisObject(Long longValue, String stringForm) {
+    super();
     this.longValue = longValue;
     this.stringForm = (stringForm == null) ? (longValue == null ? "" : longValue.toString()) : stringForm;
     this.doubleValue = null;
@@ -53,6 +55,7 @@ public class NumericAnalysisObject implements AnalysisObject {
   }
 
   public NumericAnalysisObject(Double doubleValue, String stringForm) {
+    super();
     this.doubleValue = doubleValue;
     this.stringForm = (stringForm == null) ? (doubleValue == null ? "" : doubleValue.toString()) : stringForm;
     this.intValue = null;
@@ -88,15 +91,18 @@ public class NumericAnalysisObject implements AnalysisObject {
     return stringForm;
   }
 
-  /** Get a detailed string representation of this object's data. */
+  /** Customization for "help" access. */
   @Override
-  public String getDetailedString() {
-    return stringForm;
+  protected String getHelpString() {
+    final StringBuilder result = new StringBuilder();
+    result.
+      append("No additional access defined.");
+      
+    return result.toString();
   }
-
   /** Access components of this object according to ref. */
   @Override
-  public AnalysisObject access(String ref) {
+  protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
     return null;
   }
 

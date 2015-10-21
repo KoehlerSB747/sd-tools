@@ -30,19 +30,21 @@ import org.sd.xml.XmlTreeHelper;
  * <p>
  * @author Spencer Koehler
  */
-public class XmlAnalysisObject implements AnalysisObject {
+public class XmlAnalysisObject extends AbstractAnalysisObject {
   
   private DomElement xml;
   private XPathApplicator xpathApplicator;
   private Tree<XmlLite.Data> xmlTree;
 
   public XmlAnalysisObject(String xmlString) {
+    super();
     this.xml = new XmlStringBuilder().setXmlString(xmlString).getXmlElement();
     this.xpathApplicator = new XPathApplicator();
     this.xmlTree = xml.asTree();
   }
 
   public XmlAnalysisObject(DomElement xml) {
+    super();
     this.xml = xml;
     this.xpathApplicator = new XPathApplicator();
     this.xmlTree = (xml == null) ? null : xml.asTree();
@@ -68,10 +70,25 @@ public class XmlAnalysisObject implements AnalysisObject {
     return result.toString();
   }
 
-  /** Get a detailed string representation of this object's data. */
+  /** Customization for "help" access. */
   @Override
-  public String getDetailedString() {
-    return toString();
+  protected String getHelpString() {
+    final StringBuilder result = new StringBuilder();
+    result.
+      append("\"show\" -- get the (pretty) xml data as a string.\n").
+      append("\"text\" -- get all text under this xml node.\n").
+      append("\"nodetext\" -- get just the text directly under this xml node.\n").
+      append("\"compareTo[\"$other\"]\" -- compare to other xml object.\n").
+      append("@attribute -- get attribute's value from this xml node.\n").
+      append("xpath -- slash-delimitted xpath node(s) selector yielding an xml vector.");
+      
+    return result.toString();
+  }
+
+  /** Customization for "show" access. */
+  @Override
+  protected String getShowString() {
+    return (xml != null) ? xml.asPrettyString(null, 0, 2).toString() : "NULL";
   }
 
   /**
@@ -80,19 +97,17 @@ public class XmlAnalysisObject implements AnalysisObject {
    * <li>"show" -- get the (pretty) xml data as a string</li>
    * <li>"text" -- get all text under this xml node</li>
    * <li>"nodetext" -- get just the text directly under this xml node</li>
+   * <li>"compareTo["$other"]" --compare to other xml object</li>
    * <li>@attribute -- get attribute's value from this xml node</li>
    * <li>xpath -- slash-delimitted xpath node(s) selector yielding an xml vector</li>
    * </ul>
    */
   @Override
-  public AnalysisObject access(String ref) {
+  protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
     AnalysisObject result = null;
 
     if (xml != null && ref != null && !"".equals(ref)) {
-      if ("show".equals(ref)) {
-        result = new BasicAnalysisObject<String>(xml.asPrettyString(null, 0, 2).toString());
-      }
-      else if ("text".equals(ref)) {
+      if ("text".equals(ref)) {
         result = new BasicAnalysisObject<String>(XmlTreeHelper.getAllText(xmlTree));
       }
       else if ("nodetext".equals(ref)) {
@@ -102,6 +117,12 @@ public class XmlAnalysisObject implements AnalysisObject {
         final String attributeValue = XmlTreeHelper.getAttribute(xmlTree, ref.substring(1));
         if (attributeValue != null) {
           result = new BasicAnalysisObject<String>(attributeValue);
+        }
+      }
+      else if (ref.startsWith("compareTo")) {
+        final AnalysisObject[] args = getArgValues(ref, env);
+        if (args != null && args.length == 1) {
+          result = compareTo(args[0]);
         }
       }
       else {
@@ -128,5 +149,49 @@ public class XmlAnalysisObject implements AnalysisObject {
   @Override
   public NumericAnalysisObject asNumericAnalysisObject() {
     return null;
+  }
+
+  public ComparisonAnalysisObject compareTo(AnalysisObject other) {
+    int compare = 0;
+    final List<String> diffs = new ArrayList<String>();
+
+    if (other == null) {
+      compare = -1;
+      diffs.add("2 is NULL");
+    }
+    else if (other instanceof XmlAnalysisObject) {
+      final XmlAnalysisObject otherXAO = (XmlAnalysisObject)other;
+
+      if (otherXAO.xml == null) {
+        if (this.xml != null) {
+          // other is null
+          compare = -1;
+          diffs.add("2 NULL-XML");
+        }
+      }
+      else if (this.xml == null) {
+        if (otherXAO.xml != null) {
+          // this is null
+          compare = 1;
+          diffs.add("1 NULL-XML");
+        }
+      }
+      else {
+        // both are non-null
+        if (!this.xml.matches(otherXAO.xml)) {
+          // but don't match. ...todo: need to find diffs and determine compare's value
+          compare = -1;
+          diffs.add("Non-match");
+        }
+      }
+    }
+    else {
+      // other isn't xml
+      compare = -1;
+      diffs.add("2 non-XML");
+    }
+    
+
+    return new ComparisonAnalysisObject(this, other, compare, diffs.toArray(new String[diffs.size()]));
   }
 }

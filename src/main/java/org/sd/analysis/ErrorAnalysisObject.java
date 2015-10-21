@@ -23,7 +23,7 @@ import org.sd.io.FileUtil;
  * <p>
  * @author Spencer Koehler
  */
-public class ErrorAnalysisObject implements AnalysisObject {
+public class ErrorAnalysisObject extends AbstractAnalysisObject {
 
   private String message;
   private Exception e;
@@ -33,6 +33,7 @@ public class ErrorAnalysisObject implements AnalysisObject {
   }
 
   public ErrorAnalysisObject(String message, Exception e) {
+    super();
     this.message = message;
     this.e = e;
   }
@@ -63,10 +64,14 @@ public class ErrorAnalysisObject implements AnalysisObject {
     return result.toString();
   }
 
-  /** Get a detailed string representation of this object's data. */
+  /** Customization for "help" access. */
   @Override
-  public String getDetailedString() {
-    return toString();  //todo showStackTrace?
+  protected String getHelpString() {
+    final StringBuilder result = new StringBuilder();
+    result.
+      append("\"stacktrace\" -- string length of the value");
+      
+    return result.toString();
   }
 
   /**
@@ -76,7 +81,7 @@ public class ErrorAnalysisObject implements AnalysisObject {
    * </ul>
    */
   @Override
-  public AnalysisObject access(String ref) {
+  protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
     AnalysisObject result = null;
 
     if (e != null) {

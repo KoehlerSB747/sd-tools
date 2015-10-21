@@ -212,12 +212,15 @@ public class CommandEvaluator {
   }
 
 
-  public static CommandEvaluator buildInstance(String[] args) throws Exception {
+  public static CommandEvaluator buildInstance(String[] args) throws ClassNotFoundException {
     // Properties
     //  - env -- (default=org.sd.analysis.BaseEvaluatorEnvironment) EvaluatorEnvironment classpath
     //  - commandFile -- (optional) file of non-interactive commands
     //  - dir -- (optional) establishes working directory
-    final DataProperties dataProperties = new DataProperties(args);
+    return buildInstance(new DataProperties(args));
+  }
+
+  public static CommandEvaluator buildInstance(DataProperties dataProperties) throws ClassNotFoundException {
     final String envClassName = dataProperties.getString("env", "org.sd.analysis.BaseEvaluatorEnvironment");
     final EvaluatorEnvironment env = (EvaluatorEnvironment)ReflectUtil.constructInstance(Class.forName(envClassName), dataProperties);
     final CommandEvaluator cmd = new CommandEvaluator(env);

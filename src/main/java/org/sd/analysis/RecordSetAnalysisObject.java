@@ -24,12 +24,13 @@ import org.sd.csv.RecordSet;
  * <p>
  * @author Spencer Koehler
  */
-public class RecordSetAnalysisObject implements AnalysisObject {
+public class RecordSetAnalysisObject extends AbstractAnalysisObject {
   
   private String name;
   private RecordSet recordSet;
 
   public RecordSetAnalysisObject(String name, RecordSet recordSet) {
+    super();
     this.name = name;
     this.recordSet = recordSet;
   }
@@ -53,10 +54,16 @@ public class RecordSetAnalysisObject implements AnalysisObject {
     return result.toString();
   }
 
-  /** Get a detailed string representation of this object's data. */
+  /** Customization for "help" access. */
   @Override
-  public String getDetailedString() {
-    return toString();
+  protected String getHelpString() {
+    final StringBuilder result = new StringBuilder();
+    result.
+      append("\"size\" -- number of records in set\n").
+      append("\"fields\" -- vector of field names in set\n").
+      append("field -- vector of field's values");
+      
+    return result.toString();
   }
 
   /**
@@ -68,7 +75,7 @@ public class RecordSetAnalysisObject implements AnalysisObject {
    * </ul>
    */
   @Override
-  public AnalysisObject access(String ref) {
+  protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
     AnalysisObject result = null;
 
     if ("size".equals(ref)) {

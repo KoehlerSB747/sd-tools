@@ -26,14 +26,19 @@ import org.sd.util.range.IntegerRange;
  * <p>
  * @author Spencer Koehler
  */
-public class VectorAnalysisObject <T> implements AnalysisObject {
+public class VectorAnalysisObject <T> extends AbstractAnalysisObject {
   
   private String name;
   private List<T> values;
 
   public VectorAnalysisObject(String name, List<T> values) {
+    super();
     this.name = name;
     this.values = values;
+  }
+
+  public int size() {
+    return (values == null) ? 0 : values.size();
   }
 
   public String getName() {
@@ -55,10 +60,19 @@ public class VectorAnalysisObject <T> implements AnalysisObject {
     return result.toString();
   }
 
-  /** Get a detailed string representation of this object's data. */
+  /** Customization for "help" access. */
   @Override
-  public String getDetailedString() {
-    return toString();
+  protected String getHelpString() {
+    final StringBuilder result = new StringBuilder();
+    result.
+      append("\"length\" -- number of values in vector.\n").
+      append("\"values\" -- toString version of values.\n").
+      append("\"stats\" -- stats of numeric values in vector's value's toStrings.\n").
+      append("\"text\" -- space-concatenated text of values.\n").
+      append("\"text[\"delim\"]\" -- delim-concatenated text of values.\n").
+      append("\"range\" -- subset of values in vector by index.");
+      
+    return result.toString();
   }
 
   /**
@@ -73,7 +87,7 @@ public class VectorAnalysisObject <T> implements AnalysisObject {
    * </ul>
    */
   @Override
-  public AnalysisObject access(String ref) {
+  protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
     AnalysisObject result = null;
     List<T> selected = null;
 

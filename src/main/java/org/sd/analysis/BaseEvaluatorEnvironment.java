@@ -430,6 +430,20 @@ public class BaseEvaluatorEnvironment implements EvaluatorEnvironment {
     return hr == null ? true : hr.result;
   }
 
+
+  /**
+   * Evaluate the given expression in this environment.
+   * <p>
+   * If the expr is an uncrecognized single token, then the token
+   * will be returned wrapped in a BasicAnalysisObject<String>.
+   * <p>
+   * Unrecognized multi-token expressions will yield a null result.
+   */
+  @Override
+  public final AnalysisObject evaluateExpression(String expr) {
+    return evaluateExpression(expr, false);
+  }
+
   protected final AnalysisObject evaluateExpression(String line, boolean acceptSingleTokenAsCommand) {
     AnalysisObject result = null;
 
@@ -596,7 +610,7 @@ public class BaseEvaluatorEnvironment implements EvaluatorEnvironment {
           final String[] refs = refAccess[1].split("\\.");
           for (String ref : refs) {
             if (value == null) break;
-            value = value.access(ref);
+            value = value.access(ref, this);
           }
         }
         //NOTE: "variable" portion of result includes ref
