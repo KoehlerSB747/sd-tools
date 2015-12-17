@@ -172,5 +172,5 @@ class Monitor:
             self._modlock.release()
 
     def _getMillis(self, laterdatetime, earlierdatetime):
-        return int((laterdatetime - earlierdatetime).microseconds / 1000)
+        return int((laterdatetime - earlierdatetime).total_seconds() * 1000)
 

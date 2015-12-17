@@ -42,6 +42,11 @@ class TestStatsAccumulator(unittest.TestCase):
         self.assertEqual(1.0, s.standardDeviation)
         self.assertEqual(1.0, s.variance)
 
+        s.clear('empty')
+        self.assertEqual({"label": "empty", "maximum": 0.0, "mean": 0, "minimum": 0.0, "n": 0, "stddev": 0},
+                         s.summaryInfo());
+
+
     def test_combine(self):
         s1 = StatsAccumulator("1")
         s1.add(1, 2, 3)

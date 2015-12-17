@@ -167,6 +167,11 @@ class RollingStats:
             if self._numSegments == 1:
                 # special case: wrapped around one and only segment in window
                 self._segmentStats[0].clear()
+            elif diff > self._windowWidth:
+                # wrapped around the entire window, need to clear all
+                for stats in self._segmentStats:
+                    stats.clear()
+                self._curSegment = segNum
             else:
                 # walk up to and including new current segment, clearing each
                 nextSegNum = (segNum + 1) % self._numSegments
@@ -179,7 +184,7 @@ class RollingStats:
         self._reftime = result
     
     def _getMillis(self, laterdatetime, earlierdatetime):
-        return int((laterdatetime - earlierdatetime).microseconds / 1000)
+        return int((laterdatetime - earlierdatetime).total_seconds() * 1000)
 
     def _addStatsInfo(self, stats, info):
         '''
