@@ -207,7 +207,7 @@ class RollingStats:
 
         if stats is not None:
             if stats.n > 0:
-                result = stats.mean / stats.n
+                result = stats.mean
 
         return result
 
@@ -220,6 +220,6 @@ class RollingStats:
 
         if stats is not None:
             if stats.mean > 0:
-                result = stats.n / stats.mean
+                result = 1.0 / stats.mean
 
         return result
