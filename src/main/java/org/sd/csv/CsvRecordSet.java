@@ -146,7 +146,9 @@ public class CsvRecordSet implements RecordSet {
    * Lines beginning with "#" will be ignored.
    */
   public CsvRecordSet load(File file, String fieldDelimiter) throws IOException {
-    if (this.fieldDelimiter == null && fieldDelimiter != null) this.fieldDelimiter = fieldDelimiter;
+    if (this.fieldDelimiter == null && fieldDelimiter != null) {
+      setFieldDelimiter(fieldDelimiter);
+    }
     String line = null;
     final BufferedReader reader = FileUtil.getReader(file);
     try {
@@ -209,7 +211,7 @@ public class CsvRecordSet implements RecordSet {
     String result = null;
 
     if (fieldNames == null) fieldNames = new ArrayList<String>();
-    if (fieldNames.size() < pos) {
+    if (fieldNames.size() <= pos) {
       for (int i = fieldNames.size(); i <= pos; ++i) {
         fieldNames.add(Integer.toString(i + 1));
         result = Integer.toString(pos + 1);
@@ -242,7 +244,7 @@ public class CsvRecordSet implements RecordSet {
       result = "\t";
     }
     else if (line.indexOf('|') >= 0) {
-      result = "|";
+      result = "\\|";
     }
     else if (line.indexOf(',') >= 0) {
       result = ",";

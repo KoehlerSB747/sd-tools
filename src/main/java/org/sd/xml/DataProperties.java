@@ -312,7 +312,8 @@ public class DataProperties extends BaseDataProperties {
 
     if (filename != null) {
       filename = replaceVariables(filename);
-      final String workingDir = filename.startsWith("/") ? null : replaceVariables(getString(workingDirKey, null));
+      final char firstChar = ("".equals(filename)) ? (char)0 : filename.charAt(0);
+      final String workingDir = (firstChar == '/' || firstChar == '\\') ? null : replaceVariables(getString(workingDirKey, null));
       if (workingDir != null) {
         result = new File(new File(workingDir), filename);
       }

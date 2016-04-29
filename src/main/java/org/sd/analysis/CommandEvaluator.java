@@ -76,6 +76,10 @@ public class CommandEvaluator {
 
     if (ready = env.prepareForInput(lineNum)) {
       while ((line = env.readLine()) != null) {
+        if ("".equals(line) || line.charAt(0) == '#') { // ignore blank or comment lines
+          ++lineNum;  // but inc lineNum for correlation to input
+          continue;
+        }
         if (!env.handleInputLine(lineNum, line)) {
           ready = env.prepareForExit(lineNum, line);
           break;

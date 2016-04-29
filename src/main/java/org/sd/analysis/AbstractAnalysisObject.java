@@ -62,16 +62,28 @@ public abstract class AbstractAnalysisObject implements AnalysisObject {
   protected final AnalysisObject[] getArgValues(String ref, EvaluatorEnvironment env) {
     AnalysisObject[] result = null;
 
-    final int start = ref.indexOf('[') + 1;
+    // [arg1,arg2,...,argN] -- split on comma, each arg gets evaluated as an expression
+    // [{arg1,arg2,...,argN}] -- same, but no arg gets evaluated as an expression
+
+    int start = ref.indexOf('[') + 1;
     if (start > 0) {
-      final int end = ref.lastIndexOf(']');
+      int end = ref.lastIndexOf(']');
       if (end > start) {
+
+        // determine whether args should be evaluated
+        boolean evaluate = true;
+        if (ref.charAt(start) == '{') {
+          ++start;
+          evaluate = false;
+          if (ref.charAt(end - 1) == '}') --end;
+        }
+        
         final String argsString = ref.substring(start, end);
         //todo: do smart parsing to separate into args. for now, just split on ","
         final String[] args =argsString.split("\\s*,\\s*");
         result = new AnalysisObject[args.length];
         for (int i = 0; i < args.length; ++i) {
-          result[i] = env.evaluateExpression(args[i]);
+          result[i] = evaluate ? env.evaluateExpression(args[i]) : new BasicAnalysisObject<String>(args[i]);
         }
       }
     }

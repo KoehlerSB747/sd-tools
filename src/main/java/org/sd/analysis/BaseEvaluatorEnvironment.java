@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -607,7 +608,7 @@ public class BaseEvaluatorEnvironment implements EvaluatorEnvironment {
         final String varEvalString = varEval.toString();
         AnalysisObject value = variables.get(varEvalString);
         if (refAccess.length == 2) {
-          final String[] refs = refAccess[1].split("\\.");
+          final String[] refs = splitOnDots(refAccess[1]);
           for (String ref : refs) {
             if (value == null) break;
             value = value.access(ref, this);
@@ -616,6 +617,84 @@ public class BaseEvaluatorEnvironment implements EvaluatorEnvironment {
         //NOTE: "variable" portion of result includes ref
         result = new VariableAndValue(varEvalString, value);
       }
+    }
+
+    return result;
+  }
+
+  /**
+   * Utility to split on high-level, not nested in sections, "." chars.
+   */
+  private final String[] splitOnDots(String string) {
+    final List<String> result = new ArrayList<String>();
+
+    int lastStart = 0;
+    final int len = string.length();
+    for (int i = 0; i < len; ++i) {
+      final char c = string.charAt(i);
+      if (isSectionStart(c)) {
+        // skip through section
+        i = findSectionEnd(string, c, i + 1);
+      }
+      else if (c == '.') {
+        // found a dot to split on
+        final String substring = string.substring(lastStart, i);
+        result.add(substring);
+        lastStart = i + 1;
+      }
+    }
+
+    // add remainder
+    if (lastStart < len) {
+      final String substring = string.substring(lastStart);
+      result.add(substring);
+    }
+
+    return result.toArray(new String[result.size()]);
+  }
+
+  private final boolean isSectionStart(char c) {
+    return (c == '"') || (c == '(') || (c == '[') || (c == '{') || (c == '<');
+  }
+
+  private final int findSectionEnd(String string, char startChar, int idxAfterStart) {
+    int result = idxAfterStart;
+    final char endChar = getEndChar(startChar);
+    final int len = string.length();
+    int nesting = 1;
+    while (result < len) {
+      final char c = string.charAt(result);
+      if (c == endChar) {
+        --nesting;
+        if (nesting == 0) break;
+      }
+      else if (c == startChar) {
+        ++nesting;
+      }
+      ++result;
+    }
+    return result;
+  }
+
+  private final char getEndChar(char startChar) {
+    char result = (char)0;
+
+    switch (startChar) {
+      case '"':
+        result = '"';
+        break;
+      case '(':
+        result = ')';
+        break;
+      case '[':
+        result = ']';
+        break;
+      case '{':
+        result = '}';
+        break;
+      case '<':
+        result = '>';
+        break;
     }
 
     return result;
