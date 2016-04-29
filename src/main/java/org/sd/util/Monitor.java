@@ -124,6 +124,26 @@ public class Monitor {
     }
   }
 
+  public static final String getRateString(StatsAccumulator stats) {
+    final StringBuilder result = new StringBuilder();
+
+    final long millisPerItem = (long)(stats.getMean() + 0.5);
+    result.
+      append((long)(stats.getN() + 0.5)).
+      append('@').
+      append(MathUtil.timeString(millisPerItem, false)).
+      append("/item");
+
+    final long stddevX2 = (long)(stats.getStandardDeviation() * 2 + 0.5);
+    if (stddevX2 > 0) {
+      result.
+        append(" +/- ").
+        append(stddevX2);
+    }
+
+    return result.toString();
+  }
+
   public StatsAccumulator getStats(boolean access, boolean window) {
     // Get window/cumulative access/processing stats
     StatsAccumulator result = null;
