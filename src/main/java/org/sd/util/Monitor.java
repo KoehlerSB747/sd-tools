@@ -138,8 +138,13 @@ public class Monitor {
     if (stddevX2 > 0) {
       result.
         append(" +/- ").
-        append(stddevX2);
+        append(MathUtil.timeString(stddevX2, false));
     }
+
+    result.
+      append(" [totalTime: ").
+      append(MathUtil.timeString((long)(stats.getSum() + 0.5), true)).
+      append("]");
 
     return result.toString();
   }
