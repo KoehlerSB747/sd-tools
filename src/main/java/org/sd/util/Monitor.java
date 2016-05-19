@@ -127,24 +127,29 @@ public class Monitor {
   public static final String getRateString(StatsAccumulator stats) {
     final StringBuilder result = new StringBuilder();
 
-    final long millisPerItem = (long)(stats.getMean() + 0.5);
-    result.
-      append((long)(stats.getN() + 0.5)).
-      append('@').
-      append(MathUtil.timeString(millisPerItem, false)).
-      append("/item");
-
-    final long stddevX2 = (long)(stats.getStandardDeviation() * 2 + 0.5);
-    if (stddevX2 > 0) {
+    if (stats != null) {
+      final long millisPerItem = (long)(stats.getMean() + 0.5);
       result.
-        append(" +/- ").
-        append(MathUtil.timeString(stddevX2, false));
-    }
+        append((long)(stats.getN() + 0.5)).
+        append('@').
+        append(MathUtil.timeString(millisPerItem, false)).
+        append("/item");
 
-    result.
-      append(" [totalTime: ").
-      append(MathUtil.timeString((long)(stats.getSum() + 0.5), true)).
-      append("]");
+      final long stddevX2 = (long)(stats.getStandardDeviation() * 2 + 0.5);
+      if (stddevX2 > 0) {
+        result.
+          append(" +/- ").
+          append(MathUtil.timeString(stddevX2, false));
+      }
+
+      result.
+        append(" [totalTime: ").
+        append(MathUtil.timeString((long)(stats.getSum() + 0.5), true)).
+        append("]");
+    }
+    else {
+      result.append("[NO DATA]");
+    }
 
     return result.toString();
   }

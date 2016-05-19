@@ -32,6 +32,10 @@ public class BasicAnalysisObject <T> extends AbstractAnalysisObject {
     this.value = value;
   }
 
+  public T getValue() {
+    return value;
+  }
+
   @Override
   public String toString() {
     return value == null ? null : value.toString();  //todo: maybe limit the number of chars returned here and show its size?

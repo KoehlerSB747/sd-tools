@@ -32,12 +32,11 @@ public class StringValueCollector implements RecordValueCollector<String> {
   }
 
   public boolean collect(List<String> collector, DataRecord dataRecord) {
-    boolean result = false;
+    boolean result = true;
 
     if (dataRecord != null) {
       final String value = dataRecord.getFieldValue(fieldName);
       if (value != null) {
-        result = true;
         if (collector != null) {
           collector.add(value);
         }

@@ -741,9 +741,22 @@ public class BaseEvaluatorEnvironment implements EvaluatorEnvironment {
     final Matcher m = SET_VARIABLE_PATTERN.matcher(line);
     if (m.matches()) {
       final String varName = m.group(1);
-      final AnalysisObject varValue = evaluateExpression(m.group(2), false);
+      final String value = m.group(2);
+      final int valueLen = value.length();
 
-      result = new VariableAndValue(varName, varValue);
+      AnalysisObject varValue = null;
+
+      if (valueLen > 0 && value.charAt(0) == '"' && value.charAt(valueLen - 1) == '"') {
+        // don't evaluate a quoted string, just strip quotes
+        varValue = new BasicAnalysisObject<String>(value.substring(1, valueLen - 1));
+      }
+      else {
+        varValue = evaluateExpression(value, false);
+      }
+
+      if (varValue != null) {
+        result = new VariableAndValue(varName, varValue);
+      }
     }
 
     return result;

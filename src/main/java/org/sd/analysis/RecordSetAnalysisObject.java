@@ -16,8 +16,13 @@
 package org.sd.analysis;
 
 
+import java.util.ArrayList;
 import java.util.List;
+import org.sd.csv.DataRecord;
+import org.sd.csv.FieldWidths;
 import org.sd.csv.RecordSet;
+import org.sd.csv.RecordSetUtils;
+import org.sd.util.range.IntegerRange;
 
 /**
  * An analysis object that holds a record set.
@@ -61,6 +66,7 @@ public class RecordSetAnalysisObject extends AbstractAnalysisObject {
     result.
       append("\"size\" -- number of records in set\n").
       append("\"fields\" -- vector of field names in set\n").
+      append("\"display[range]\" -- formatted display string of lines in the range\n").
       append("field -- vector of field's values");
       
     return result.toString();
@@ -71,6 +77,7 @@ public class RecordSetAnalysisObject extends AbstractAnalysisObject {
    * <ul>
    * <li>"size" -- number of records in set</li>
    * <li>"fields" -- vector of field names in set</li>
+   * <li>"display[range]" -- formatted display of lines in the range</li>
    * <li>field -- vector of field's values</li>
    * </ul>
    */
@@ -86,7 +93,23 @@ public class RecordSetAnalysisObject extends AbstractAnalysisObject {
         result = new VectorAnalysisObject<String>(name, recordSet.getFieldNames());
       }
     }
+    else if (ref.startsWith("display")) {
+      if (recordSet != null) {
+        final AnalysisObject[] args = getArgValues(ref, env);
+        IntegerRange range = null;
+        if (args != null && args.length > 0) {
+          final List<String> values = new ArrayList<String>();
+          for (AnalysisObject arg : args) {
+            values.add(arg.toString());
+          }
+          range = new IntegerRange(values);
+        }
+        final String formattedData = getFormattedData(recordSet, range);
+        result = new BasicAnalysisObject<String>(formattedData);
+      }
+    }
     else if (recordSet != null) {
+      // ref is name of field whose values to get
       final List<String> fieldValues = recordSet.getFieldValues(ref);
       if (fieldValues != null) {
         result = new VectorAnalysisObject<String>(ref, fieldValues);
@@ -100,5 +123,34 @@ public class RecordSetAnalysisObject extends AbstractAnalysisObject {
   @Override
   public NumericAnalysisObject asNumericAnalysisObject() {
     return null;
+  }
+
+  public final String getFormattedData(IntegerRange range) {
+    String result = null;
+
+    if (recordSet != null) {
+      result = getFormattedData(recordSet, range);
+    }
+
+    return (result == null) ? "" : result;
+  }
+
+  private final String getFormattedData(RecordSet recordSet, IntegerRange range) {
+    final StringBuilder result = new StringBuilder();
+
+    final FieldWidths fieldWidths = recordSet.getFieldWidths();
+
+    final List<String> fieldNames = recordSet.getFieldNames();
+    final String headerLine = fieldWidths.buildFormattedHeaderLine(fieldNames);
+    result.append(headerLine);
+
+    final List<DataRecord> dataRecords = RecordSetUtils.collectDataRecords(recordSet, range);
+    for (DataRecord dataRecord : dataRecords) {
+      final String dataLine = fieldWidths.buildFormattedDataLine(dataRecord, fieldNames);
+      result.append('\n');
+      result.append(dataLine);
+    }
+
+    return result.toString();
   }
 }

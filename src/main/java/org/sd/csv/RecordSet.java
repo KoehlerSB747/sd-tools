@@ -67,4 +67,9 @@ public interface RecordSet {
    * otherwise, return a non-null (possibly empty) result.
    */
   public List<String> getFieldValues(String fieldName);
+
+  /**
+   * Get widths of field contents (e.g., for formatted output).
+   */
+  public FieldWidths getFieldWidths();
 }

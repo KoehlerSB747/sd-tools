@@ -28,7 +28,7 @@ public interface RecordValueCollector <T> {
   /**
    * Collect a value from the data record.
    *
-   * @return true if a value was collected; otherwise, false.
+   * @return true to keep looking for values; otherwise, false.
    */
   public boolean collect(List<T> collector, DataRecord dataRecord);
   

@@ -60,6 +60,8 @@ public class TestCommandEvaluator extends TestCase {
       "$x.b.values",
       "$x.b.stats",
       "$x.b.stats.mean",
+      "$x.display[0,2]",  // yields header, row0, row2
+      "$x.display[3]",    // yields only header because 3 is out of range
     };
     
     final String[] expectedResult = new String[] {
@@ -68,6 +70,10 @@ public class TestCommandEvaluator extends TestCase {
       "[2, 5, 8]",
       "#Stats.b[n=3,mean=5.0,min=2.0,max=8.0,sum=15.0]",
       "5.0",
+      "a	b	c",
+      "1	2	3",
+      "7	8	9",
+      "a	b	c",
     };
 
     validate(commandEvaluator, commands, expectedResult, null);
@@ -90,6 +96,31 @@ public class TestCommandEvaluator extends TestCase {
 
     validate(commandEvaluator, commands, expectedResult, null);
   }
+
+  public void testVectorMath() throws Exception {
+    final CommandEvaluator commandEvaluator = buildCommandEvaluator(new String[] {
+        getDirArg("resources"),
+      });
+
+    final String[] commands = new String[] {
+      "x=(loadcsv sample1.csv)",
+      "va=$x.a",
+      "vb=$x.b",
+      "vc=$x.c",
+      "vb_minus_va=$vb.subtract[$va]",
+      "$vb_minus_va.values",
+      "vb_minus_va_plus_vc=$vb_minus_va.add[$vc]",
+      "$vb_minus_va_plus_vc.values"
+    };
+
+    final String[] expectedResult = new String[] {
+      "[1, 1, 1]",
+      "[4, 7, 10]",
+    };
+
+    validate(commandEvaluator, commands, expectedResult, null);
+  }
+
 
   private final CommandEvaluator buildCommandEvaluator(String[] args) throws Exception {
     return CommandEvaluator.buildInstance(args);

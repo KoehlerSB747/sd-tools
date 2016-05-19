@@ -96,19 +96,104 @@ public class NumericAnalysisObject extends AbstractAnalysisObject {
   protected String getHelpString() {
     final StringBuilder result = new StringBuilder();
     result.
-      append("No additional access defined.");
+      append("\"subtract[$other]\" -- subtract the other from this.\n").
+      append("\"add[$other]\" -- add the other to this.");
       
     return result.toString();
   }
-  /** Access components of this object according to ref. */
+  /**
+   * Access components of this object according to ref.
+   * <ul>
+   * <li>"subtract[$other]" -- subtract the other from this</li>
+   * <li>"add[$other]" -- add the other to this</li>
+   * </ul>
+   */
   @Override
   protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
-    return null;
+    AnalysisObject result = null;
+
+    if (ref.startsWith("subtract")) {
+      final AnalysisObject[] args = getArgValues(ref, env);
+      NumericAnalysisObject retval = this;
+      if (args != null) {
+        for (AnalysisObject arg : args) {
+          retval = retval.subtract(arg.asNumericAnalysisObject());
+        }
+      }
+      result = retval;
+    }
+    else if (ref.startsWith("add")) {
+      final AnalysisObject[] args = getArgValues(ref, env);
+      NumericAnalysisObject retval = this;
+      if (args != null) {
+        for (AnalysisObject arg : args) {
+          retval = retval.add(arg.asNumericAnalysisObject());
+        }
+      }
+      result = retval;
+    }
+
+    return result;
   }
 
   /** Get a numeric object representing this instance's value if applicable, or null. */
   @Override
   public NumericAnalysisObject asNumericAnalysisObject() {
     return this;
+  }
+
+
+  double asDouble() {
+    double result = 0.0;
+
+    if (this.isDouble()) {
+      result = doubleValue;
+    }
+    else if (this.isLong()) {
+      result = (double)longValue;
+    }
+    else if (this.isInteger()) {
+      result = (double)intValue;
+    }
+
+    return result;
+  }
+
+  NumericAnalysisObject subtract(NumericAnalysisObject other) {
+    NumericAnalysisObject result = this;
+
+    if (other != null) {
+      final double value = this.asDouble() - other.asDouble();
+      result = buildLikeObject(value);
+    }
+
+    return result;
+  }
+
+  NumericAnalysisObject add(NumericAnalysisObject other) {
+    NumericAnalysisObject result = this;
+
+    if (other != null) {
+      final double value = this.asDouble() + other.asDouble();
+      result = buildLikeObject(value);
+    }
+
+    return result;
+  }
+
+  private final NumericAnalysisObject buildLikeObject(double value) {
+    NumericAnalysisObject result = this;
+
+    if (this.isDouble()) {
+      result = new NumericAnalysisObject(value);
+    }
+    else if (this.isLong()) {
+      result = new NumericAnalysisObject((long)(value + 0.5));
+    }
+    else if (this.isInteger()) {
+      result = new NumericAnalysisObject((int)(value + 0.5));
+    }
+
+    return result;
   }
 }

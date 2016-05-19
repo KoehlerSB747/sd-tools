@@ -32,14 +32,13 @@ public class NumericValueCollector implements RecordValueCollector<Double> {
   }
 
   public boolean collect(List<Double> collector, DataRecord dataRecord) {
-    boolean result = false;
+    boolean result = true;
 
     if (dataRecord != null) {
       final String value = dataRecord.getFieldValue(fieldName);
       if (value != null) {
         try {
           final Double d = Double.parseDouble(value);
-          result = true;
           if (collector != null) {
             collector.add(d);
           }

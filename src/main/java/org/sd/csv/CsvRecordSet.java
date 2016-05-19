@@ -41,6 +41,7 @@ public class CsvRecordSet implements RecordSet {
   private List<String> fieldNames;
   private List<DataRecord> dataRecords;
   private Map<String, List<String>> fieldValues;
+  private FieldWidths fieldWidths;
 
   public CsvRecordSet() {
     this(null);
@@ -54,6 +55,7 @@ public class CsvRecordSet implements RecordSet {
     this.fieldNames = null;
     this.dataRecords = new ArrayList<DataRecord>();
     this.fieldValues = null;
+    this.fieldWidths = new FieldWidths();
   }
 
   public void setName(String name) {
@@ -170,38 +172,55 @@ public class CsvRecordSet implements RecordSet {
   }
 
   public final CsvRecordSet loadFieldMetaData(String headerLine) {
-    this.fieldMetaData = new HashMap<String, FieldMetaData>();
-    this.fieldNames = new ArrayList<String>();
     if (fieldDelimiter == null) {
       setFieldDelimiter(guessFieldDelimiter(headerLine));
     }
     final String[] pieces = headerLine.split(splitDelimiter);
-    for (String piece : pieces) {
+    return loadFieldMetaData(pieces);
+  }
+
+  public final CsvRecordSet loadFieldMetaData(String[] headerPieces) {
+    this.fieldMetaData = new HashMap<String, FieldMetaData>();
+    this.fieldNames = new ArrayList<String>();
+    for (String piece : headerPieces) {
       final FieldMetaData fieldMetaData = new FieldMetaData(piece);
       this.fieldMetaData.put(piece, fieldMetaData);
       this.fieldNames.add(piece);
+      fieldWidths.updateWidth(piece, piece);
     }
     return this;
   }
 
   public final CsvRecordSet loadField(String recordLine) {
-    final SimpleDataRecord dataRecord = new SimpleDataRecord();
-
     if (fieldDelimiter == null) {
       setFieldDelimiter(guessFieldDelimiter(recordLine));
     }
 
     final String[] pieces = recordLine.split(splitDelimiter);
+    return loadField(pieces);
+  }
 
-    for (int i = 0; i < pieces.length; ++i) {
+  public final CsvRecordSet loadField(String[] recordPieces) {
+    final SimpleDataRecord dataRecord = new SimpleDataRecord();
+
+    for (int i = 0; i < recordPieces.length; ++i) {
       final String fieldName = getFieldName(i);
-      final String fieldValue = pieces[i];
+      final String fieldValue = recordPieces[i];
       dataRecord.setFieldValue(fieldName, fieldValue);
+      fieldWidths.updateWidth(fieldName, fieldValue);
     }
 
     this.dataRecords.add(dataRecord);
 
     return this;
+  }
+
+  /**
+   * Get widths of field contents (e.g., for formatted output).
+   */
+  @Override
+  public FieldWidths getFieldWidths() {
+    return fieldWidths;
   }
 
   /**

@@ -19,6 +19,7 @@ package org.sd.csv;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.sd.util.range.IntegerRange;
 
 /**
  * Utility methods over record sets.
@@ -27,22 +28,28 @@ import java.util.List;
  */
 public class RecordSetUtils {
   
-  public static <T> List<T> collectFieldValues(RecordSet recordSet, String fieldName, RecordValueCollector<T> valueCollector) {
+  public static <T> List<T> collectFieldValues(RecordSet recordSet, RecordValueCollector<T> valueCollector) {
     final List<T> result = new ArrayList<T>();
 
     for (Iterator<DataRecord> iter = recordSet.iterator(); iter.hasNext(); ) {
       final DataRecord dataRecord = iter.next();
-      valueCollector.collect(result, dataRecord);
+      if (!valueCollector.collect(result, dataRecord)) {
+        break;
+      }
     }
 
     return result;
   }
 
   public static List<Double> collectNumbers(RecordSet recordSet, String fieldName) {
-    return collectFieldValues(recordSet, fieldName, new NumericValueCollector(fieldName));
+    return collectFieldValues(recordSet, new NumericValueCollector(fieldName));
   }
 
   public static List<String> collectStrings(RecordSet recordSet, String fieldName) {
-    return collectFieldValues(recordSet, fieldName, new StringValueCollector(fieldName));
+    return collectFieldValues(recordSet, new StringValueCollector(fieldName));
+  }
+
+  public static List<DataRecord> collectDataRecords(RecordSet recordSet, IntegerRange range) {
+    return collectFieldValues(recordSet, new RangeDataRecordCollector(range));
   }
 }
