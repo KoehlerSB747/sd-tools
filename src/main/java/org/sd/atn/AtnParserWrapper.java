@@ -232,7 +232,12 @@ public class AtnParserWrapper {
     // Load parse options
     final DomElement poElt = (DomElement)parserElement.selectSingleNode("parseOptions");
     if (poElt != null) {
-      this.parseOptions = new AtnParseOptions(poElt, resourceManager);
+      if (this.parseOptions != null) {
+        this.parseOptions.supplement(poElt, resourceManager);
+      }
+      else {
+        this.parseOptions = new AtnParseOptions(poElt, resourceManager);
+      }
     }
 
     // Update min/max counts

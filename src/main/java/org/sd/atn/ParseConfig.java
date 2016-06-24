@@ -291,6 +291,9 @@ public class ParseConfig {
     //      ...
     //   </interpreter>
     //   <parseSelector parser="compoundID:parserID" ...override attributes...>...override elements...</parseSelector>
+    //   <options parser="compoundID:parserID" mode="supplement|override">
+    //      ...
+    //   </options>
     // </supplement>
     //
 
@@ -393,6 +396,21 @@ public class ParseConfig {
           final AtnParseSelector parseSelectorOverride = (AtnParseSelector)resourceManager.getResource((DomElement)supplementNode);
           parserWrapper.setParseSelector(parseSelectorOverride);
           supplemented = true;
+        }
+        else if ("options".equals(directive)) {
+          final String mode = supplementNode.getAttributeValue("mode", "supplement");
+          final AtnParseOptions parseOptions = parserWrapper.getParseOptions();
+          if ("supplement".equals(mode)) {
+            parseOptions.supplement(supplementNode.asDomElement(), resourceManager);
+            supplemented = true;
+          }
+          else if ("override".equals(mode)) {
+            parserWrapper.setParseOptions(new AtnParseOptions(supplementNode.asDomElement(), resourceManager));
+            supplemented = true;
+          }
+          else {
+            failureReason = "Invalid mode (" + mode + ") for 'options'";
+          }
         }
       }
       else {

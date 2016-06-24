@@ -98,10 +98,10 @@ public class TokenCountTest extends BaseClassifierTest {
     startIdx = Math.max(0, startIdx);
     endIdx = Math.min(text.length() - 1, endIdx);
 
-    char lastC = (char)0;
+    char lastC = ' ';
     for (int idx = startIdx; idx <= endIdx; ++idx) {
       final char c = text.charAt(idx);
-      if (c == ' ' && lastC != ' ') ++result;
+      if (c == ' ' && lastC != ' ' && idx < endIdx) ++result;
       lastC = c;
     }
 

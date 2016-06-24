@@ -293,6 +293,7 @@ public class RoteListClassifier extends AbstractAtnStateTokenClassifier {
    * Supplement this classifier with the given dom node.
    */
   public void supplement(DomNode supplementNode) {
+    super.supplement(supplementNode);
     doSupplement(supplementNode);
   }
 

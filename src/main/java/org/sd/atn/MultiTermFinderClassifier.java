@@ -75,6 +75,7 @@ public class MultiTermFinderClassifier extends AbstractAtnStateTokenClassifier {
   }
 
   public void supplement(DomNode supplementNode) {
+    super.supplement(supplementNode);
     init(supplementNode.asDomElement());
   }
 

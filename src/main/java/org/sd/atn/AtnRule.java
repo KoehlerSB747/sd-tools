@@ -208,6 +208,10 @@ public class AtnRule {
     return result;
   }
 
+  boolean isVerbose() {
+    return verbose;
+  }
+
   private final List<DomElement> collectChildElements(DomElement parentElement) {
     final List<DomElement> result = new ArrayList<DomElement>();
 

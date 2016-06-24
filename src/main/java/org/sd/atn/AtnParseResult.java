@@ -328,14 +328,30 @@ public class AtnParseResult {
    */
   public boolean continueParsing() {
     boolean success = false;
+    boolean verbose = false;
+    AtnState refState = null;
 
     while ((startRuleIndex < startRules.size() || (states.size() + skipStates.size() > 0)) && (die == null || !die.get())) {
       if (states.size() + skipStates.size() == 0) {
-        final AtnRule startRule = startRules.get(startRuleIndex);
+        final AtnRule startRule = startRules.get(startRuleIndex++);
         final Token firstToken = getFirstToken(startRule, this.firstToken);
-        if (firstToken == null) return false;
+        if (firstToken == null) {
+          if (startRule.isVerbose() || AtnState.getTraceFlow()) {
+            System.out.println("  ABORT startRule[" + startRule.getRuleName() + "," + startRule.getRuleId() +
+                               "].tokenFilter[" + startRule.getTokenFilterId() + "] failed for firstToken=" +
+                               this.firstToken);
+          }
+          continue;
+        }
 
-        if (startRule.fromFirstTokenOnly() && firstToken.getSequenceNumber() > 0) return false;
+        if (startRule.fromFirstTokenOnly() && firstToken.getSequenceNumber() > 0) {
+          if (startRule.isVerbose() || AtnState.getTraceFlow()) {
+            System.out.println("  ABORT startRule[" + startRule.getRuleName() + "," + startRule.getRuleId() +
+                               "] limited to fromFirstTokenOnly and firstToken=" + firstToken + " seq=" +
+                               firstToken.getSequenceNumber());
+          }
+          continue;
+        }
 
         final int numSteps = startRule.getNumSteps();
         if (startRule.isPermuted()) {
@@ -344,6 +360,10 @@ public class AtnParseResult {
             final AtnState firstState = new AtnState(firstToken, startRule, stepNum, parse, options, 0, 0, null);
             firstState.setSeekStartIndex(this.firstToken.getStartIndex());
             states.addLast(firstState);
+            if (firstState.getRule().isVerbose()) {
+              verbose = true;
+              if (refState == null) refState = firstState;
+            }
           }
         }
         else {
@@ -352,16 +372,25 @@ public class AtnParseResult {
                firstState = firstState.getSkipOptionalState()) {
             firstState.setSeekStartIndex(this.seekStartIndex);
             states.addLast(firstState);
+            if (firstState.getRule().isVerbose()) {
+              verbose = true;
+              if (refState == null) refState = firstState;
+            }
           }
         }
-        ++startRuleIndex;
       }
 
-      final AtnState state = states.size() > 0 ? states.getFirst() : skipStates.getFirst();
+
       success = AtnState.matchTokenToRule(grammar, states, skipStates, stopList, die);
-      // if (!success) System.out.println(AtnStateUtil.showStateTree(state.parentStateNode))
+      if (!success && refState != null) System.out.println(refState.showStateTree());
 
       if (success && options.getFirstParseOnly()) {
+        if ((verbose || AtnState.getTraceFlow()) &&
+            (states.size() + skipStates.size() > 0) || startRuleIndex < startRules.size()) {
+          System.out.println("  FIRST parse complete/terminal before startRuleIndex=" +
+                             startRuleIndex + "/" + startRules.size() +
+                             " w/" + (states.size() + skipStates.size()) + " states.");
+        }
         break;
       }
     }

@@ -656,14 +656,14 @@ public class AtnState {
     return result;
   }
 
-  private String showStateTree() {
+  String showStateTree() {
     return showStateTree(true);
   }
 
   /**
    * Show the full state tree and/or the state path.
    */
-  private String showStateTree(boolean fullTree) {
+  String showStateTree(boolean fullTree) {
     final StringBuilder result = new StringBuilder();
 
     result.

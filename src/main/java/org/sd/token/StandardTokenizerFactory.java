@@ -19,7 +19,9 @@
 package org.sd.token;
 
 
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import org.sd.util.tree.Tree;
 
@@ -108,8 +110,17 @@ public class StandardTokenizerFactory {
    */
   public static Tree<Token> fullTokenization(String text, StandardTokenizerOptions options) {
     final StandardTokenizer tokenizer = getTokenizer(text, options);
+    return fullTokenization(tokenizer);
+  }
 
-    final Tree<Token> result = new Tree<Token>(new Token(tokenizer, text, 0, options.getRevisionStrategy(), 0, 0, tokenizer.getWordCount(), -1));
+  /**
+   * Create a tree of tokens where the root contains the full input text (as
+   * a token), the second level contains primary tokenizations (according to
+   * the given options,) and the third level contains the token revisions for
+   * each of their (parent) primary tokenizations.
+   */
+  public static Tree<Token> fullTokenization(StandardTokenizer tokenizer) {
+    final Tree<Token> result = new Tree<Token>(new Token(tokenizer, tokenizer.getText(), 0, tokenizer.getOptions().getRevisionStrategy(), 0, 0, tokenizer.getWordCount(), -1));
 
     for (Token primaryToken = tokenizer.getToken(0); primaryToken != null; primaryToken = tokenizer.getNextToken(primaryToken)) {
       final Tree<Token> primaryTokenNode = result.addChild(primaryToken);
@@ -120,6 +131,30 @@ public class StandardTokenizerFactory {
     }
 
     return result;
+  }
+
+  public static Tree<Token> showTokenization(PrintStream out, String text, StandardTokenizerOptions options) {
+    final Tree<Token> result = fullTokenization(text, options);
+    showTokenization(out, result);
+    return result;
+  }
+
+  public static Tree<Token> showTokenization(PrintStream out, StandardTokenizer tokenizer) {
+    final Tree<Token> result = fullTokenization(tokenizer);
+    showTokenization(out, result);
+    return result;
+  }
+
+  public static void showTokenization(PrintStream out, Tree<Token> tokens) {
+    if (out != null) {
+      for (Iterator<Tree<Token>> iter = tokens.iterator(Tree.Traversal.DEPTH_FIRST); iter.hasNext(); ) {
+        final Tree<Token> curNode = iter.next();
+        for (int indentPos = 0; indentPos < curNode.depth(); ++indentPos) {
+          out.print("  ");
+        }
+        out.println(curNode.getData().toString());
+      }
+    }
   }
 
   /**

@@ -47,10 +47,12 @@ public abstract class AbstractAtnStateTokenClassifier implements AtnStateTokenCl
 
   private boolean consume;
   private TokenClassifierHelper tokenClassifierHelper;
+  private boolean disable;
 
   protected AbstractAtnStateTokenClassifier() {
     this.consume = true;
     this.tokenClassifierHelper = new TokenClassifierHelper();
+    this.disable = false;
   }
 
   protected AbstractAtnStateTokenClassifier(Normalizer normalizer, int maxWordCount) {
@@ -60,6 +62,7 @@ public abstract class AbstractAtnStateTokenClassifier implements AtnStateTokenCl
   protected AbstractAtnStateTokenClassifier(Normalizer normalizer, int maxWordCount, boolean consume) {
     this.tokenClassifierHelper = new TokenClassifierHelper(normalizer, maxWordCount);
     this.consume = consume;
+    this.disable = false;
   }
 
   protected AbstractAtnStateTokenClassifier(DomElement classifierIdElement, Map<String, Normalizer> id2Normalizer) {
@@ -67,6 +70,9 @@ public abstract class AbstractAtnStateTokenClassifier implements AtnStateTokenCl
 
     // check for consume attribute; default to 'true'
     this.consume = classifierIdElement.getAttributeBoolean("consume", true);
+
+    // check for disable attribute; default to 'false'
+    this.disable = classifierIdElement.getAttributeBoolean("disable", false);
   }
 
   protected boolean consume() {
@@ -75,6 +81,14 @@ public abstract class AbstractAtnStateTokenClassifier implements AtnStateTokenCl
 
   protected void setConsume(boolean consume) {
     this.consume = consume;
+  }
+
+  protected boolean disable() {
+    return disable;
+  }
+
+  protected void setDisable(boolean disable) {
+    this.disable = disable;
   }
 
   protected final TokenClassifierHelper getTokenClassifierHelper() {
@@ -91,7 +105,7 @@ public abstract class AbstractAtnStateTokenClassifier implements AtnStateTokenCl
   public MatchResult classify(Token token, AtnState atnState) {
     boolean result = false;
 
-    if (tokenClassifierHelper.meetsConstraints(token)) {
+    if (!disable && tokenClassifierHelper.meetsConstraints(token)) {
       result = doClassify(token, atnState);
     }
 
@@ -106,10 +120,15 @@ public abstract class AbstractAtnStateTokenClassifier implements AtnStateTokenCl
    *         otherwise, null if didn't or couldn't match.
    */
   public Map<String, String> classify(String text) {
-    return doClassify(tokenClassifierHelper.normalize(text));
+    return disable ? null : doClassify(tokenClassifierHelper.normalize(text));
   }
 
   public void supplement(DomNode supplementNode) {
+    // check for consume attribute; default to 'true'
+    this.consume = supplementNode.getAttributeBoolean("consume", this.consume);
+
+    // check for disable attribute; default to 'false'
+    this.disable = supplementNode.getAttributeBoolean("disable", this.disable);
   }
 
   public int getMaxWordCount() {

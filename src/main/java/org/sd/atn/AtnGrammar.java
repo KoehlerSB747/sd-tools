@@ -521,6 +521,9 @@ public class AtnGrammar {
 
         if (classifier != null) {
           if (!classifiers.contains(classifier)) {
+            if (classifiers.size() > 0 && GlobalConfig.verboseLoad()) {
+              System.out.println(new Date() + ": AtnGrammar adding classifier (" + classifierId + ") for total of " + (classifiers.size() + 1));
+            }
             classifiers.add(classifier);
           }
           else {

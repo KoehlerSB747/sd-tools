@@ -167,8 +167,16 @@ public class AtnParseOptions {
    */
   public AtnParseOptions(DomElement optionsElement, ResourceManager resourceManager) {
     this.resourceManager = resourceManager;
-    DataProperties options = new DataProperties(optionsElement);
-    init(options);
+    final DataProperties options = new DataProperties(optionsElement);
+
+    this.consumeAllText = false;
+    this.skipTokenLimit = 0;
+    this.firstParseOnly = false;
+    this.adjustInputForTokens = false;
+    this.parseInterpreter = null;
+    this.startRules = null;
+
+    init(options, false);
   }
 
   /**
@@ -184,7 +192,15 @@ public class AtnParseOptions {
    */
   public AtnParseOptions(DataProperties options, ResourceManager resourceManager) {
     this.resourceManager = resourceManager;
-    init(options);
+
+    this.consumeAllText = false;
+    this.skipTokenLimit = 0;
+    this.firstParseOnly = false;
+    this.adjustInputForTokens = false;
+    this.parseInterpreter = null;
+    this.startRules = null;
+
+    init(options, false);
   }
 
   /**
@@ -201,7 +217,15 @@ public class AtnParseOptions {
     this.startRules = options.startRules;
   }
 
-  private final void init(DataProperties options) {
+  public void supplement(DomElement optionsElement, ResourceManager resourceManager) {
+    if (resourceManager != null && this.resourceManager == null) {
+      this.resourceManager = resourceManager;
+    }
+    final DataProperties options = new DataProperties(optionsElement);
+    init(options, true);
+  }
+
+  private final void init(DataProperties options, boolean supplement) {
     //
     // <parseOptions>
     //   <consumeAllText>false</consumeAllText>
@@ -221,13 +245,20 @@ public class AtnParseOptions {
     //
 
     this.options = options;
-    this.consumeAllText = options.getBoolean("consumeAllText", false);
-    this.skipTokenLimit = options.getInt("skipTokenLimit", 0);
-    this.firstParseOnly = options.getBoolean("firstParseOnly", false);
-    this.adjustInputForTokens = options.getBoolean("adjustInputForTokens", false);
+    this.consumeAllText = options.getBoolean("consumeAllText", this.consumeAllText);
+    this.skipTokenLimit = options.getInt("skipTokenLimit", this.skipTokenLimit);
+    this.firstParseOnly = options.getBoolean("firstParseOnly", this.firstParseOnly);
+    this.adjustInputForTokens = options.getBoolean("adjustInputForTokens", this.adjustInputForTokens);
 
     final DomElement parseInterpreterNode = (DomElement)options.getDomElement().selectSingleNode("parseInterpreter");
-    setParseInterpreter(parseInterpreterNode);
+    if (parseInterpreterNode != null) {
+      if (supplement && this.parseInterpreter != null) {
+        supplementParseInterpreter(parseInterpreterNode);
+      }
+      else {
+        setParseInterpreter(parseInterpreterNode);
+      }
+    }
 
     final NodeList startNodes = options.getDomElement().selectNodes("start");
     if (startNodes != null) {
@@ -240,11 +271,11 @@ public class AtnParseOptions {
   }
 
   public final void setParseInterpreter(DomElement parseInterpreterNode) {
-    this.parseInterpreter = (parseInterpreterNode != null) ? (ParseInterpreter)resourceManager.getResource(parseInterpreterNode) : null;
+    this.parseInterpreter = (parseInterpreterNode != null) ? (ParseInterpreter)resourceManager.getResource(parseInterpreterNode) : this.parseInterpreter;
   }
 
   public void supplementParseInterpreter(DomElement parseInterpreterNode) {
-    if (parseInterpreter != null) {
+    if (parseInterpreter != null && parseInterpreterNode != null) {
       parseInterpreter.supplement(parseInterpreterNode);
     }
   }

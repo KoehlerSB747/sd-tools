@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.sd.token.StandardTokenizerFactory;
 import org.sd.token.StandardTokenizerOptions;
 import org.sd.token.Tokenizer;
 import org.sd.util.InputContext;
@@ -274,6 +275,8 @@ public class CompoundParser {
 
       if (verbose) {
         System.out.println("\nParser '" + this.id + ":" + id + "' parsing '" + input.getText() + "'...");
+        System.out.println("Tokenization:");
+        StandardTokenizerFactory.showTokenization(System.out, currentTokenizer);
       }
 
       if (traceflow) {
