@@ -42,9 +42,10 @@ import org.sd.xml.DomElement;
  *                         letters that look like digits without finding any
  *                         true digits</li>
  * <li>minLength -- (optional, default=0 [unbounded]) specifies the minimum
- *                  acceptable input text length (e.g. at least 2 digits).
+ *                  acceptable input text length (e.g. at least 2 digits).</li>
  * <li>ignoreLetters -- (optional, default=false) specifies whether to ignore
- *                      letters and accept any digits found.
+ *                      letters and accept any digits found.</li>
+ * <li>add -- (optional) specifies a value to add to the extracted value for the stored feature.</li>
  * </ul>
  *
  * @author Spence Koehler
@@ -67,7 +68,9 @@ import org.sd.xml.DomElement;
        "  minLength -- (optional, default=0 [unbounded]) specifies the minimum\n" +
        "               acceptable input text length (e.g. at least 2 digits).\n" +
        "  ignoreLetters -- (optional, default=false) specifies whether to ignore\n" +
-       "                   letters and accept any digits found."
+       "                   letters and accept any digits found.\n" +
+       "  add -- (optional) specifies a value to add to the extracted value for the\n" +
+       "         stored feature."
   )
 public class DigitsClassifier extends RoteListClassifier {
 
@@ -78,6 +81,7 @@ public class DigitsClassifier extends RoteListClassifier {
   private int minLength;
   private int maxLength;
   private boolean ignoreLetters;
+  private int addValue;
 
   public DigitsClassifier(DomElement classifierIdElement, ResourceManager resourceManager, Map<String, Normalizer> id2Normalizer) {
     super(classifierIdElement, resourceManager, id2Normalizer);
@@ -100,6 +104,7 @@ public class DigitsClassifier extends RoteListClassifier {
     this.maxLength = classifierIdElement.getAttributeInt("maxLength", Integer.MAX_VALUE);
 
     this.ignoreLetters = classifierIdElement.getAttributeBoolean("ignoreLetters", false);
+    this.addValue = classifierIdElement.getAttributeInt("add", 0);
   }
   
   protected final String getFeatureName() {
@@ -197,7 +202,17 @@ public class DigitsClassifier extends RoteListClassifier {
     if (result && featureName != null && !"".equals(featureName) && textAndFeatures != null) {
       // set the digits text as "featureName" feature
       if (textAndFeatures.hasText() && !token.hasFeatures() || !token.getFeatures().hasFeatureType(featureName)) {
-        token.setFeature(featureName, textAndFeatures.getText(), this);
+        String theText = textAndFeatures.getText();
+        if (addValue != 0) {
+          try {
+            final int value = Integer.parseInt(theText);
+            theText = Integer.toString(value + addValue);
+          }
+          catch (NumberFormatException nfe) {
+            // ignore -- fail to add
+          }
+        }
+        token.setFeature(featureName, theText, this);
       }
       // set other features if present
       if (textAndFeatures.hasFeatures()) {
