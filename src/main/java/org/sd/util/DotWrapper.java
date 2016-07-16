@@ -26,13 +26,13 @@ import java.io.Writer;
 import org.sd.io.FileUtil;
 
 /**
- * Wrapper for generating dot and/or image files from a dotMaker.
+ * Wrapper for generating dot and/or image files from a dotWriter.
  * <p>
  * @author Spence Koehler
  */
 public class DotWrapper {
   
-  private DotMaker dotMaker;
+  private DotWriter dotWriter;
   private File workingDir;
   private String filePrefix;
 
@@ -45,12 +45,12 @@ public class DotWrapper {
   /**
    * Construct a new instance.
    *
-   * @param dotMaker  The dot maker to use for creating the imaage.
+   * @param dotWriter  The dot writer to use for creating the imaage.
    * @param workingDir  The working directory for generated dot and/or image files.
    * @param filePrefix  The prefix to use for generated temporary files.
    */
-  public DotWrapper(DotMaker dotMaker, File workingDir, String filePrefix) {
-    this.dotMaker = dotMaker;
+  public DotWrapper(DotWriter dotWriter, File workingDir, String filePrefix) {
+    this.dotWriter = dotWriter;
     this.workingDir = workingDir;
     this.filePrefix = filePrefix;
 
@@ -63,8 +63,8 @@ public class DotWrapper {
   }
 
 
-  public DotMaker getDotMaker() {
-    return dotMaker;
+  public DotWriter getDotWriter() {
+    return dotWriter;
   }
 
   public File getWorkingDir() {
@@ -226,7 +226,7 @@ public class DotWrapper {
 
     if (!_populatedDotFile || !result.exists()) {
       final Writer writer = FileUtil.getWriter(result);
-      dotMaker.writeDot(writer);
+      dotWriter.writeDot(writer);
       writer.close();
       _populatedDotFile = true;
     }
@@ -280,7 +280,7 @@ public class DotWrapper {
 
   private final String getDotContents() throws IOException {
     final Writer writer = new StringWriter();
-    dotMaker.writeDot(writer);
+    dotWriter.writeDot(writer);
     writer.close();
     return writer.toString();
   }

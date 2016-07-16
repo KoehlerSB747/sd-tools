@@ -32,7 +32,7 @@ import java.util.Map;
  * <p>
  * @author Spence Koehler
  */
-public abstract class DotMaker {
+public abstract class DotMaker implements DotWriter {
   
   /**
    * Populate edges through calls to addId2Label and addEdge.
