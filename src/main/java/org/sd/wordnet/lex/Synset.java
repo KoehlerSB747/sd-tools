@@ -180,4 +180,75 @@ public class Synset {
     result.append("Synset[").append(getSynsetName()).append(']');
     return result.toString();
   }
+
+  public String getDescription() {
+    final StringBuilder result = new StringBuilder();
+
+    result.append(this.toString()).append("\n");
+
+    if (this.hasGloss()) {
+      result.append("\tgloss: ").append(gloss).append('\n');
+    }
+
+    int ptrNum = 1;
+    if (this.hasPointerDefinitions()) {
+      result.append("\tPointers:\n");
+      for (PointerDefinition pointer : pointers) {
+        result.
+          append("\t\t").
+          append(ptrNum++).
+          append(": ").
+          append(pointer.getFormattedPointerDefinition()).
+          append('\n');
+      }
+    }
+
+    int frmNum = 0;
+    if (this.hasFrames()) {
+      result.append("\tFrames: ");
+      for (Integer frame : frames) {
+        if (frmNum > 0) result.append(", ");
+        result.append(frame);
+        ++frmNum;
+      }
+      result.append("\n");
+    }
+
+    int wordNum = 1;
+    if (this.hasWords()) {
+      result.append("\tWords:\n");
+      for (Word word : words) {
+        result.
+          append("\t\t").
+          append(wordNum++).
+          append(": ").
+          append(word.getWordName()).
+          append('(').append(word.getNormalizedWord()).append(")\n");
+        if (word.hasPointerDefinitions()) {
+          ptrNum = 1;
+          result.append("\t\t\tPointers:\n");
+          for (PointerDefinition pointer : word.getPointerDefinitions()) {
+            result.
+              append("\t\t\t\t").
+              append(ptrNum++).
+              append(": ").
+              append(pointer.getFormattedPointerDefinition()).
+              append('\n');
+          }
+        }
+        if (word.hasFrames()) {
+          frmNum = 0;
+          result.append("\t\t\tFrames: ");
+          for (Integer frame : frames) {
+            if (frmNum > 0) result.append(", ");
+            result.append(frame);
+            ++frmNum;
+          }
+          result.append("\n");
+        }
+      }
+    }
+
+    return result.toString();
+  }
 }
