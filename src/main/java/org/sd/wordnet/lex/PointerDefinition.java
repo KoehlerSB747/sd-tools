@@ -92,15 +92,11 @@ public class PointerDefinition {
         builder.append(lexFileName).append(':');
       }
       if (headWord != null) {
-        builder.append(headWord.getName());
-        final int lexId = headWord.getLexId();
-        if (lexId > 0) {
-          builder.append(lexId);
-        }
+        builder.append(headWord.getName());  //<word><lexId>
       }
       if (satelliteWord != null) {
         builder.append('^');
-        builder.append(satelliteWord.getName());
+        builder.append(satelliteWord.getName());  //<word><lexId>
         final int lexId = satelliteWord.getLexId();
         if (lexId > 0) {
           builder.append(lexId);

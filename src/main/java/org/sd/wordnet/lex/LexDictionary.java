@@ -76,6 +76,16 @@ public class LexDictionary {
   }
 
 
+  public List<PointerInstance> getAllPointers(List<Synset> synsets) {
+    final List<PointerInstance> result = new ArrayList<PointerInstance>();
+    if (synsets != null) {
+      for (Synset synset : synsets) {
+        result.addAll(getAllPointers(synset));
+      }
+    }
+    return result;
+  }
+
   public List<PointerInstance> getAllPointers(Synset synset) {
     final List<PointerInstance> result = new ArrayList<PointerInstance>();
 
@@ -102,16 +112,41 @@ public class LexDictionary {
   }
 
   public List<PointerInstance> getWordPointers(Synset synset) {
+    return getWordPointers(synset, null);
+  }
+
+  public List<PointerInstance> getWordPointers(Synset synset, Word theWord) {
     final List<PointerInstance> result = new ArrayList<PointerInstance>();
 
     // compute pointers from each synset word
     if (synset.hasWords()) {
       for (Word word : synset.getWords()) {
-        if (word.hasPointerDefinitions()) {
-          for (PointerDefinition pointerDef : word.getPointerDefinitions()) {
-            findPointers(result, synset, word, pointerDef);
+        if (theWord == null || theWord.matches(word)) {
+          if (word.hasPointerDefinitions()) {
+            for (PointerDefinition pointerDef : word.getPointerDefinitions()) {
+              findPointers(result, synset, word, pointerDef);
+            }
           }
         }
+      }
+    }
+
+    return result;
+  }
+
+  public List<PointerInstance> getNextPointers(PointerInstance pointer) {
+    final List<PointerInstance> result = new ArrayList<PointerInstance>();
+
+    // Collect the targetSynset's pointers and the targetWord's (or targetSatelliteWord's) pointers
+    if (pointer.hasTargetSynset()) {
+      final Synset targetSynset = pointer.getTargetSynset();
+      result.addAll(getSynsetPointers(targetSynset));
+
+      if (pointer.hasTargetSatelliteWord()) {
+        result.addAll(getWordPointers(targetSynset, pointer.getTargetSatelliteWord()));
+      }
+      else if (pointer.hasTargetWord()) {
+        result.addAll(getWordPointers(targetSynset, pointer.getTargetWord()));
       }
     }
 

@@ -28,9 +28,6 @@ import java.util.TreeSet;
  */
 public class Word {
   
-  public enum Match { NO, WORD, WORD_SENSE };
-    
-
   private SimpleWord simpleWord;
   private List<PointerDefinition> pointers;
   private List<Integer> frames;
@@ -66,16 +63,23 @@ public class Word {
     return result == null ? "" : result;
   }
 
-  public Match matches(SimpleWord simpleWord) {
-    Match result = Match.NO;
+  public boolean matches(Word otherWord) {
+    boolean result = false;
+
+    if (otherWord != null) {
+      result = this.matches(otherWord.getSimpleWord());
+    }
+
+    return result;
+  }
+
+  public boolean matches(SimpleWord simpleWord) {
+    boolean result = false;
 
     if (simpleWord != null && simpleWord.hasWord() && this.hasSimpleWord() && this.simpleWord.hasWord()) {
-      if (this.simpleWord.getNormalizedWord().equals(simpleWord.getNormalizedWord())) {
-        result = Match.WORD;
-
-        if (this.simpleWord.getLexId() == simpleWord.getLexId()) {
-          result = Match.WORD_SENSE;
-        }
+      if (this.simpleWord.getLexId() == simpleWord.getLexId() &&
+          this.simpleWord.getNormalizedWord().equals(simpleWord.getNormalizedWord())) {
+        result = true;
       }
     }
 

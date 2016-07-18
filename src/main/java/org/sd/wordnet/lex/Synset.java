@@ -101,20 +101,8 @@ public class Synset {
 
     if (this.hasWords()) {
       for (Word word : words) {
-        final Word.Match match = word.matches(simpleWord);
-
-        switch (match) {
-          case WORD_SENSE :
-            result = word;
-            break;
-          case WORD :
-            if (result == null) {
-              result = word;
-            }
-            break;
-        }
-
-        if (match == Word.Match.WORD_SENSE) {
+        if (word.matches(simpleWord)) {
+          result = word;
           break;
         }
       }
@@ -223,7 +211,7 @@ public class Synset {
           append(wordNum++).
           append(": ").
           append(word.getWordName()).
-          append('(').append(word.getNormalizedWord()).append(")\n");
+          append(" (norm=").append(word.getNormalizedWord()).append(")\n");
         if (word.hasPointerDefinitions()) {
           ptrNum = 1;
           result.append("\t\t\tPointers:\n");

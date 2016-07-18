@@ -32,12 +32,14 @@ import org.sd.util.DotWriter;
  */
 public class WordGraph implements DotWriter {
   
+  private List<Synset> synsets;
   private List<PointerInstance> pointers;
   private Map<String, SynsetInfo> synsetName2Info;
   private Map<String, String> graphAttributes;
   private int nextSynsetId = 0;
 
-  public WordGraph(List<PointerInstance> pointers) {
+  public WordGraph(List<Synset> synsets, List<PointerInstance> pointers) {
+    this.synsets = synsets;
     this.pointers = pointers;
     this.synsetName2Info = new LinkedHashMap<String, SynsetInfo>();
     this.graphAttributes = new LinkedHashMap<String, String>();
@@ -46,9 +48,17 @@ public class WordGraph implements DotWriter {
   }
 
   private final void init() {
-    for (PointerInstance pointer : pointers) {
-      init(pointer.getSourceSynset());
-      init(pointer.getTargetSynset());
+    if (synsets != null) {
+      for (Synset synset : synsets) {
+        init(synset);
+      }
+    }
+
+    if (pointers != null) {
+      for (PointerInstance pointer : pointers) {
+        init(pointer.getSourceSynset());
+        init(pointer.getTargetSynset());
+      }
     }
 
     this.graphAttributes.put("compound", "true");
@@ -168,16 +178,9 @@ public class WordGraph implements DotWriter {
 
     final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])), true, true, true);
     final List<Synset> synsets = dict.lookupSynsets(args[1]);
-    if (synsets != null) {
-      final List<PointerInstance> allPointers = new ArrayList<PointerInstance>();
-      for (Synset synset : synsets) {
-        final List<PointerInstance> pointers = dict.getAllPointers(synset);
-        allPointers.addAll(pointers);
-      }
-      if (allPointers.size() > 0) {
-        final WordGraph wordGraph = new WordGraph(allPointers);
-        System.out.println(wordGraph.buildGraph(null));
-      }
-    }
+    final List<PointerInstance> allPointers = dict.getAllPointers(synsets);
+
+    final WordGraph wordGraph = new WordGraph(synsets, allPointers);
+    System.out.println(wordGraph.buildGraph(null));
   }
 }

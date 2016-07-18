@@ -88,7 +88,7 @@ public class SimpleWord {
         lexIdString.append(lastChar);
         while (--lastPos >= 0) {
           lastChar = word.charAt(lastPos);
-          if (Character.isDigit(word.charAt(lastPos))) {
+          if (Character.isDigit(lastChar)) {
             lexIdString.insert(0, lastChar);
           }
           else {
@@ -101,7 +101,7 @@ public class SimpleWord {
       if (lastChar == ')') {
         final int lpPos = word.lastIndexOf('(', lastPos - 1);
         if (lpPos >= 0) {
-          this.marker = word.substring(lpPos);
+          this.marker = word.substring(lpPos, lastPos + 1);
           //word = word.substring(0, lpPos);
           lastPos = lpPos - 1;
           lastChar = word.charAt(lastPos);
@@ -113,7 +113,7 @@ public class SimpleWord {
         lexIdString.append(lastChar);
         while (--lastPos >= 0) {
           lastChar = word.charAt(lastPos);
-          if (Character.isDigit(word.charAt(lastPos))) {
+          if (Character.isDigit(lastChar)) {
             lexIdString.insert(0, lastChar);
           }
           else {

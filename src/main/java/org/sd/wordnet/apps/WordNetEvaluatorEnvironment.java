@@ -35,7 +35,7 @@ import org.sd.wordnet.util.NormalizeUtil;
 import org.sd.xml.DataProperties;
 
 /**
- * An EvaluatorEnvironment for interacting with WordNet.
+ * An EvaluatorEnvironment for interacting with WordNet through a CommandEvaluator.
  * <p>
  * @author Spencer Koehler
  */
