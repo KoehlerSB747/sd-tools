@@ -28,19 +28,23 @@ import java.util.TreeSet;
  */
 public class Word {
   
+  private Synset synset;
   private SimpleWord simpleWord;
   private List<PointerDefinition> pointers;
   private List<Integer> frames;
 
   public Word() {
+    this.synset = null;
     this.simpleWord = null;
     this.pointers = null;
     this.frames = null;
   }
 
-  public Word(SimpleWord simpleWord) {
+  public Word(Synset synset, SimpleWord simpleWord) {
+    this.synset = synset;
     this.simpleWord = simpleWord;
     this.pointers = null;
+    this.frames = null;
   }
 
   public String getWordName() {
@@ -84,6 +88,18 @@ public class Word {
     }
 
     return result;
+  }
+
+  public boolean hasSynset() {
+    return synset != null;
+  }
+
+  public void setSynset(Synset synset) {
+    this.synset = synset;
+  }
+
+  public Synset getSynset() {
+    return synset;
   }
 
   public boolean hasSimpleWord() {

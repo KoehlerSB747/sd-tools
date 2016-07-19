@@ -18,6 +18,7 @@ package org.sd.wordnet.lex;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.sd.wordnet.util.FormatHelper;
 import org.sd.wordnet.util.StringDecoder;
 
 /**
@@ -92,7 +93,7 @@ public class Synset {
 
   public void addWord(SimpleWord simpleWord) {
     if (simpleWord != null) {
-      words.add(new Word(simpleWord));
+      words.add(new Word(this, simpleWord));
     }
   }
 
@@ -170,12 +171,27 @@ public class Synset {
   }
 
   public String getDescription() {
+    return getDescription(null, null, null, null, null);
+  }
+
+  public String getDescription(
+    FormatHelper<Synset> synsetNameFmt,
+    FormatHelper<String> glossFmt,
+    FormatHelper<PointerDefinition> pointerFmt,
+    FormatHelper<Integer> frameFmt,
+    FormatHelper<Word> wordFmt) {
+
     final StringBuilder result = new StringBuilder();
 
-    result.append(this.toString()).append("\n");
+    result.
+      append(synsetNameFmt == null ? this.toString() : synsetNameFmt.format(this)).
+      append("\n");
 
     if (this.hasGloss()) {
-      result.append("\tgloss: ").append(gloss).append('\n');
+      result.
+        append("\tgloss: ").
+        append(glossFmt == null ? gloss : glossFmt.format(gloss)).
+        append('\n');
     }
 
     int ptrNum = 1;
@@ -186,7 +202,7 @@ public class Synset {
           append("\t\t").
           append(ptrNum++).
           append(": ").
-          append(pointer.getFormattedPointerDefinition()).
+          append(pointerFmt == null ? pointer.getFormattedPointerDefinition() : pointerFmt.format(pointer)).
           append('\n');
       }
     }
@@ -196,7 +212,12 @@ public class Synset {
       result.append("\tFrames: ");
       for (Integer frame : frames) {
         if (frmNum > 0) result.append(", ");
-        result.append(frame);
+        if (frameFmt == null) {
+          result.append(frame);
+        }
+        else {
+          result.append(frameFmt.format(frame));
+        }
         ++frmNum;
       }
       result.append("\n");
@@ -209,9 +230,18 @@ public class Synset {
         result.
           append("\t\t").
           append(wordNum++).
-          append(": ").
-          append(word.getWordName()).
-          append(" (norm=").append(word.getNormalizedWord()).append(")\n");
+          append(": ");
+
+        if (wordFmt == null) {
+          result.
+            append(word.getWordName()).
+            append(" (norm=").append(word.getNormalizedWord()).
+            append(")\n");
+        }
+        else {
+          result.append(wordFmt.format(word));
+        }
+
         if (word.hasPointerDefinitions()) {
           ptrNum = 1;
           result.append("\t\t\tPointers:\n");
@@ -220,7 +250,7 @@ public class Synset {
               append("\t\t\t\t").
               append(ptrNum++).
               append(": ").
-              append(pointer.getFormattedPointerDefinition()).
+              append(pointerFmt == null ? pointer.getFormattedPointerDefinition() : pointerFmt.format(pointer)).
               append('\n');
           }
         }
@@ -229,7 +259,12 @@ public class Synset {
           result.append("\t\t\tFrames: ");
           for (Integer frame : frames) {
             if (frmNum > 0) result.append(", ");
-            result.append(frame);
+            if (frameFmt == null) {
+              result.append(frame);
+            }
+            else {
+              result.append(frameFmt.format(frame));
+            }
             ++frmNum;
           }
           result.append("\n");

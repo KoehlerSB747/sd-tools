@@ -35,6 +35,13 @@ public class SimpleWord {
     this.lexId = 0;
   }
 
+  public SimpleWord(String formattedWord) {
+    this();
+    
+    // word (marker)? lex_id?,
+    this.setWord(formattedWord);
+  }
+
   public String getFormattedWord() {
     return formattedWord;
   }
@@ -68,7 +75,7 @@ public class SimpleWord {
     return word;
   }
 
-  public void setWord(String word) {
+  public final void setWord(String word) {
     this.formattedWord = word;
     this.word = fixWord(word);
   }

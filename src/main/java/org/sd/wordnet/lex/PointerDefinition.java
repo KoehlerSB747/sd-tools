@@ -23,6 +23,17 @@ package org.sd.wordnet.lex;
  */
 public class PointerDefinition {
   
+  private static long nextUID = 0;
+  private static final Object uidMutex = new Object();
+  private static final long getNextUID() {
+    long result = 0L;
+    synchronized (uidMutex) {
+      result = nextUID++;
+    }
+    return result;
+  }
+
+  private long uid;
   private String lexFileName;
   private SimpleWord headWord;
   private SimpleWord satelliteWord;
@@ -30,11 +41,54 @@ public class PointerDefinition {
   private String _formattedPointerDefinition;
 
   public PointerDefinition() {
+    this.uid = getNextUID();
     this.lexFileName = null;
     this.headWord = null;
     this.satelliteWord = null;
     this.pointerSymbol = null;
     this._formattedPointerDefinition = null;
+  }
+
+  public PointerDefinition(String formattedPtr) {
+    this();
+
+    // lex_filename:? headWord lex_id? ^? satelliteWord? lex_id? , pointer_symbol
+    final int commaPos = formattedPtr.indexOf(',');
+    if (commaPos < 0) {
+      final boolean stopHere = true;
+    }
+
+    // decode pointerSymbol
+    this.pointerSymbol = formattedPtr.substring(commaPos + 1);
+    formattedPtr = formattedPtr.substring(0, commaPos);
+
+    // decode satelliteWord
+    final int caretPos = formattedPtr.indexOf('^');
+    if (caretPos >= 0) {
+      final String satelliteText = formattedPtr.substring(caretPos + 1);
+      this.satelliteWord = new SimpleWord(satelliteText);
+
+      formattedPtr = formattedPtr.substring(0, caretPos);
+    }
+
+    // decode lexFileName
+    final int colonPos = formattedPtr.indexOf(':');
+    if (colonPos >= 0) {
+      final String lexFileName = formattedPtr.substring(0, colonPos);
+      this.lexFileName = lexFileName;
+
+      formattedPtr = formattedPtr.substring(colonPos + 1);
+    }
+
+    // decode headWord
+    this.headWord = new SimpleWord(formattedPtr);
+  }
+
+  /**
+   * Get a globally unique ID for this pointer definition.
+   */
+  public long getUID() {
+    return uid;
   }
 
   public boolean hasLexFileName() {

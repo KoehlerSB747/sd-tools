@@ -48,6 +48,10 @@ public class PointerInstance {
     this.targetSatelliteWord = targetSatelliteWord;
   }
 
+  public long getUID() {
+    return pointerDef.getUID();
+  }
+
   public boolean hasSourceSynset() {
     return sourceSynset != null;
   }
@@ -98,6 +102,10 @@ public class PointerInstance {
 
   public boolean hasTargetWord() {
     return targetWord != null;
+  }
+
+  public Word getSpecificTarget() {
+    return targetSatelliteWord != null ? targetSatelliteWord : targetWord;
   }
 
   public Word getTargetWord() {

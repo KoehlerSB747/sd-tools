@@ -178,7 +178,7 @@ public class WordGraph implements DotWriter {
 
     final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])), true, true, true);
     final List<Synset> synsets = dict.lookupSynsets(args[1]);
-    final List<PointerInstance> allPointers = dict.getAllPointers(synsets);
+    final List<PointerInstance> allPointers = dict.getAllPointers(null, synsets);
 
     final WordGraph wordGraph = new WordGraph(synsets, allPointers);
     System.out.println(wordGraph.buildGraph(null));

@@ -76,33 +76,57 @@ public class LexDictionary {
   }
 
 
-  public List<PointerInstance> getAllPointers(List<Synset> synsets) {
-    final List<PointerInstance> result = new ArrayList<PointerInstance>();
+  /**
+   * Collect all of the pointers from the synsets and their words to other words.
+   * 
+   * @param result  Container to which pointers will be added (ok if null)
+   * @param synsets  The synsets whose synset and word pointers to follow
+   *
+   * @return the result
+   */
+  public List<PointerInstance> getAllPointers(List<PointerInstance> result, List<Synset> synsets) {
+    if (result == null) result = new ArrayList<PointerInstance>();
     if (synsets != null) {
       for (Synset synset : synsets) {
-        result.addAll(getAllPointers(synset));
+        getAllPointers(result, synset);
       }
     }
     return result;
   }
 
-  public List<PointerInstance> getAllPointers(Synset synset) {
-    final List<PointerInstance> result = new ArrayList<PointerInstance>();
+  /**
+   * Collect all of the pointers from the synset and its words to other words.
+   * 
+   * @param result  Container to which pointers will be added (ok if null)
+   * @param synset  The synset whose synset and word pointers to follow
+   *
+   * @return the result
+   */
+  public List<PointerInstance> getAllPointers(List<PointerInstance> result, Synset synset) {
+    if (result == null) result = new ArrayList<PointerInstance>();
 
     // compute pointers from synset as a whole
-    result.addAll(getSynsetPointers(synset));
+    getSynsetPointers(result, synset);
 
     // compute pointers from each synset word
-    result.addAll(getWordPointers(synset));
+    getWordPointers(result, synset);
 
     return result;
   }
 
-  public List<PointerInstance> getSynsetPointers(Synset synset) {
-    final List<PointerInstance> result = new ArrayList<PointerInstance>();
+  /**
+   * Collect all of the pointers from the synset (not its words) to other words.
+   * 
+   * @param result  Container to which pointers will be added (ok if null)
+   * @param synset  The synset whose synset pointers to follow
+   *
+   * @return the result
+   */
+  public List<PointerInstance> getSynsetPointers(List<PointerInstance> result, Synset synset) {
+    if (result == null) result = new ArrayList<PointerInstance>();
 
     // compute pointers from synset as a whole
-    if (synset.hasPointerDefinitions()) {
+    if (synset != null && synset.hasPointerDefinitions()) {
       for (PointerDefinition pointerDef : synset.getPointerDefinitions()) {
         findPointers(result, synset, null, pointerDef);
       }
@@ -111,44 +135,81 @@ public class LexDictionary {
     return result;
   }
 
-  public List<PointerInstance> getWordPointers(Synset synset) {
-    return getWordPointers(synset, null);
-  }
-
-  public List<PointerInstance> getWordPointers(Synset synset, Word theWord) {
-    final List<PointerInstance> result = new ArrayList<PointerInstance>();
+  /**
+   * Collect all of the pointers from words within the synset.
+   * 
+   * @param result  Container to which pointers will be added (ok if null)
+   * @param synset  The synset whose word pointers to follow
+   *
+   * @return the result
+   */
+  public List<PointerInstance> getWordPointers(List<PointerInstance> result, Synset synset) {
+    if (result == null) result = new ArrayList<PointerInstance>();
 
     // compute pointers from each synset word
     if (synset.hasWords()) {
       for (Word word : synset.getWords()) {
-        if (theWord == null || theWord.matches(word)) {
-          if (word.hasPointerDefinitions()) {
-            for (PointerDefinition pointerDef : word.getPointerDefinitions()) {
-              findPointers(result, synset, word, pointerDef);
-            }
-          }
-        }
+        getPointers(result, word);
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Get the pointers from the given word (not including pointers from the
+   * word's synset).
+   * 
+   * @param result  Container to which pointers will be added (ok if null)
+   * @param word  The word whose pointers to follow
+   *
+   * @return the result
+   */
+  public List<PointerInstance> getPointers(List<PointerInstance> result, Word word) {
+    if (result == null) result = new ArrayList<PointerInstance>();
+
+    if (word != null && word.hasPointerDefinitions()) {
+      for (PointerDefinition pointerDef : word.getPointerDefinitions()) {
+        findPointers(result, word.getSynset(), word, pointerDef);
       }
     }
 
     return result;
   }
 
-  public List<PointerInstance> getNextPointers(PointerInstance pointer) {
-    final List<PointerInstance> result = new ArrayList<PointerInstance>();
+  /**
+   * Get all pointers from the given word, including pointers from the
+   * word's synset.
+   *
+   * @param result  Container to which pointers will be added (ok if null)
+   * @param word  The word whose pointers to follow
+   *
+   * @return the result
+   */
+  public List<PointerInstance> getAllPointers(List<PointerInstance> result, Word word) {
+    if (result == null) result = new ArrayList<PointerInstance>();
 
-    // Collect the targetSynset's pointers and the targetWord's (or targetSatelliteWord's) pointers
-    if (pointer.hasTargetSynset()) {
-      final Synset targetSynset = pointer.getTargetSynset();
-      result.addAll(getSynsetPointers(targetSynset));
-
-      if (pointer.hasTargetSatelliteWord()) {
-        result.addAll(getWordPointers(targetSynset, pointer.getTargetSatelliteWord()));
-      }
-      else if (pointer.hasTargetWord()) {
-        result.addAll(getWordPointers(targetSynset, pointer.getTargetWord()));
-      }
+    if (word != null && word.hasSynset()) {
+      getSynsetPointers(result, word.getSynset());
     }
+    getPointers(result, word);
+
+    return result;
+  }
+
+  /**
+   * Get all pointers (synset and word) from the satellite or target of the
+   * given pointer.
+   * 
+   * @param result  Container to which pointers will be added (ok if null)
+   * @param word  The word whose pointers to follow
+   *
+   * @return the result
+   */
+  public List<PointerInstance> getNextPointers(List<PointerInstance> result, PointerInstance pointer) {
+    if (result == null) result = new ArrayList<PointerInstance>();
+
+    getAllPointers(result, pointer.getSpecificTarget());
 
     return result;
   }
@@ -157,9 +218,12 @@ public class LexDictionary {
     if (result == null) result = new ArrayList<PointerInstance>();
 
     if (pointerDef != null && pointerDef.hasHeadWord()) {
+      if (sourceSynset == null) sourceSynset = sourceWord.getSynset();
       final List<Synset> targetSynsets = lookupSynsets(pointerDef.getHeadWord().getNormalizedWord());
       if (targetSynsets != null) {
-        final String targetLexFileName = pointerDef.hasLexFileName() ? pointerDef.getLexFileName() : sourceSynset.getLexFileName();
+        final String targetLexFileName =
+          pointerDef.hasLexFileName() ? pointerDef.getLexFileName() :
+          sourceSynset != null ? sourceSynset.getLexFileName() : null;
         for (Synset targetSynset : targetSynsets) {
           boolean gotit = false;
           if (targetLexFileName.equals(targetSynset.getLexFileName())) {

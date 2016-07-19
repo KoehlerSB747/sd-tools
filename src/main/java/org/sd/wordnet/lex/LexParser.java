@@ -62,6 +62,7 @@ public class LexParser {
           else if (innerSegInfo.getStartChar() == '[') {  // segment has [word/pointer]
             // [ word (marker)? lex_id?, pointer* frame* ]
             final Word word = buildWordWithPointer(innerSegInfo);
+            word.setSynset(result);  // backpointer
             result.addWord(word);
           }
           else if (innerSegInfo.getAllText().endsWith(",")) {  // segment has simple word
@@ -143,49 +144,11 @@ public class LexParser {
   }
 
   static final SimpleWord buildSimpleWord(String text) {
-    final SimpleWord result = new SimpleWord();
-
-    // word (marker)? lex_id?,
-    result.setWord(text);
-
-    return result;
+    return new SimpleWord(text);
   }
 
   static final PointerDefinition buildPointerDefinition(String text) {
-    final PointerDefinition result = new PointerDefinition();
-
-    // lex_filename:? headWord lex_id? ^? satelliteWord? lex_id? , pointer_symbol
-    final int commaPos = text.indexOf(',');
-    if (commaPos < 0) {
-      final boolean stopHere = true;
-    }
-
-    // decode pointerSymbol
-    result.setPointerSymbol(text.substring(commaPos + 1));
-    text = text.substring(0, commaPos);
-
-    // decode satelliteWord
-    final int caretPos = text.indexOf('^');
-    if (caretPos >= 0) {
-      final String satelliteText = text.substring(caretPos + 1);
-      result.setSatelliteWord(buildSimpleWord(satelliteText));
-
-      text = text.substring(0, caretPos);
-    }
-
-    // decode lexFileName
-    final int colonPos = text.indexOf(':');
-    if (colonPos >= 0) {
-      final String lexFileName = text.substring(0, colonPos);
-      result.setLexFileName(lexFileName);
-
-      text = text.substring(colonPos + 1);
-    }
-
-    // decode headWord
-    result.setHeadWord(buildSimpleWord(text));
-
-    return result;
+    return new PointerDefinition(text);
   }
 
   static final List<Integer> getFrameNums(StringDecoder.SegmentInfo segmentInfo) {
