@@ -242,7 +242,7 @@ public class ExpandedWord {
           String result = null;
           final PointerDefinition ptrDef= node.getData().sourcePtr;
           if (ptrDef != null) {
-            result = node.getData().sourcePtr.getPointerSymbol();
+            result = node.getData().sourcePtr.getDotNormalizedPointerSymbol();
           }
           return result;
         }

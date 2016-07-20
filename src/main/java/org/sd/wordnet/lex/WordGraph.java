@@ -184,8 +184,7 @@ public class WordGraph implements DotWriter {
   }
 
   private final String escapedPtrSymbol(PointerInstance pointer) {
-    final String result = pointer.getPointerDef().getPointerSymbol();
-    return "\\".equals(result) ? "\\\\" : result;
+    return pointer.getPointerDef().getDotNormalizedPointerSymbol();
   }
 
 

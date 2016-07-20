@@ -135,6 +135,10 @@ public class PointerDefinition {
     return pointerSymbol;
   }
 
+  public String getDotNormalizedPointerSymbol() {
+    return "\\".equals(pointerSymbol) ? "\\\\" : pointerSymbol;
+  }
+
   public void setPointerSymbol(String pointerSymbol) {
     this.pointerSymbol = pointerSymbol;
   }
