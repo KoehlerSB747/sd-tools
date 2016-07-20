@@ -18,6 +18,7 @@ package org.sd.wordnet.lex;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.sd.wordnet.util.FormatHelper;
 import org.sd.wordnet.util.StringDecoder;
 
@@ -171,10 +172,11 @@ public class Synset {
   }
 
   public String getDescription() {
-    return getDescription(null, null, null, null, null);
+    return getDescription(false, null, null, null, null, null);
   }
 
   public String getDescription(
+    boolean htmlSafe,
     FormatHelper<Synset> synsetNameFmt,
     FormatHelper<String> glossFmt,
     FormatHelper<PointerDefinition> pointerFmt,
@@ -184,13 +186,13 @@ public class Synset {
     final StringBuilder result = new StringBuilder();
 
     result.
-      append(synsetNameFmt == null ? this.toString() : synsetNameFmt.format(this)).
+      append(synsetNameFmt == null ? fix(htmlSafe, this.toString()) : synsetNameFmt.format(this)).
       append("\n");
 
     if (this.hasGloss()) {
       result.
         append("\tgloss: ").
-        append(glossFmt == null ? gloss : glossFmt.format(gloss)).
+        append(glossFmt == null ? fix(htmlSafe, gloss) : glossFmt.format(gloss)).
         append('\n');
     }
 
@@ -202,7 +204,7 @@ public class Synset {
           append("\t\t").
           append(ptrNum++).
           append(": ").
-          append(pointerFmt == null ? pointer.getFormattedPointerDefinition() : pointerFmt.format(pointer)).
+          append(pointerFmt == null ? fix(htmlSafe, pointer.getFormattedPointerDefinition()) : pointerFmt.format(pointer)).
           append('\n');
       }
     }
@@ -235,11 +237,11 @@ public class Synset {
         if (wordFmt == null) {
           result.
             append(word.getWordName()).
-            append(" (norm=").append(word.getNormalizedWord()).
+            append(" (norm=").append(fix(htmlSafe, word.getNormalizedWord())).
             append(")\n");
         }
         else {
-          result.append(wordFmt.format(word));
+          result.append(wordFmt.format(word)).append("\n");
         }
 
         if (word.hasPointerDefinitions()) {
@@ -250,7 +252,7 @@ public class Synset {
               append("\t\t\t\t").
               append(ptrNum++).
               append(": ").
-              append(pointerFmt == null ? pointer.getFormattedPointerDefinition() : pointerFmt.format(pointer)).
+              append(pointerFmt == null ? fix(htmlSafe, pointer.getFormattedPointerDefinition()) : pointerFmt.format(pointer)).
               append('\n');
           }
         }
@@ -273,5 +275,9 @@ public class Synset {
     }
 
     return result.toString();
+  }
+
+  private final String fix(boolean htmlSafe, String string) {
+    return htmlSafe ? StringEscapeUtils.escapeHtml(string) : string;
   }
 }

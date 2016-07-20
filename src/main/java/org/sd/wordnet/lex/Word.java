@@ -57,6 +57,17 @@ public class Word {
     return result;
   }
 
+  public String getQualifiedWordName() {
+    final StringBuilder result = new StringBuilder();
+
+    if (synset != null && synset.hasLexFileName()) {
+      result.append(synset.getLexFileName()).append(':');
+    }
+    result.append(getWordName());
+
+    return result.toString();
+  }
+
   public String getNormalizedWord() {
     String result = null;
                         

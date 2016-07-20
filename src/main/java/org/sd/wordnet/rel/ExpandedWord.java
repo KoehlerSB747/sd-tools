@@ -23,7 +23,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.sd.util.DotWriter;
 import org.sd.util.tree.Tree;
+import org.sd.util.tree.TreeAnalyzer;
+import org.sd.util.tree.Tree2Dot;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.lex.PointerDefinition;
 import org.sd.wordnet.lex.PointerInstance;
@@ -40,6 +43,7 @@ public class ExpandedWord {
 
   private Tree<PointerData> tree;
   private Map<String, Tree<PointerData>> nodeMap;
+  private DotWriter _dotWriter;
 
   public ExpandedWord(Word rootWord, LexDictionary dict) {
     this.nodeMap = new HashMap<String, Tree<PointerData>>();
@@ -61,6 +65,12 @@ public class ExpandedWord {
     }
 
     result = new Tree<PointerData>(ptrData);
+    if (parent != null) {
+      parent.addChild(result);
+    }
+    if (existing != null) {
+      existing.prune(true, true);
+    }
 
     this.nodeMap.put(wordName, result);
     expand(result, dict);
@@ -94,6 +104,12 @@ public class ExpandedWord {
     return nodeMap;
   }
 
+  public DotWriter getDotWriter() {
+    if (_dotWriter == null) {
+      _dotWriter = buildDotWriter();
+    }
+    return _dotWriter;
+  }
   //todo: create/return a graph representing the tree
 
   /**
@@ -213,6 +229,25 @@ public class ExpandedWord {
     }
 
     return result;
+  }
+
+  private final DotWriter buildDotWriter() {
+    final Tree2Dot.LabelMaker<PointerData> nodeLabelMaker = new Tree2Dot.LabelMaker<PointerData>() {
+        public String makeLabel(Tree<PointerData> node, TreeAnalyzer<PointerData> treeAnalyzer) {
+          return node.getData().word.getQualifiedWordName();
+        }
+      };
+    final Tree2Dot.LabelMaker<PointerData> edgeLabelMaker = new Tree2Dot.LabelMaker<PointerData>() {
+        public String makeLabel(Tree<PointerData> node, TreeAnalyzer<PointerData> treeAnalyzer) {
+          String result = null;
+          final PointerDefinition ptrDef= node.getData().sourcePtr;
+          if (ptrDef != null) {
+            result = node.getData().sourcePtr.getPointerSymbol();
+          }
+          return result;
+        }
+      };
+    return new Tree2Dot<PointerData>(tree, null, nodeLabelMaker, edgeLabelMaker);
   }
 
 

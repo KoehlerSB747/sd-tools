@@ -36,6 +36,8 @@ public class WordGraph implements DotWriter {
   private List<PointerInstance> pointers;
   private Map<String, SynsetInfo> synsetName2Info;
   private Map<String, String> graphAttributes;
+  private Map<String, String> nodeAttributes;
+  private Map<String, String> edgeAttributes;
   private int nextSynsetId = 0;
 
   public WordGraph(List<Synset> synsets, List<PointerInstance> pointers) {
@@ -43,6 +45,8 @@ public class WordGraph implements DotWriter {
     this.pointers = pointers;
     this.synsetName2Info = new LinkedHashMap<String, SynsetInfo>();
     this.graphAttributes = new LinkedHashMap<String, String>();
+    this.nodeAttributes = new LinkedHashMap<String, String>();
+    this.edgeAttributes = new LinkedHashMap<String, String>();
 
     init();
   }
@@ -61,9 +65,11 @@ public class WordGraph implements DotWriter {
       }
     }
 
-    this.graphAttributes.put("compound", "true");
-    this.graphAttributes.put("rankdir", "LR");
-    this.graphAttributes.put("fontsize", "8");
+    setAttribute("compound", "true");
+    setAttribute("rankdir", "LR");
+    setAttribute("fontsize", "9");
+    setAttribute("node:fontsize", "12");
+    setAttribute("edge:fontsize", "11");
   }
 
   private final void init(Synset synset) {
@@ -76,8 +82,19 @@ public class WordGraph implements DotWriter {
     }
   }
 
-  public final void setNodeAttribute(String nodeAttributeKey, String nodeAttributeValue) {
-    graphAttributes.put(nodeAttributeKey, nodeAttributeValue);
+  public final void setAttribute(String key, String value) {
+    // key=value       -- graphAttribute
+    // node:key=value  -- nodeAttribute
+    // edge:key=value  -- edgeAttribute
+    if (key.startsWith("node:")) {
+      nodeAttributes.put(key.substring(5), value);
+    }
+    else if (key.startsWith("edge:")) {
+      edgeAttributes.put(key.substring(5), value);
+    }
+    else {
+      graphAttributes.put(key, value);
+    }
   }
 
   public void writeDot(Writer writer) throws IOException {
@@ -99,6 +116,26 @@ public class WordGraph implements DotWriter {
         append('=').
         append(attributeEntry.getValue()).
         append(";\n");
+    }
+
+    if (nodeAttributes.size() > 0) {
+      result.append("  node [");
+      boolean didFirst = false;
+      for (Map.Entry<String, String> nodeEntry : nodeAttributes.entrySet()) {
+        if (didFirst) result.append(", ");
+        result.append(nodeEntry.getKey()).append('=').append(nodeEntry.getValue());
+      }
+      result.append("];\n");
+    }
+
+    if (edgeAttributes.size() > 0) {
+      result.append("  edge [");
+      boolean didFirst = false;
+      for (Map.Entry<String, String> edgeEntry : edgeAttributes.entrySet()) {
+        if (didFirst) result.append(", ");
+        result.append(edgeEntry.getKey()).append('=').append(edgeEntry.getValue());
+      }
+      result.append("];\n");
     }
 
     for (Map.Entry<String, SynsetInfo> infoEntry : synsetName2Info.entrySet()) {
@@ -134,7 +171,7 @@ public class WordGraph implements DotWriter {
       result.
         append("  word").append(info1.synsetId).append("_").append(wordId1).
         append(" -> word").append(info2.synsetId).append("_").append(wordId2).
-        append(" [label=\"").append(pointer.getPointerDef().getPointerSymbol()).append("\"");
+        append(" [label=\"").append(escapedPtrSymbol(pointer)).append("\"");
       if (!pointer.hasSourceWord()) {
         result.append(", ltail=cluster").append(info1.synsetId);
       }
@@ -144,6 +181,11 @@ public class WordGraph implements DotWriter {
     result.append("}\n");
 
     return result;
+  }
+
+  private final String escapedPtrSymbol(PointerInstance pointer) {
+    final String result = pointer.getPointerDef().getPointerSymbol();
+    return "\\".equals(result) ? "\\\\" : result;
   }
 
 

@@ -26,8 +26,26 @@ import java.io.Writer;
  */
 public interface DotWriter {
   
-  public void setNodeAttribute(String nodeAttributeKey, String nodeAttributeValue);
+  /**
+   * Set a graph, node, or edge attribute.
+   * <ul>
+   * <li>if key.startsWith("node:"), then set a node attribute e.g. "node:fontsize=9"</li>
+   * <li>else if key.startsWith("edge:"), then set an edge attribute e.g., "edge:fontsize=9"</li>
+   * <li>else, set a graph attribute e.g. "fontsize=9"</li>
+   * </ul>
+   *
+   * @param key  The key
+   * @param value  The value
+   */
+  public void setAttribute(String key, String value);
 
+  /**
+   * Write the dot output to the writer.
+   *
+   * @param writer  the writer to write to
+   *
+   * @throws IOException
+   */
   public void writeDot(Writer writer) throws IOException;
 
 }

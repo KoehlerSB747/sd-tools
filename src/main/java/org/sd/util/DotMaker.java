@@ -65,6 +65,31 @@ public abstract class DotMaker implements DotWriter {
   }
 
   /**
+   * Set a graph, node, or edge attribute.
+   * <ul>
+   * <li>if key.startsWith("node:"), then set a node attribute e.g. "node:fontsize=9"</li>
+   * <li>else if key.startsWith("edge:"), then set an edge attribute e.g., "edge:fontsize=9"</li>
+   * <li>else, set a graph attribute e.g. "fontsize=9"</li>
+   * </ul>
+   *
+   * @param key  The key
+   * @param value  The value
+   */
+  public void setAttribute(String key, String value) {
+    if (key != null) {
+      if (key.startsWith("node:")) {
+        setNodeAttribute(key.substring(5), value);
+      }
+      else if (key.startsWith("edge:")) {
+        setEdgeAttribute(key.substring(5), value);
+      }
+      else {
+        setGraphAttribute(key, value);
+      }
+    }
+  }
+
+  /**
    * Set a nodeAttribute.
    */
   public final void setNodeAttribute(String nodeAttributeKey, String nodeAttributeValue) {
@@ -230,6 +255,9 @@ public abstract class DotMaker implements DotWriter {
     writeAttributeEntries(writer, graphAttributes);
     writer.write("  node [");
     writeAttributesList(writer, nodeAttributes, false);
+    writer.write("];\n");
+    writer.write("  edge [");
+    writeAttributesList(writer, edgeAttributes, false);
     writer.write("];\n\n");
     //todo: setup for proper formatting
   }
@@ -293,15 +321,11 @@ public abstract class DotMaker implements DotWriter {
 
         final StringBuilder edgeString = new StringBuilder();
         edgeString.append(fromNode).append(" -> ").append(toNode);
-        if (edgeLabel != null || edgeAttributes != null) {
-          edgeString.append(" [");
-          if (edgeLabel != null) {
-            edgeString.append("label=\"").append(edgeLabel).append("\"");
-          }
-          if (edgeAttributes != null) {
-            collectAttributesList(edgeString, edgeAttributes, edgeLabel != null);
-          }
-          edgeString.append("]");
+        if (edgeLabel != null) {
+          edgeString.
+            append(" [").
+            append("label=\"").append(edgeLabel).append("\"").
+            append("]");
         }
         edgeString.append(";\n");
 

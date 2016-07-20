@@ -42,18 +42,24 @@ public class Tree2Dot <T> extends DotMaker {
   
   private Tree<T> tree;
   private TreeAnalyzer<T> treeAnalyzer;
-  private LabelMaker<T> labelMaker;
+  private LabelMaker<T> nodeLabelMaker;
+  private LabelMaker<T> edgeLabelMaker;
 
   public Tree2Dot(Tree<T> tree) {
-    this(tree, null, null);
+    this(tree, null, null, null);
   }
 
-  public Tree2Dot(Tree<T> tree, TreeAnalyzer<T> treeAnalyzer, LabelMaker<T> labelMaker) {
+  public Tree2Dot(Tree<T> tree, TreeAnalyzer<T> treeAnalyzer, LabelMaker<T> nodeLabelMaker) {
+    this(tree, treeAnalyzer, nodeLabelMaker, null);
+  }
+
+  public Tree2Dot(Tree<T> tree, TreeAnalyzer<T> treeAnalyzer, LabelMaker<T> nodeLabelMaker, LabelMaker<T> edgeLabelMaker) {
     super();
 
     this.tree = tree;
     this.treeAnalyzer = treeAnalyzer;
-    this.labelMaker = labelMaker;
+    this.nodeLabelMaker = nodeLabelMaker;
+    this.edgeLabelMaker = edgeLabelMaker;
   }
 
   protected final void populateEdges() {
@@ -71,7 +77,8 @@ public class Tree2Dot <T> extends DotMaker {
     if (children != null && children.size() > 0) {
       for (Tree<T> child : children) {
         final int childId = addId2Label(child);
-        addEdge(nodeId, childId);
+        final String edgeLabel = (edgeLabelMaker != null) ? edgeLabelMaker.makeLabel(child, treeAnalyzer) : null;
+        addEdge(nodeId, childId, edgeLabel);
         populateEdges(child, childId);
       }
     }
@@ -79,7 +86,7 @@ public class Tree2Dot <T> extends DotMaker {
 
   private final String getLabel(Tree<T> node) {
     final T data = node.getData();
-    final String result = (labelMaker == null) ? (data == null ? null : data.toString()) : labelMaker.makeLabel(node, treeAnalyzer);
+    final String result = (nodeLabelMaker == null) ? (data == null ? null : data.toString()) : nodeLabelMaker.makeLabel(node, treeAnalyzer);
     return (result == null) ? "<null>" : result;
   }
 
