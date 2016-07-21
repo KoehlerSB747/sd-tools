@@ -111,6 +111,7 @@ public class LongestParseSelector implements AtnParseSelector {
     catch (IllegalArgumentException e) {
       //TODO: simplify ParseData compare so this doesn't happen.
       //      in the meantime, it seems to happen in inconsequential cases.
+      final boolean stopHere = true;
     }
 
     final Set<Integer> selected = new HashSet<Integer>();
@@ -368,7 +369,7 @@ public class LongestParseSelector implements AtnParseSelector {
             (!simplest || complexity == other.getComplexity()) &&
             skipCount == other.getSkipCount() &&
             (!rulePatternMatch || weight == other.getWeight())) {
-          result = 0;
+          result = getPrefCompare(other);
         }
         else {
           // the parse that skips fewer tokens comes first
