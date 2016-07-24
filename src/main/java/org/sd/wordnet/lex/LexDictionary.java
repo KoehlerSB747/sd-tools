@@ -33,6 +33,7 @@ import java.util.Set;
 public class LexDictionary {
   
   private LexLoader lexLoader;
+  private MorphTool morphTool;
   private boolean loadSynsets;
   private boolean loadAdjClusters;
   private boolean loadLexNames;
@@ -41,8 +42,13 @@ public class LexDictionary {
   private Map<String, List<AdjectiveCluster>> adjClusters;
   private Map<String, Set<String>> lexNames;
 
+  // for morphological derivations
+  private Map<String, List<Synset>> dsynsets;
+  private Map<String, Set<String>> dlexNames;
+
   public LexDictionary(LexLoader lexLoader, boolean loadSynsets, boolean loadAdjClusters, boolean loadLexNames) throws IOException {
     this.lexLoader = lexLoader;
+    this.morphTool = new MorphTool(lexLoader.getDbFileDir().getParentFile());
     this.loadSynsets = loadSynsets;
     this.loadAdjClusters = loadAdjClusters;
     this.loadLexNames = loadLexNames;
@@ -51,8 +57,15 @@ public class LexDictionary {
     this.adjClusters = loadAdjClusters ? new HashMap<String, List<AdjectiveCluster>>() : null;
     this.lexNames = loadLexNames ? new HashMap<String, Set<String>>() : null;
 
+    this.dsynsets = null;
+    this.dlexNames = null;
+
     init();
   }
+
+  Map<String, List<Synset>> getSynsets() { return synsets; }
+  Map<String, List<AdjectiveCluster>> getAdjClusters() { return adjClusters; }
+  Map<String, Set<String>> getLexNames() { return lexNames; }
 
   private final void init() throws IOException {
     final DictionaryEntryHandler handler = new DictionaryEntryHandler(synsets, adjClusters, lexNames);
@@ -64,11 +77,109 @@ public class LexDictionary {
   }
 
   public Set<String> lookupLexNames(String normInput) {
-    return (lexNames != null) ? lexNames.get(normInput) : null;
+    return lookupLexNames(normInput, true);
+  }
+
+  public Set<String> lookupLexNames(String normInput, boolean morph) {
+    if (lexNames == null) return null;
+
+    Set<String> result = lexNames.get(normInput);
+
+    if (morph) {
+      final Set<String> dresult = lookupDerivedLexNames(normInput);
+      if (dresult != null) {
+        if (result != null) {
+          final Set<String> combined = new HashSet<String>(result);
+          combined.addAll(dresult);
+          result = combined;
+        }
+        else {
+          result = dresult;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  public Set<String> lookupDerivedLexNames(String normInput) {
+    Set<String> result = dlexNames == null ? null : dlexNames.get(normInput);
+
+    if (result == null) {
+      for (MorphTool.Derivation derivation : morphTool.deriveBaseForms(normInput)) {
+        final Set<String> dLexNames = lexNames.get(derivation.baseForm);
+        if (dLexNames != null) {
+          if (result != null) result = new HashSet<String>(result);
+          for (String dLexName : dLexNames) {
+            // only add valid, if we have the synsets to verify; else add all
+            if (synsets == null || synsets.containsKey(dLexName)) {
+              if (result == null) result = new HashSet<String>();
+              result.add(dLexName);
+            }
+          }
+
+          if (result != null) {
+            // preserve computation for subsequent lookups
+            if (dlexNames == null) dlexNames = new HashMap<String, Set<String>>();
+            dlexNames.put(normInput, result);
+          }
+        }
+      }
+    }
+
+    return result;
   }
 
   public List<Synset> lookupSynsets(String normInput) {
-    return (synsets != null) ? synsets.get(normInput) : null;
+    return lookupSynsets(normInput, true);
+  }
+
+  public List<Synset> lookupSynsets(String normInput, boolean morph) {
+    if (synsets == null) return null;
+
+    List<Synset> result = synsets.get(normInput);
+
+    if (morph) {
+      final List<Synset> dresult = lookupDerivedSynsets(normInput);
+      if (dresult != null) {
+        if (result != null) {
+          final List<Synset> combined = new ArrayList<Synset>(result);
+          combined.addAll(dresult);
+          result = combined;
+        }
+        else {
+          result = dresult;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  public List<Synset> lookupDerivedSynsets(String normInput) {
+    List<Synset> result = dsynsets == null ? null : dsynsets.get(normInput);
+
+    if (result == null) {
+      for (MorphTool.Derivation derivation : morphTool.deriveBaseForms(normInput)) {
+        final List<Synset> dSynsets = synsets.get(derivation.baseForm);
+        if (dSynsets != null) {
+          for (Synset dSynset : dSynsets) {
+            if (derivation.matchesPOS(dSynset.getLexFileName())) {
+              if (result == null) result = new ArrayList<Synset>();
+              result.add(dSynset);
+            }
+          }
+
+          if (result != null) {
+            // preserve computation for subsequent lookups
+            if (dsynsets == null) dsynsets = new HashMap<String, List<Synset>>();
+            dsynsets.put(normInput, result);
+          }
+        }
+      }
+    }
+    
+    return result;
   }
 
   public List<AdjectiveCluster> lookupAdjectiveClusters(String normInput) {
@@ -245,11 +356,6 @@ public class LexDictionary {
 
     return result;
   }
-
-
-  Map<String, List<Synset>> getSynsets() { return synsets; }
-  Map<String, List<AdjectiveCluster>> getAdjClusters() { return adjClusters; }
-  Map<String, Set<String>> getLexNames() { return lexNames; }
 
 
   private static final class DictionaryEntryHandler implements LexLoader.EntryHandler {

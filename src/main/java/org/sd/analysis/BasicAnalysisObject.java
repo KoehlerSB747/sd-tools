@@ -113,6 +113,16 @@ public class BasicAnalysisObject <T> extends AbstractAnalysisObject {
 
           if (result == null) {
             try {
+              final Long l = Long.parseLong(valueString);
+              result = new NumericAnalysisObject(l, valueString);
+            }
+            catch (NumberFormatException nfe) {
+              //ignore
+            }
+          }
+
+          if (result == null) {
+            try {
               final Double d = Double.parseDouble(valueString);
               result = new NumericAnalysisObject(d, valueString);
             }

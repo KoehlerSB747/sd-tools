@@ -263,26 +263,32 @@ public abstract class DotMaker implements DotWriter {
   }
 
   protected void writeAttributeEntries(Writer writer, Map<String, String> attributes) throws IOException {
-    for (Map.Entry<String, String> entry : attributes.entrySet()) {
-      writer.write("  ");
-      writeAttributeEntry(entry, writer);
-      writer.write(";\n");
+    if (attributes != null) {
+      for (Map.Entry<String, String> entry : attributes.entrySet()) {
+        writer.write("  ");
+        writeAttributeEntry(entry, writer);
+        writer.write(";\n");
+      }
     }
   }
 
   protected void writeAttributesList(Writer writer, Map<String, String> attributes, boolean didOne) throws IOException {
-    for (Map.Entry<String, String> entry : attributes.entrySet()) {
-      if (didOne) writer.write(", ");
-      writeAttributeEntry(entry, writer);
-      didOne = true;
+    if (attributes != null) {
+      for (Map.Entry<String, String> entry : attributes.entrySet()) {
+        if (didOne) writer.write(", ");
+        writeAttributeEntry(entry, writer);
+        didOne = true;
+      }
     }
   }
 
   protected void collectAttributesList(StringBuilder builder, Map<String, String> attributes, boolean didOne) {
-    for (Map.Entry<String, String> entry : attributes.entrySet()) {
-      if (didOne) builder.append(", ");
-      collectAttributeEntry(entry, builder);
-      didOne = true;
+    if (attributes != null) {
+      for (Map.Entry<String, String> entry : attributes.entrySet()) {
+        if (didOne) builder.append(", ");
+        collectAttributeEntry(entry, builder);
+        didOne = true;
+      }
     }
   }
 

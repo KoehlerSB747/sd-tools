@@ -90,4 +90,36 @@ public abstract class AbstractAnalysisObject implements AnalysisObject {
 
     return result;
   }
+
+  public static final int[] asIntValues(AnalysisObject[] argValues, int defaultValue) {
+    if (argValues == null) return null;
+
+    final int[] result = new int[argValues.length];
+
+    for (int i = 0; i < argValues.length; ++i) {
+      int value = defaultValue;
+
+      final AnalysisObject argValue = argValues[i];
+      if (argValue != null) {
+        final NumericAnalysisObject nao = argValue.asNumericAnalysisObject();
+        if (nao != null) {
+          if (nao.isInteger()) {
+            value = nao.getIntegerValue();
+          }
+          else if (nao.isLong()) {
+            final long lvalue = nao.getLongValue();
+            value = (int)lvalue;
+          }
+          else if (nao.isDouble()) {
+            final double dvalue = nao.getDoubleValue();
+            value = (int)dvalue;
+          }
+        }
+
+        result[i] = value;
+      }
+    }
+
+    return result;
+  }
 }
