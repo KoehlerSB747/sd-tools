@@ -22,6 +22,8 @@ import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import org.sd.analysis.AbstractAnalysisObject;
 import org.sd.analysis.AnalysisFunction;
 import org.sd.analysis.AnalysisObject;
@@ -55,7 +57,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
     final File dbFileDir = dataProperties.getFile("dbFileDir", "dir");
     try {
-      this.lexDictionary = new LexDictionary(new LexLoader(dbFileDir), true, true, true);
+      this.lexDictionary = new LexDictionary(new LexLoader(dbFileDir));
     }
     catch (IOException ioe) {
       throw new IllegalArgumentException(ioe);
@@ -65,8 +67,8 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
   @Override
   protected void addMoreFunctions() {
     defineFunction("lookup", new LookupFunction());
-    // defineFunction("graph", new GraphFunction());
-    // defineFunction("verify", new GraphFunction());
+    defineFunction("find", new FindFunction());
+    // defineFunction("verify", new VerifyFunction());
     // defineFunction("anagrams", new AnagramFunction());  -- do WordUnscrambler
   }
 
@@ -86,6 +88,28 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
           final String normInput = NormalizeUtil.normalizeForLookup(input);
           final List<Synset> synsets = lexDictionary.lookupSynsets(normInput);
           result = new SynsetLookupAnalysisObject(input, normInput, synsets);
+        }
+      }
+
+      return result;
+    }
+  }
+
+  final class FindFunction implements AnalysisFunction {
+
+    FindFunction() {
+    }
+
+    @Override
+    public AnalysisObject execute(AnalysisObject[] args) {
+      WordsAnalysisObject result = null;
+
+      if (args != null) {
+        if (args.length >= 1) {
+          final String input = args[0].toString();
+          final String[] parts = input.split(":");
+          final List<Word> words = lexDictionary.findWords(parts.length == 2 ? parts[1] : parts[0], parts.length == 2 ? parts[0] : null);
+          result = new WordsAnalysisObject(input, parts, words);
         }
       }
 
@@ -166,7 +190,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
         final StringBuilder graph = new StringBuilder();
 
         if (hasSynsets()) {
-          final List<PointerInstance> pointers = lexDictionary.getAllPointers(null, synsets);
+          final List<PointerInstance> pointers = lexDictionary.getForwardPointers(null, synsets);
           final WordGraph wordGraph = new WordGraph(synsets, pointers);
           wordGraph.buildGraph(graph);
         }
@@ -307,6 +331,96 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     }
   }
 
+  public final class WordsAnalysisObject extends AbstractAnalysisObject {
+    public final String input;
+    public final String[] parts;
+    public final List<Word> words;
+
+    public WordsAnalysisObject(String input, String[] parts, List<Word> words) {
+      this.input = input;
+      this.parts = parts;
+      this.words = words;
+    }
+
+    public boolean hasWords() {
+      return words != null && words.size() > 0;
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder result = new StringBuilder();
+      result.
+        append("#Words[").append(input).append("]-").append(hasWords() ? words.size() : 0);
+      return result.toString();
+    }
+
+    @Override
+    public String getHelpString() {
+      final StringBuilder result = new StringBuilder();
+      result.
+        append("\"show\" -- show the content of the words.\n").
+        append("\"word[<wordIdx>]\" -- get the identified word.");
+      
+      return result.toString();
+    }
+
+    /** Customization for "show" access. */
+    @Override
+    protected String getShowString() {
+      final StringBuilder result = new StringBuilder();
+
+      if (hasWords()) {
+        result.append("findWords(" + input + ")");
+        int wordIdx = 0;
+        for (Word word : words) {
+          result.append("\n").append(++wordIdx).append(": ").append(word.getSynset().getGloss());
+        }
+      }
+      else {
+        result.append("lookupWords(" + input + ") -- NO DATA");
+      }
+
+      return result.toString();
+    }
+
+    @Override
+    protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
+      AnalysisObject result = null;
+
+      if (ref.startsWith("word")) {
+        // get the word at idx=args[0]
+        Word word = null;
+        final AnalysisObject[] argValues = getArgValues(ref, env);
+        final int[] args = asIntValues(argValues, 0);
+        if (args != null && args.length > 0) {
+          final int idx = Math.max(0, args[0] - 1);
+          if (idx >= 0 && idx < words.size()) {
+            word = words.get(idx);
+          }
+        }
+        else if (words.size() > 0) {
+          word = words.get(0);
+        }
+
+        if (word != null) {
+          result = new WordAnalysisObject(word, null);
+        }
+        else {
+          result = new ErrorAnalysisObject("No such elt");
+        }
+      }
+
+      return result;
+    }
+
+    /** Get a numeric object representing this instance's value if applicable, or null. */
+    @Override
+    public NumericAnalysisObject asNumericAnalysisObject() {
+      return null;
+    }
+  }
+
+
   public final class WordAnalysisObject extends AbstractAnalysisObject {
     public final SynsetAnalysisObject synset;
     public final WordAnalysisObject sourceWord;
@@ -324,7 +438,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       this.synset = synset;
       this.sourceWord = sourceWord;
       this.pointer = pointer;
-      this.pointers = lexDictionary.getAllPointers(null, word);
+      this.pointers = lexDictionary.getForwardPointers(null, word);
       this._expandedWord =  null;
     }
 
@@ -349,8 +463,11 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       final StringBuilder result = new StringBuilder();
       result.
         append("\"show\" -- show the content of this word.\n").
-        append("\"graph\" -- show the word's graph.\n").
         append("\"follow[<ptrIdx>]\" -- follow the identified pointer to its word.\n").
+        append("\"graph[<maxDepth>,<symbolConstraint>,<onlyNames>]\" -- get the word's (dot) graph.\n").
+        append("\"rgraph[<maxDepth>,<symbolConstraint>,<onlyNames>]\" -- get the word's reverse (dot) graph.\n").
+        append("\"hypernyms\" -- get the word's hypernyms.\n").
+        append("\"hyponyms\" -- get the word's hyponyms.\n").
         append("\"back\" -- go back to (get) the synset or word leading here, or get self.");
       
       return result.toString();
@@ -402,19 +519,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
       AnalysisObject result = null;
 
-      if ("graph".equals(ref)) {
-        final ExpandedWord expandedWord = getExpandedWord();
-        final DotWriter dotWriter = expandedWord.getDotWriter();
-        final StringWriter stringWriter = new StringWriter();
-        try {
-          dotWriter.writeDot(stringWriter);
-          result = new BasicAnalysisObject<String>(stringWriter.toString());
-        }
-        catch (IOException ioe) {
-          result = new ErrorAnalysisObject("failed writing graph", ioe);
-        }
-      }
-      else if ("back".equals(ref)) {
+      if ("back".equals(ref)) {
         if (sourceWord != null) {
           result = sourceWord;
         }
@@ -424,6 +529,43 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
         else {
           result = this;
         }
+      }
+      else if ("hypernyms".equals(ref)) {
+        result = doGraphAccess(true, -1, "@", true);
+      }
+      else if ("hyponyms".equals(ref)) {
+        result = doGraphAccess(false, -1, "@", true);
+      }
+      else if (ref.startsWith("graph") || ref.startsWith("rgraph")) {
+        final boolean doGraph = ref.startsWith("graph");
+
+        int maxDepth = -1;
+        String symbolConstraint = null;
+        boolean onlyNamesFlag = false;
+
+        final AnalysisObject[] argValues = getArgValues(ref, env);
+        if (argValues != null) {
+          // maxDepth, symbolConstraint, onlyNamesFlag
+          if (argValues.length > 0) {
+            try {
+              maxDepth = Integer.parseInt(argValues[0].toString());
+            }
+            catch (NumberFormatException nfe) {
+              System.err.println("Error w/maxDepth=" + argValues[0].toString() + ": " + nfe.toString());
+            }
+          }
+          if (argValues.length > 1) {
+            symbolConstraint = argValues[1].toString();
+            if ("".equals(symbolConstraint) || "null".equals(symbolConstraint)) {
+              symbolConstraint = null;
+            }
+          }
+          if (argValues.length > 2) {
+            onlyNamesFlag = "true".equals(argValues[3].toString());
+          }
+        }
+
+        result = doGraphAccess(doGraph, maxDepth, symbolConstraint, onlyNamesFlag);
       }
       else if (ref.startsWith("follow")) {
         // get the word pointed to by synset ptr at idx=args[0]
@@ -479,6 +621,62 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       }
 
       return result.toString();
+    }
+
+    private final AnalysisObject doGraphAccess(boolean doGraph, int maxDepth, String symbolConstraint, boolean onlyNamesFlag) {
+      AnalysisObject result = null;
+      ExpandedWord expandedWord = null;
+
+      if (doGraph) {
+        if (maxDepth <= 0 && symbolConstraint == null) {
+          expandedWord = getExpandedWord();
+        }
+        else {
+          expandedWord = new ExpandedWord(word, lexDictionary, maxDepth, symbolConstraint);
+        }
+
+        if (onlyNamesFlag) {
+          final Set<String> names = new TreeSet<String>(expandedWord.getNodeMap().keySet());
+          result = new BasicAnalysisObject<Set<String>>(names);
+        }
+        else {
+          final DotWriter dotWriter = expandedWord.getDotWriter();
+          final StringWriter stringWriter = new StringWriter();
+          try {
+            dotWriter.writeDot(stringWriter);
+            result = new BasicAnalysisObject<String>(stringWriter.toString());
+          }
+          catch (IOException ioe) {
+            result = new ErrorAnalysisObject("failed writing graph", ioe);
+          }
+        }
+      }
+      else {
+        // create reverse graph
+        final List<PointerInstance> revPointers = lexDictionary.getReversePointers(null, word.getQualifiedWordName(), word, maxDepth, symbolConstraint);
+
+        if (onlyNamesFlag) {
+          final Set<String> names = new TreeSet<String>();
+          for (PointerInstance revPtr : revPointers) {
+            if (revPtr.hasSourceWord()) {
+              names.add(revPtr.getSourceWord().getQualifiedWordName());
+            }
+            final Word target = revPtr.getSpecificTarget();
+            if (target != null) {
+              names.add(target.getQualifiedWordName());
+            }
+          }
+          result = new BasicAnalysisObject<Set<String>>(names);
+        }
+        else {
+          final StringBuilder graph = new StringBuilder();
+          final WordGraph wordGraph = new WordGraph(null, revPointers);
+          wordGraph.buildGraph(graph);
+          result = new BasicAnalysisObject<String>(graph.toString());
+        }
+      }
+
+      return result;
     }
   }
 }

@@ -29,6 +29,7 @@ public class PointerInstance {
   private Synset targetSynset;
   private Word targetWord;
   private Word targetSatelliteWord;
+  private PointerInstance nextPointerInstance;
 
   public PointerInstance() {
     this.sourceSynset = null;
@@ -37,6 +38,7 @@ public class PointerInstance {
     this.targetSynset = null;
     this.targetWord = null;
     this.targetSatelliteWord = null;
+    this.nextPointerInstance = null;
   }
 
   public PointerInstance(Synset sourceSynset, Word sourceWord, PointerDefinition pointerDef, Synset targetSynset, Word targetWord, Word targetSatelliteWord) {
@@ -46,6 +48,7 @@ public class PointerInstance {
     this.targetSynset = targetSynset;
     this.targetWord = targetWord;
     this.targetSatelliteWord = targetSatelliteWord;
+    this.nextPointerInstance = null;
   }
 
   public long getUID() {
@@ -126,5 +129,27 @@ public class PointerInstance {
 
   public void setTargetSatelliteWord(Word targetSatelliteWord) {
     this.targetSatelliteWord = targetSatelliteWord;
+  }
+
+  public boolean hasNextPointerInstance() {
+    return nextPointerInstance != null;
+  }
+
+  public void setNextPointerInstance(PointerInstance nextPointerInstance) {
+    this.nextPointerInstance = nextPointerInstance;
+  }
+
+  public PointerInstance getNextPointerInstance() {
+    return nextPointerInstance;
+  }
+
+  public int getChainLength() {
+    int result = 0;
+
+    for (PointerInstance nextPtrInst = nextPointerInstance; nextPtrInst != null; nextPtrInst = nextPtrInst.nextPointerInstance) {
+      ++result;
+    }
+
+    return result;
   }
 }

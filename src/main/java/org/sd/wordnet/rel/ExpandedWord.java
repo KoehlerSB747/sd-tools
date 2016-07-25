@@ -44,48 +44,80 @@ public class ExpandedWord {
   private Tree<PointerData> tree;
   private Map<String, Tree<PointerData>> nodeMap;
   private DotWriter _dotWriter;
+  private int maxDepth;
+  private String symbolConstraint;
 
   public ExpandedWord(Word rootWord, LexDictionary dict) {
+    this(rootWord, dict, -1, null);
+  }
+
+  public ExpandedWord(Word rootWord, LexDictionary dict, int maxDepth, String symbolConstraint) {
+    this.maxDepth = maxDepth;
+    this.symbolConstraint = symbolConstraint;
     this.nodeMap = new HashMap<String, Tree<PointerData>>();
     this.tree = doAddNode(new PointerData(rootWord, null), null, dict);
   }
 
   private final Tree<PointerData> doAddNode(PointerData ptrData, Tree<PointerData> parent, LexDictionary dict) {
     Tree<PointerData> result = null;
+    Tree<PointerData> childNode = null;
+    final LinkedList<Bundle> queue = new LinkedList<Bundle>();
 
-    final String wordName = ptrData.word.getWordName();
-    final Tree<PointerData> existing = this.nodeMap.get(wordName);
-    if (existing != null) {
-      final int existingDepth = existing.depth();
-      final int newDepth = (parent == null) ? 0 : parent.depth() + 1;
+    while (ptrData != null) {
+      final String wordName = ptrData.word.getQualifiedWordName();
+      final Tree<PointerData> existing = this.nodeMap.get(wordName);
+      boolean shouldAdd = true;
+      if (existing != null) {
+        final int existingDepth = existing.depth();
+        final int newDepth = (parent == null) ? 0 : parent.depth() + 1;
 
-      if (newDepth >= existingDepth) {
-        return existing;
+        if (newDepth >= existingDepth) {
+          shouldAdd = false;
+        }
+        else {
+          existing.prune(true, true);
+          childNode = existing;
+        }
+      }
+      else {
+        childNode = new Tree<PointerData>(ptrData);
+      }
+
+      if (shouldAdd) {
+        int nextDepth = 1;
+        if (parent != null) {
+          parent.addChild(childNode);
+          nextDepth = parent.depth() + 2;
+        }
+        else if (result == null) {
+          result = childNode;
+        }
+
+        this.nodeMap.put(wordName, childNode);
+
+        if (existing == null && (maxDepth <= 0 || nextDepth < maxDepth)) {
+          final Word word = childNode.getData().word;
+          for (PointerInstance ptr : dict.getForwardPointers(null, word)) {
+            final PointerDefinition ptrDef = ptr.getPointerDef();
+            if (symbolConstraint == null || symbolConstraint.equals(ptrDef.getPointerSymbol())) {
+              final Word child = ptr.getSpecificTarget();
+              if (child != null) {
+                queue.add(new Bundle(new PointerData(child, ptrDef), childNode));
+              }
+            }
+          }
+        }
+      }
+
+      ptrData = null;
+      while (queue.size() > 0 && ptrData == null) {
+        final Bundle bundle = queue.removeFirst();
+        ptrData = bundle.ptrData;
+        parent = bundle.parent;
       }
     }
-
-    result = new Tree<PointerData>(ptrData);
-    if (parent != null) {
-      parent.addChild(result);
-    }
-    if (existing != null) {
-      existing.prune(true, true);
-    }
-
-    this.nodeMap.put(wordName, result);
-    expand(result, dict);
 
     return result;
-  }
-
-  private final void expand(Tree<PointerData> ptrNode, LexDictionary dict) {
-    final Word word = ptrNode.getData().word;
-    for (PointerInstance ptr : dict.getAllPointers(null, word)) {
-      final Word child = ptr.getSpecificTarget();
-      if (child != null) {
-        doAddNode(new PointerData(child, ptr.getPointerDef()), ptrNode, dict);
-      }
-    }
   }
 
   public int size() {
@@ -258,6 +290,16 @@ public class ExpandedWord {
     public PointerData(Word word, PointerDefinition sourcePtr) {
       this.word = word;
       this.sourcePtr = sourcePtr;
+    }
+  }
+
+  public static final class Bundle {
+    public final PointerData ptrData;
+    public final Tree<PointerData> parent;
+
+    public Bundle(PointerData ptrData, Tree<PointerData> parent) {
+      this.ptrData = ptrData;
+      this.parent = parent;
     }
   }
 }

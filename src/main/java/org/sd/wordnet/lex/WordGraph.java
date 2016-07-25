@@ -217,9 +217,9 @@ public class WordGraph implements DotWriter {
     // arg0: dbFileDir
     // arg1: normalizedWord
 
-    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])), true, true, true);
+    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])));
     final List<Synset> synsets = dict.lookupSynsets(args[1]);
-    final List<PointerInstance> allPointers = dict.getAllPointers(null, synsets);
+    final List<PointerInstance> allPointers = dict.getForwardPointers(null, synsets);
 
     final WordGraph wordGraph = new WordGraph(synsets, allPointers);
     System.out.println(wordGraph.buildGraph(null));

@@ -33,7 +33,7 @@ public class WordUnscrambler implements AnagramGenerator.WordValidator {
   private LexDictionary lexDictionary;
 
   public WordUnscrambler(File dbFileDir) throws IOException {
-    this.lexDictionary = new LexDictionary(new LexLoader(dbFileDir), false, false, true);
+    this.lexDictionary = new LexDictionary(new LexLoader(dbFileDir), false, false, true, false);
   }
 
   public boolean isValid(String word) {

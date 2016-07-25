@@ -103,6 +103,21 @@ public class PointerDefinition {
     this.lexFileName = lexFileName;
   }
 
+  public SimpleWord getSpecificTarget() {
+    return satelliteWord != null ? satelliteWord : headWord;
+  }
+
+  public String getSpecificTargetQualifiedName(String defaultLexFileName) {
+    final StringBuilder result = new StringBuilder();
+
+    result.
+      append(lexFileName != null ? lexFileName : defaultLexFileName).
+      append(':').
+      append(getSpecificTarget().getName());
+
+    return result.toString();
+  }
+
   public boolean hasHeadWord() {
     return headWord != null && headWord.hasWord();
   }

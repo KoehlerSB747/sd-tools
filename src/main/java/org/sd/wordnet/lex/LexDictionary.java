@@ -21,9 +21,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.sd.wordnet.util.NormalizeUtil;
 
 /**
  * Container for synsets and adjective clusters.
@@ -37,25 +39,33 @@ public class LexDictionary {
   private boolean loadSynsets;
   private boolean loadAdjClusters;
   private boolean loadLexNames;
+  private boolean loadReversePointers;
 
   private Map<String, List<Synset>> synsets;
   private Map<String, List<AdjectiveCluster>> adjClusters;
   private Map<String, Set<String>> lexNames;
+  private Map<String, List<ReversePointer>> revPtrs; // simpleWord.name -> reversePointer
 
   // for morphological derivations
   private Map<String, List<Synset>> dsynsets;
   private Map<String, Set<String>> dlexNames;
 
-  public LexDictionary(LexLoader lexLoader, boolean loadSynsets, boolean loadAdjClusters, boolean loadLexNames) throws IOException {
+  public LexDictionary(LexLoader lexLoader) throws IOException {
+    this(lexLoader, true, true, true, true);
+  }
+
+  public LexDictionary(LexLoader lexLoader, boolean loadSynsets, boolean loadAdjClusters, boolean loadLexNames, boolean loadReversePointers) throws IOException {
     this.lexLoader = lexLoader;
     this.morphTool = new MorphTool(lexLoader.getDbFileDir().getParentFile());
     this.loadSynsets = loadSynsets;
     this.loadAdjClusters = loadAdjClusters;
     this.loadLexNames = loadLexNames;
+    this.loadReversePointers = loadReversePointers;
 
     this.synsets = loadSynsets ? new HashMap<String, List<Synset>>() : null;
     this.adjClusters = loadAdjClusters ? new HashMap<String, List<AdjectiveCluster>>() : null;
     this.lexNames = loadLexNames ? new HashMap<String, Set<String>>() : null;
+    this.revPtrs = loadReversePointers ? new HashMap<String, List<ReversePointer>>() : null;
 
     this.dsynsets = null;
     this.dlexNames = null;
@@ -66,9 +76,10 @@ public class LexDictionary {
   Map<String, List<Synset>> getSynsets() { return synsets; }
   Map<String, List<AdjectiveCluster>> getAdjClusters() { return adjClusters; }
   Map<String, Set<String>> getLexNames() { return lexNames; }
+  Map<String, List<ReversePointer>> getRevPtrs() { return revPtrs; }
 
   private final void init() throws IOException {
-    final DictionaryEntryHandler handler = new DictionaryEntryHandler(synsets, adjClusters, lexNames);
+    final DictionaryEntryHandler handler = new DictionaryEntryHandler(synsets, adjClusters, lexNames, revPtrs);
     lexLoader.load(handler, null);
   }
 
@@ -195,11 +206,11 @@ public class LexDictionary {
    *
    * @return the result
    */
-  public List<PointerInstance> getAllPointers(List<PointerInstance> result, List<Synset> synsets) {
+  public List<PointerInstance> getForwardPointers(List<PointerInstance> result, List<Synset> synsets) {
     if (result == null) result = new ArrayList<PointerInstance>();
     if (synsets != null) {
       for (Synset synset : synsets) {
-        getAllPointers(result, synset);
+        getForwardPointers(result, synset);
       }
     }
     return result;
@@ -213,7 +224,7 @@ public class LexDictionary {
    *
    * @return the result
    */
-  public List<PointerInstance> getAllPointers(List<PointerInstance> result, Synset synset) {
+  public List<PointerInstance> getForwardPointers(List<PointerInstance> result, Synset synset) {
     if (result == null) result = new ArrayList<PointerInstance>();
 
     // compute pointers from synset as a whole
@@ -226,7 +237,7 @@ public class LexDictionary {
   }
 
   /**
-   * Collect all of the pointers from the synset (not its words) to other words.
+   * Collect all of the forward pointers from the synset (not its words) to other words.
    * 
    * @param result  Container to which pointers will be added (ok if null)
    * @param synset  The synset whose synset pointers to follow
@@ -247,7 +258,7 @@ public class LexDictionary {
   }
 
   /**
-   * Collect all of the pointers from words within the synset.
+   * Collect all of the forward pointers from words within the synset.
    * 
    * @param result  Container to which pointers will be added (ok if null)
    * @param synset  The synset whose word pointers to follow
@@ -268,7 +279,7 @@ public class LexDictionary {
   }
 
   /**
-   * Get the pointers from the given word (not including pointers from the
+   * Get the forward pointers from the given word (not including pointers from the
    * word's synset).
    * 
    * @param result  Container to which pointers will be added (ok if null)
@@ -297,7 +308,7 @@ public class LexDictionary {
    *
    * @return the result
    */
-  public List<PointerInstance> getAllPointers(List<PointerInstance> result, Word word) {
+  public List<PointerInstance> getForwardPointers(List<PointerInstance> result, Word word) {
     if (result == null) result = new ArrayList<PointerInstance>();
 
     if (word != null && word.hasSynset()) {
@@ -309,7 +320,7 @@ public class LexDictionary {
   }
 
   /**
-   * Get all pointers (synset and word) from the satellite or target of the
+   * Get all forward pointers (synset and word) from the satellite or target of the
    * given pointer.
    * 
    * @param result  Container to which pointers will be added (ok if null)
@@ -320,7 +331,118 @@ public class LexDictionary {
   public List<PointerInstance> getNextPointers(List<PointerInstance> result, PointerInstance pointer) {
     if (result == null) result = new ArrayList<PointerInstance>();
 
-    getAllPointers(result, pointer.getSpecificTarget());
+    getForwardPointers(result, pointer.getSpecificTarget());
+
+    return result;
+  }
+
+  public final List<String> getQualifiedWordNames(String wordName) {
+    final List<String> result = new ArrayList<String>();
+
+    if (wordName.indexOf(':') < 0) {
+      final List<Word> words = findWords(wordName, null);
+      if (words != null) {
+        for (Word word : words) {
+          result.add(word.getQualifiedWordName());
+        }
+      }
+    }
+
+    if (result.size() == 0) {
+      result.add(wordName);
+    }
+
+    return result;
+  }
+
+  /**
+   * Get all pointers that point to the given word.
+   */
+  public List<PointerInstance> getReversePointers(List<PointerInstance> result, String wordName, Word theWord, int maxDist, String symbolConstraint) {
+    if (revPtrs == null) return null;
+
+    if (result == null) result = new ArrayList<PointerInstance>();
+
+    if (theWord != null) {
+      doGetReversePointers(result, theWord.getQualifiedWordName(), theWord, maxDist, symbolConstraint);
+    }
+    else {
+      final List<String> qualifiedWordNames = getQualifiedWordNames(wordName);
+
+      for (String qualifiedWordName : qualifiedWordNames) {
+        doGetReversePointers(result, qualifiedWordName, null, maxDist, symbolConstraint);
+      }
+    }
+          
+    return result;
+  }
+
+  private final void doGetReversePointers(List<PointerInstance> result, String qualifiedWordName, Word nextTargetWord, int maxDist, String symbolConstraint) {
+    final LinkedList<PointerInstance> queue = new LinkedList<PointerInstance>();
+    PointerInstance ptrInstance = null;
+
+    while (qualifiedWordName != null) {
+
+      if (ptrInstance == null || maxDist <= 0 || ptrInstance.getChainLength() < maxDist) {
+        final List<ReversePointer> revPtrList = revPtrs.get(qualifiedWordName);
+        if (revPtrList != null) {
+          for (ReversePointer revPtr : revPtrList) {
+            if (symbolConstraint == null || symbolConstraint.equals(revPtr.getSourcePointerDefinition().getPointerSymbol())) {
+              if (revPtr.hasSourceWord()) {
+                final List<PointerInstance> ptrInstances = buildReversePointerInstances(revPtr, revPtr.getSourceWord(), nextTargetWord, ptrInstance);
+                if (ptrInstances != null) queue.addAll(ptrInstances);
+              }
+              else if (revPtr.hasSourceSynset()) {
+                // add all synset words
+                for (Word word : revPtr.getSourceSynset().getWords()) {
+                  final List<PointerInstance> ptrInstances = buildReversePointerInstances(revPtr, word, nextTargetWord, ptrInstance);
+                  if (ptrInstances != null) queue.addAll(ptrInstances);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      qualifiedWordName = null;
+      while (queue.size() > 0 && qualifiedWordName == null) {
+        ptrInstance = queue.removeFirst();
+        result.add(ptrInstance);
+
+        nextTargetWord = ptrInstance.getSourceWord();
+        if (nextTargetWord != null) {
+          qualifiedWordName = nextTargetWord.getQualifiedWordName();
+        }
+      }
+    }
+  }
+
+  private final List<PointerInstance> buildReversePointerInstances(ReversePointer revPtr, Word sourceWord, Word targetWord, PointerInstance nextPtrInstance) {
+    List<PointerInstance> result = null;
+
+    final PointerDefinition ptrDef = revPtr.getSourcePointerDefinition();
+
+    if (targetWord != null) {
+      final PointerInstance ptrInst = new PointerInstance(sourceWord.getSynset(), sourceWord, ptrDef, targetWord.getSynset(), targetWord, null);
+      ptrInst.setNextPointerInstance(nextPtrInstance);
+      if (result == null) result = new ArrayList<PointerInstance>();
+      result.add(ptrInst);
+    }
+    else {
+      final List<Word> targetWords =
+        findWords(ptrDef.getSpecificTarget(), ptrDef.hasLexFileName() ?
+                  ptrDef.getLexFileName() :
+                  sourceWord.getSynset().getLexFileName());
+
+      if (targetWords != null) {
+        for (Word word : targetWords) {
+          final PointerInstance ptrInst = new PointerInstance(sourceWord.getSynset(), sourceWord, ptrDef, word.getSynset(), word, null);  //todo: handle head -vs- satellite words better here
+          ptrInst.setNextPointerInstance(nextPtrInstance);
+          if (result == null) result = new ArrayList<PointerInstance>();
+          result.add(ptrInst);
+        }
+      }
+    }
 
     return result;
   }
@@ -357,21 +479,78 @@ public class LexDictionary {
     return result;
   }
 
+  public final List<Word> findWords(String wordName, String lexFileNameHint) {
+    if (synsets == null) return null;
+
+    List<Word> result = null;
+
+    final String norm = NormalizeUtil.normalizeForLookup(wordName);
+    final List<Synset> synsets = lookupSynsets(norm);
+
+    if (synsets != null) {
+      for (Synset synset : synsets) {
+        if (lexFileNameHint == null || lexFileNameHint.equalsIgnoreCase(synset.getLexFileName())) {
+          for (Word word : synset.getWords()) {
+            if (wordName.equals(word.getWordName())) {
+              if (result == null) result = new ArrayList<Word>();
+              result.add(word);
+              break;
+            }
+          }
+          if (lexFileNameHint != null) break;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  public final List<Word> findWords(SimpleWord simpleWord, String lexFileNameHint) {
+    if (synsets == null) return null;
+
+    List<Word> result = null;
+
+    final List<Synset> synsets = lookupSynsets(simpleWord.getNormalizedWord());
+
+    if (synsets != null) {
+      for (Synset synset : synsets) {
+        if (lexFileNameHint == null || lexFileNameHint.equalsIgnoreCase(synset.getLexFileName())) {
+          final Word word = synset.findWord(simpleWord);
+          if (word != null) {
+            if (result == null) result = new ArrayList<Word>();
+            result.add(word);
+          }
+          if (lexFileNameHint != null) break;
+        }
+      }
+    }
+
+    return result;
+  }
+
 
   private static final class DictionaryEntryHandler implements LexLoader.EntryHandler {
     private Map<String, List<Synset>> synsets;
     private Map<String, List<AdjectiveCluster>> adjClusters;
     private Map<String, Set<String>> lexNames;
+    private Map<String, List<ReversePointer>> revPtrs;
 
     public DictionaryEntryHandler(Map<String, List<Synset>> synsets,
                                   Map<String, List<AdjectiveCluster>> adjClusters,
-                                  Map<String, Set<String>> lexNames) {
+                                  Map<String, Set<String>> lexNames,
+                                  Map<String, List<ReversePointer>> revPtrs) {
       this.synsets = synsets;
       this.adjClusters = adjClusters;
       this.lexNames = lexNames;
+      this.revPtrs = revPtrs;
     }
 
     public void handleSynset(Synset synset) {
+      if (revPtrs != null && synset.hasPointerDefinitions()) {
+        // add to revPtrs
+        addReversePointers(synset.getPointerDefinitions(), synset, null);
+      }
+
       if (synset.hasWords()) {
         for (Word word : synset.getWords()) {
           final String normWord = word.getNormalizedWord();
@@ -403,7 +582,24 @@ public class LexDictionary {
             }
             lexNameSet.add(lexName);
           }
+
+          // Add to revPtrs
+          if (revPtrs != null && word.hasPointerDefinitions()) {
+            addReversePointers(word.getPointerDefinitions(), null, word);
+          }
         }
+      }
+    }
+
+    private final void addReversePointers(List<PointerDefinition> ptrDefs, Synset synset, Word word) {
+      for (PointerDefinition ptrDef : ptrDefs) {
+        final String qualifiedName = ptrDef.getSpecificTargetQualifiedName(word != null ? word.getSynset().getLexFileName() : synset.getLexFileName());
+        List<ReversePointer> revPtrList = revPtrs.get(qualifiedName);
+        if (revPtrList == null) {
+          revPtrList = new ArrayList<ReversePointer>();
+          revPtrs.put(qualifiedName, revPtrList);
+        }
+        revPtrList.add(new ReversePointer(ptrDef, synset, word));
       }
     }
 
@@ -448,7 +644,7 @@ public class LexDictionary {
     // arg0: dbFileDir
     
     final long startTime = System.currentTimeMillis();
-    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])), true, true, true);
+    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])));
     final long loadTime = System.currentTimeMillis() - startTime;
     //System.out.println("Loaded " + dict.getSynsetCount() + " synsets in " + loadTime + "ms");
 

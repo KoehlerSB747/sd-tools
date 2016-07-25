@@ -130,7 +130,7 @@ public class LexChecker {
     // arg0: dbFileDir
 
     final long startTime = System.currentTimeMillis();
-    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])), true, true, true);
+    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])));
     final long loadTime = System.currentTimeMillis() - startTime;
     System.out.println("Loaded " + dict.getSynsetCount() + " synsets in " + loadTime + "ms");
 
