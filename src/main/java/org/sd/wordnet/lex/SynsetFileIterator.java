@@ -111,4 +111,8 @@ public class SynsetFileIterator implements Iterator<Synset> {
       }
     }
   }
+
+  public void remove() {
+    throw new UnsupportedOperationException("Not supported");
+  }
 }

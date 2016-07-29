@@ -188,4 +188,8 @@ public class AdjectiveClusterFileIterator implements Iterator<AdjectiveCluster> 
       }
     }
   }
+
+  public void remove() {
+    throw new UnsupportedOperationException("Not supported");
+  }
 }
