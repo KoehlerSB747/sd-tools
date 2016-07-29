@@ -18,12 +18,10 @@ package org.sd.wordnet.apps;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import org.sd.analysis.AbstractAnalysisObject;
 import org.sd.analysis.AnalysisFunction;
 import org.sd.analysis.AnalysisObject;
@@ -40,6 +38,8 @@ import org.sd.wordnet.lex.Synset;
 import org.sd.wordnet.lex.Word;
 import org.sd.wordnet.lex.WordGraph;
 import org.sd.wordnet.rel.ExpandedWord;
+import org.sd.wordnet.rel.GraphHelper;
+import org.sd.wordnet.rel.WordRelation;
 import org.sd.wordnet.util.NormalizeUtil;
 import org.sd.xml.DataProperties;
 
@@ -102,14 +102,18 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
     @Override
     public AnalysisObject execute(AnalysisObject[] args) {
-      WordsAnalysisObject result = null;
+      AnalysisObject result = null;
 
       if (args != null) {
         if (args.length >= 1) {
           final String input = args[0].toString();
-          final String[] parts = input.split(":");
-          final List<Word> words = lexDictionary.findWords(parts.length == 2 ? parts[1] : parts[0], parts.length == 2 ? parts[0] : null);
-          result = new WordsAnalysisObject(input, parts, words);
+          final List<Word> words = lexDictionary.findWords(input, null);
+          if (words != null && words.size() == 1) {
+            result = new WordAnalysisObject(words.get(0), null);
+          }
+          else {
+            result = new WordsAnalysisObject(input, words);
+          }
         }
       }
 
@@ -333,12 +337,10 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
   public final class WordsAnalysisObject extends AbstractAnalysisObject {
     public final String input;
-    public final String[] parts;
     public final List<Word> words;
 
-    public WordsAnalysisObject(String input, String[] parts, List<Word> words) {
+    public WordsAnalysisObject(String input, List<Word> words) {
       this.input = input;
-      this.parts = parts;
       this.words = words;
     }
 
@@ -370,7 +372,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       final StringBuilder result = new StringBuilder();
 
       if (hasWords()) {
-        result.append("findWords(" + input + ")");
+        result.append("findords(" + input + ")");
         int wordIdx = 0;
         for (Word word : words) {
           result.append("\n").append(++wordIdx).append(": ").append(word.getSynset().getGloss());
@@ -426,8 +428,8 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     public final WordAnalysisObject sourceWord;
     public final Word word;
     public final PointerInstance pointer;
+    private GraphHelper graphHelper;
     private List<PointerInstance> pointers;
-    private ExpandedWord _expandedWord;
 
     public WordAnalysisObject(Word word, SynsetAnalysisObject container) {
       this(word, container, null, null);
@@ -438,15 +440,12 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       this.synset = synset;
       this.sourceWord = sourceWord;
       this.pointer = pointer;
-      this.pointers = lexDictionary.getForwardPointers(null, word);
-      this._expandedWord =  null;
+      this.graphHelper = new GraphHelper(lexDictionary, word);
+      this.pointers = graphHelper.getPointers();
     }
 
     public ExpandedWord getExpandedWord() {
-      if (_expandedWord == null) {
-        _expandedWord = new ExpandedWord(word, lexDictionary);
-      }
-      return _expandedWord;
+      return graphHelper.getExpandedWord();
     }
 
     @Override
@@ -464,6 +463,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       result.
         append("\"show\" -- show the content of this word.\n").
         append("\"follow[<ptrIdx>]\" -- follow the identified pointer to its word.\n").
+        append("\"ix[<word>]\" -- find the intersection with the other word.\n").
         append("\"graph[<maxDepth>,<symbolConstraint>,<onlyNames>]\" -- get the word's (dot) graph.\n").
         append("\"rgraph[<maxDepth>,<symbolConstraint>,<onlyNames>]\" -- get the word's reverse (dot) graph.\n").
         append("\"hypernyms\" -- get the word's hypernyms.\n").
@@ -531,10 +531,30 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
         }
       }
       else if ("hypernyms".equals(ref)) {
-        result = doGraphAccess(true, -1, "@", true);
+        final Set<String> hypernyms = graphHelper.getHypernyms();
+        result = new BasicAnalysisObject<Set<String>>(hypernyms);
       }
       else if ("hyponyms".equals(ref)) {
-        result = doGraphAccess(false, -1, "@", true);
+        final Set<String> hyponyms = graphHelper.getHyponyms();
+        result = new BasicAnalysisObject<Set<String>>(hyponyms);
+      }
+      else if (ref.startsWith("ix")) {
+        final AnalysisObject[] argValues = getArgValues(ref, env);
+        if (argValues != null && argValues.length > 0 && argValues[0] instanceof WordAnalysisObject) {
+          final WordAnalysisObject other = (WordAnalysisObject)argValues[0];
+          final ExpandedWord otherExpandedWord = other.getExpandedWord();
+/*
+          final ExpandedWord myExpandedWord = this.getExpandedWord();
+          final Set<String> ix = myExpandedWord.getIntersection(otherExpandedWord);
+          result = new BasicAnalysisObject<Set<String>>(ix);
+*/
+/*
+          final String graph = graphHelper.getIntersectionDotGraph(otherExpandedWord);
+          result = new BasicAnalysisObject<String>(graph);
+*/
+          final Set<WordRelation> relData = graphHelper.getRelationsWith(otherExpandedWord);
+          result = new BasicAnalysisObject<Set<WordRelation>>(relData);
+        }
       }
       else if (ref.startsWith("graph") || ref.startsWith("rgraph")) {
         final boolean doGraph = ref.startsWith("graph");
@@ -565,7 +585,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
           }
         }
 
-        result = doGraphAccess(doGraph, maxDepth, symbolConstraint, onlyNamesFlag);
+        result = doGraphAccess(doGraph, maxDepth, symbolConstraint, onlyNamesFlag, 250);
       }
       else if (ref.startsWith("follow")) {
         // get the word pointed to by synset ptr at idx=args[0]
@@ -623,57 +643,16 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       return result.toString();
     }
 
-    private final AnalysisObject doGraphAccess(boolean doGraph, int maxDepth, String symbolConstraint, boolean onlyNamesFlag) {
+    private final AnalysisObject doGraphAccess(boolean doForwardGraph, int maxDepth, String symbolConstraint, boolean onlyNamesFlag, int ptrLimit) {
       AnalysisObject result = null;
-      ExpandedWord expandedWord = null;
 
-      if (doGraph) {
-        if (maxDepth <= 0 && symbolConstraint == null) {
-          expandedWord = getExpandedWord();
-        }
-        else {
-          expandedWord = new ExpandedWord(word, lexDictionary, maxDepth, symbolConstraint);
-        }
-
-        if (onlyNamesFlag) {
-          final Set<String> names = new TreeSet<String>(expandedWord.getNodeMap().keySet());
-          result = new BasicAnalysisObject<Set<String>>(names);
-        }
-        else {
-          final DotWriter dotWriter = expandedWord.getDotWriter();
-          final StringWriter stringWriter = new StringWriter();
-          try {
-            dotWriter.writeDot(stringWriter);
-            result = new BasicAnalysisObject<String>(stringWriter.toString());
-          }
-          catch (IOException ioe) {
-            result = new ErrorAnalysisObject("failed writing graph", ioe);
-          }
-        }
+      if (onlyNamesFlag) {
+        final Set<String> names = graphHelper.getNames(maxDepth, symbolConstraint, !doForwardGraph);
+        result = new BasicAnalysisObject<Set<String>>(names);
       }
       else {
-        // create reverse graph
-        final List<PointerInstance> revPointers = lexDictionary.getReversePointers(null, word.getQualifiedWordName(), word, maxDepth, symbolConstraint);
-
-        if (onlyNamesFlag) {
-          final Set<String> names = new TreeSet<String>();
-          for (PointerInstance revPtr : revPointers) {
-            if (revPtr.hasSourceWord()) {
-              names.add(revPtr.getSourceWord().getQualifiedWordName());
-            }
-            final Word target = revPtr.getSpecificTarget();
-            if (target != null) {
-              names.add(target.getQualifiedWordName());
-            }
-          }
-          result = new BasicAnalysisObject<Set<String>>(names);
-        }
-        else {
-          final StringBuilder graph = new StringBuilder();
-          final WordGraph wordGraph = new WordGraph(null, revPointers);
-          wordGraph.buildGraph(graph);
-          result = new BasicAnalysisObject<String>(graph.toString());
-        }
+        final String dotGraph = graphHelper.getDotGraph(maxDepth, symbolConstraint, ptrLimit, !doForwardGraph);
+        result = new BasicAnalysisObject<String>(dotGraph);
       }
 
       return result;

@@ -16,6 +16,8 @@
 package org.sd.wordnet.rel;
 
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import org.sd.util.DotWriter;
 import org.sd.util.tree.Tree;
 import org.sd.util.tree.TreeAnalyzer;
@@ -30,6 +33,7 @@ import org.sd.util.tree.Tree2Dot;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.lex.PointerDefinition;
 import org.sd.wordnet.lex.PointerInstance;
+import org.sd.wordnet.lex.Synset;
 import org.sd.wordnet.lex.Word;
 
 /**
@@ -41,6 +45,7 @@ import org.sd.wordnet.lex.Word;
  */
 public class ExpandedWord {
 
+  private LexDictionary dict;
   private Tree<PointerData> tree;
   private Map<String, Tree<PointerData>> nodeMap;
   private DotWriter _dotWriter;
@@ -52,6 +57,7 @@ public class ExpandedWord {
   }
 
   public ExpandedWord(Word rootWord, LexDictionary dict, int maxDepth, String symbolConstraint) {
+    this.dict = dict;
     this.maxDepth = maxDepth;
     this.symbolConstraint = symbolConstraint;
     this.nodeMap = new HashMap<String, Tree<PointerData>>();
@@ -124,6 +130,10 @@ public class ExpandedWord {
     return nodeMap.size();
   }
 
+  public LexDictionary getLexDictionary() {
+    return dict;
+  }
+
   public Word getRootWord() {
     return tree.getData().word;
   }
@@ -134,6 +144,22 @@ public class ExpandedWord {
 
   public Map<String, Tree<PointerData>> getNodeMap() {
     return nodeMap;
+  }
+
+  public TreeSet<String> getWordNames() {
+    return new TreeSet<String>(nodeMap.keySet());
+  }
+
+  public String getDotGraph() {
+    final StringWriter stringWriter = new StringWriter();
+    final DotWriter dotWriter = getDotWriter();
+    try {
+      dotWriter.writeDot(stringWriter);
+    }
+    catch (IOException ioe) {
+      // eat this.
+    }
+    return stringWriter.toString();
   }
 
   public DotWriter getDotWriter() {
@@ -154,6 +180,31 @@ public class ExpandedWord {
     for (Tree<PointerData> wordNode = nodeMap.get(wordName); wordNode != null; wordNode = wordNode.getParent()) {
       if (result == null) result = new LinkedList<PointerData>();
       result.addFirst(wordNode.getData());
+    }
+
+    return result;
+  }
+
+  /**
+   * Build the path of pointer instances from root to the given wordName, or null if the
+   * wordName is not present.
+   */
+  public List<PointerInstance> buildPointerPath(String wordName) {
+    List<PointerInstance> result = null;
+
+    final List<PointerData> pointerPath = getPointerPath(wordName);
+    if (pointerPath != null) {
+      result = new ArrayList<PointerInstance>();
+      Word sourceWord = getRootWord();
+      Synset sourceSynset = sourceWord.getSynset();
+      for (PointerData ptrData : pointerPath) {
+        if (ptrData.sourcePtr != null) {
+          dict.findPointers(result, sourceSynset, sourceWord, ptrData.sourcePtr);
+          final PointerInstance last = result.get(result.size() - 1);
+          sourceWord = last.getSpecificTarget();
+          sourceSynset = sourceWord.getSynset();
+        }
+      }
     }
 
     return result;
@@ -184,35 +235,17 @@ public class ExpandedWord {
         else {
           // add or keep only the most shallow keys
           boolean shouldAdd = true;
-
           List<String> shouldRemoveIfAdd = null;
-          for (String curKey : result) {
-            if (key.equals(curKey)) {
-              shouldAdd = false;
-              break;
-            }
-            else {
-              final int myCmp = this.compareAncestry(key, curKey);
-              if (myCmp < 0) {
-                // new key is an ancestor to existing. remove current key
-                if (shouldRemoveIfAdd == null) shouldRemoveIfAdd = new ArrayList<String>();
-                shouldRemoveIfAdd.add(curKey);
-              }
-              else if (myCmp > 0) {
-                shouldAdd = false;
-                break;
-              }
 
-              final int otherCmp = other.compareAncestry(key, curKey);
-              if (otherCmp < 0) {
-                // new key is an ancestor to existing. remove current key
-                if (shouldRemoveIfAdd == null) shouldRemoveIfAdd = new ArrayList<String>();
-                shouldRemoveIfAdd.add(curKey);
-              }
-              else if (otherCmp > 0) {
-                shouldAdd = false;
-                break;
-              }
+          for (String curKey : result) {
+            final int myCmp = this.compareAncestry(key, curKey);
+            if (myCmp < 0) {
+              // new key is an ancestor to existing. remove current key
+              if (shouldRemoveIfAdd == null) shouldRemoveIfAdd = new ArrayList<String>();
+              shouldRemoveIfAdd.add(curKey);
+            }
+            else if (myCmp > 0) {
+              shouldAdd = false;
             }
           }
 
@@ -279,7 +312,11 @@ public class ExpandedWord {
           return result;
         }
       };
-    return new Tree2Dot<PointerData>(tree, null, nodeLabelMaker, edgeLabelMaker);
+    final Tree2Dot<PointerData> result = new Tree2Dot<PointerData>(tree, null, nodeLabelMaker, edgeLabelMaker);
+
+    result.setAttribute("rankdir", "LR");
+
+    return result;
   }
 
 
@@ -290,6 +327,38 @@ public class ExpandedWord {
     public PointerData(Word word, PointerDefinition sourcePtr) {
       this.word = word;
       this.sourcePtr = sourcePtr;
+    }
+
+    public boolean equals(Object other) {
+      boolean result = (this == other);
+
+      if (!result && other != null && other instanceof PointerData) {
+        final PointerData otherPointerData = (PointerData)other;
+
+        if (this.sourcePtr != null && otherPointerData.sourcePtr != null) {
+          result = this.sourcePtr.equals(otherPointerData.sourcePtr);
+        }
+        else if (this.sourcePtr == null && otherPointerData.sourcePtr == null) {
+          result = (this.word == otherPointerData.word);
+
+          if (!result) {
+            if (this.word != null && otherPointerData.word != null) {
+              result = this.word.getQualifiedWordName().equals(otherPointerData.word.getQualifiedWordName());
+            }
+          }
+        }
+      }
+
+      return result;
+    }
+
+    public int hashCode() {
+      int result = 11;
+
+      if (word != null) result = result * 11 + word.getQualifiedWordName().hashCode();
+      if (sourcePtr != null) result = result * 11 + sourcePtr.hashCode();
+
+      return result;
     }
   }
 

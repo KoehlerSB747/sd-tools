@@ -187,4 +187,19 @@ public class PointerDefinition {
   public String toString() {
     return getFormattedPointerDefinition();
   }
+
+  public boolean equals(Object other) {
+    boolean result = (this == other);
+
+    if (!result && other != null && other instanceof PointerDefinition) {
+      final PointerDefinition otherPointerDefinition = (PointerDefinition)other;
+      result = this.uid == otherPointerDefinition.uid;
+    }
+
+    return result;
+  }
+
+  public int hashCode() {
+    return (int)(uid % Integer.MAX_VALUE);
+  }
 }

@@ -32,18 +32,24 @@ import org.sd.util.DotWriter;
  */
 public class WordGraph implements DotWriter {
   
+  public static final int DEFAULT_POINTER_LIMIT = 250;
+
   private List<Synset> synsets;
   private List<PointerInstance> pointers;
-  private Map<String, SynsetInfo> synsetName2Info;
+  private Map<String, List<SynsetInfo>> synsetName2Infos;
   private Map<String, String> graphAttributes;
   private Map<String, String> nodeAttributes;
   private Map<String, String> edgeAttributes;
   private int nextSynsetId = 0;
 
   public WordGraph(List<Synset> synsets, List<PointerInstance> pointers) {
+    this(synsets, pointers, DEFAULT_POINTER_LIMIT);
+  }
+
+  public WordGraph(List<Synset> synsets, List<PointerInstance> pointers, int pointerLimit) {
     this.synsets = synsets;
-    this.pointers = pointers;
-    this.synsetName2Info = new LinkedHashMap<String, SynsetInfo>();
+    this.pointers = (pointerLimit > 0 && pointers.size() > pointerLimit) ? new ArrayList<PointerInstance>(pointers.subList(0, pointerLimit)) : pointers;
+    this.synsetName2Infos = new LinkedHashMap<String, List<SynsetInfo>>();
     this.graphAttributes = new LinkedHashMap<String, String>();
     this.nodeAttributes = new LinkedHashMap<String, String>();
     this.edgeAttributes = new LinkedHashMap<String, String>();
@@ -74,12 +80,40 @@ public class WordGraph implements DotWriter {
 
   private final void init(Synset synset) {
     if (synset != null) {
-      SynsetInfo info = synsetName2Info.get(synset.getSynsetName());
-      if (info == null) {
-        info = new SynsetInfo(synset, ++nextSynsetId);
-        synsetName2Info.put(synset.getSynsetName(), info);
+      List<SynsetInfo> infos = synsetName2Infos.get(synset.getSynsetName());
+      if (infos == null) {
+        infos = new ArrayList<SynsetInfo>();
+        synsetName2Infos.put(synset.getSynsetName(), infos);
+      }
+      if (findSynset(infos, synset) == null) {
+        final SynsetInfo info = new SynsetInfo(synset, ++nextSynsetId);
+        infos.add(info);
       }
     }
+  }
+
+  private final SynsetInfo findSynset(List<SynsetInfo> infos, Synset synset) {
+    SynsetInfo result = null;
+
+    for (SynsetInfo info : infos) {
+      if (info.synset == synset) {
+        result = info;
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  private final SynsetInfo findInfo(Synset synset) {
+    SynsetInfo result = null;
+
+    final List<SynsetInfo> infos = synsetName2Infos.get(synset.getSynsetName());
+    if (infos != null) {
+      result = findSynset(infos, synset);
+    }
+
+    return result;
   }
 
   public final void setAttribute(String key, String value) {
@@ -138,35 +172,37 @@ public class WordGraph implements DotWriter {
       result.append("];\n");
     }
 
-    for (Map.Entry<String, SynsetInfo> infoEntry : synsetName2Info.entrySet()) {
+    for (Map.Entry<String, List<SynsetInfo>> infoEntry : synsetName2Infos.entrySet()) {
       final String synsetName = infoEntry.getKey();
-      final SynsetInfo info = infoEntry.getValue();
+      final List<SynsetInfo> infos = infoEntry.getValue();
 
-      result.
-        append("  subgraph cluster").append(info.synsetId).append(" {\n").
-        append("    label=\"").append(synsetName).append("\";\n");
-      
-      for (Map.Entry<String, Integer> wordEntry : info.wordName2Id.entrySet()) {
-        final String wordName = wordEntry.getKey();
-        final Integer wordId = wordEntry.getValue();
-
+      for (SynsetInfo info : infos) {
         result.
-          append("    word").
-          append(info.synsetId).
-          append('_').
-          append(wordId).
-          append(" [label=\"").
-          append(wordName).
-          append("\"];\n");
-      }
+          append("  subgraph cluster").append(info.synsetId).append(" {\n").
+          append("    label=\"").append(synsetName).append("\";\n");
+      
+        for (Map.Entry<String, Integer> wordEntry : info.wordName2Id.entrySet()) {
+          final String wordName = wordEntry.getKey();
+          final Integer wordId = wordEntry.getValue();
 
-      result.append("  }\n");
+          result.
+            append("    word").
+            append(info.synsetId).
+            append('_').
+            append(wordId).
+            append(" [label=\"").
+            append(wordName).
+            append("\"];\n");
+        }
+
+        result.append("  }\n");
+      }
     }
 
     for (PointerInstance pointer : pointers) {
-      final SynsetInfo info1 = synsetName2Info.get(pointer.getSourceSynset().getSynsetName());
+      final SynsetInfo info1 = findInfo(pointer.getSourceSynset());
       final int wordId1 = pointer.hasSourceWord() ? info1.wordName2Id.get(pointer.getSourceWord().getWordName()) : 1;
-      final SynsetInfo info2 = synsetName2Info.get(pointer.getTargetSynset().getSynsetName());
+      final SynsetInfo info2 = findInfo(pointer.getTargetSynset());
       final int wordId2 = info2.wordName2Id.get(pointer.getTargetWord().getWordName());
       result.
         append("  word").append(info1.synsetId).append("_").append(wordId1).

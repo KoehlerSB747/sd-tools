@@ -381,24 +381,23 @@ public class LexDictionary {
     final LinkedList<PointerInstance> queue = new LinkedList<PointerInstance>();
     PointerInstance ptrInstance = null;
 
+    final Set<Long> seenPtrUids = new HashSet<Long>();
+
     while (qualifiedWordName != null) {
 
-      if (ptrInstance == null || maxDist <= 0 || ptrInstance.getChainLength() < maxDist) {
+      if (ptrInstance == null || maxDist <= 0 || ptrInstance.getChainLength() <= maxDist) {
         final List<ReversePointer> revPtrList = revPtrs.get(qualifiedWordName);
         if (revPtrList != null) {
           for (ReversePointer revPtr : revPtrList) {
-            if (symbolConstraint == null || symbolConstraint.equals(revPtr.getSourcePointerDefinition().getPointerSymbol())) {
-              if (revPtr.hasSourceWord()) {
-                final List<PointerInstance> ptrInstances = buildReversePointerInstances(revPtr, revPtr.getSourceWord(), nextTargetWord, ptrInstance);
-                if (ptrInstances != null) queue.addAll(ptrInstances);
-              }
-              else if (revPtr.hasSourceSynset()) {
-                // add all synset words
-                for (Word word : revPtr.getSourceSynset().getWords()) {
-                  final List<PointerInstance> ptrInstances = buildReversePointerInstances(revPtr, word, nextTargetWord, ptrInstance);
-                  if (ptrInstances != null) queue.addAll(ptrInstances);
-                }
-              }
+            final PointerDefinition ptrDef = revPtr.getSourcePointerDefinition();
+            if (seenPtrUids.contains(ptrDef.getUID())) continue;
+            seenPtrUids.add(ptrDef.getUID());
+            if (symbolConstraint == null || symbolConstraint.equals(ptrDef.getPointerSymbol())) {
+              final Word sourceWord = revPtr.hasSourceWord() ? revPtr.getSourceWord() :
+                revPtr.getSourceSynset().getWords().get(0);  // add first synset word
+              final List<PointerInstance> ptrInstances =
+                buildReversePointerInstances(revPtr, sourceWord, null, nextTargetWord, ptrInstance);
+              if (ptrInstances != null) queue.addAll(ptrInstances);
             }
           }
         }
@@ -417,13 +416,14 @@ public class LexDictionary {
     }
   }
 
-  private final List<PointerInstance> buildReversePointerInstances(ReversePointer revPtr, Word sourceWord, Word targetWord, PointerInstance nextPtrInstance) {
+  private final List<PointerInstance> buildReversePointerInstances(ReversePointer revPtr, Word sourceWord, Synset sourceSynset, Word targetWord, PointerInstance nextPtrInstance) {
     List<PointerInstance> result = null;
 
     final PointerDefinition ptrDef = revPtr.getSourcePointerDefinition();
+    if (sourceSynset == null && sourceWord != null) sourceSynset = sourceWord.getSynset();
 
     if (targetWord != null) {
-      final PointerInstance ptrInst = new PointerInstance(sourceWord.getSynset(), sourceWord, ptrDef, targetWord.getSynset(), targetWord, null);
+      final PointerInstance ptrInst = new PointerInstance(sourceSynset, sourceWord, ptrDef, targetWord.getSynset(), targetWord, null);
       ptrInst.setNextPointerInstance(nextPtrInstance);
       if (result == null) result = new ArrayList<PointerInstance>();
       result.add(ptrInst);
@@ -436,7 +436,7 @@ public class LexDictionary {
 
       if (targetWords != null) {
         for (Word word : targetWords) {
-          final PointerInstance ptrInst = new PointerInstance(sourceWord.getSynset(), sourceWord, ptrDef, word.getSynset(), word, null);  //todo: handle head -vs- satellite words better here
+          final PointerInstance ptrInst = new PointerInstance(sourceSynset, sourceWord, ptrDef, word.getSynset(), word, null);  //todo: handle head -vs- satellite words better here
           ptrInst.setNextPointerInstance(nextPtrInstance);
           if (result == null) result = new ArrayList<PointerInstance>();
           result.add(ptrInst);
@@ -479,10 +479,28 @@ public class LexDictionary {
     return result;
   }
 
+  /**
+   * Find word(s) matching (case-insensitive) the given wordName, which can be
+   * of the form: <word><lexId> or <lexFileName>:<word><lexId>, for lexId &gt; 0.
+   * <p>
+   * When lexFileName is used in the wordName, it overrides any lexFileNameHint.
+   *
+   * @param wordName  The word name to find.
+   * @param lexFileNameHint  Hint to narrow the scope for finding the right word
+   *                         (okay if null).
+   *
+   * @return the found word(s)
+   */
   public final List<Word> findWords(String wordName, String lexFileNameHint) {
     if (synsets == null) return null;
 
     List<Word> result = null;
+
+    final int cPos = wordName.indexOf(':');
+    if (cPos >= 0) {
+      lexFileNameHint = wordName.substring(0, cPos);
+      wordName = wordName.substring(cPos + 1);
+    }
 
     final String norm = NormalizeUtil.normalizeForLookup(wordName);
     final List<Synset> synsets = lookupSynsets(norm);
@@ -497,7 +515,7 @@ public class LexDictionary {
               break;
             }
           }
-          if (lexFileNameHint != null) break;
+          if (lexFileNameHint != null && result != null) break;
         }
       }
     }
@@ -593,14 +611,27 @@ public class LexDictionary {
 
     private final void addReversePointers(List<PointerDefinition> ptrDefs, Synset synset, Word word) {
       for (PointerDefinition ptrDef : ptrDefs) {
-        final String qualifiedName = ptrDef.getSpecificTargetQualifiedName(word != null ? word.getSynset().getLexFileName() : synset.getLexFileName());
-        List<ReversePointer> revPtrList = revPtrs.get(qualifiedName);
-        if (revPtrList == null) {
-          revPtrList = new ArrayList<ReversePointer>();
-          revPtrs.put(qualifiedName, revPtrList);
+        if (word == null) {
+          // add synset pointers from each synset word to the pointer target
+          for (Word synsetWord : synset.getWords()) {
+            doAddReversePointer(ptrDef, synset, synsetWord);
+          }
         }
-        revPtrList.add(new ReversePointer(ptrDef, synset, word));
+        else {
+          // add word pointer from word to the pointer target
+          doAddReversePointer(ptrDef, synset, word);
+        }
       }
+    }
+
+    private final void doAddReversePointer(PointerDefinition ptrDef, Synset synset, Word word) {
+      final String qualifiedName = ptrDef.getSpecificTargetQualifiedName(word != null ? word.getSynset().getLexFileName() : synset.getLexFileName());
+      List<ReversePointer> revPtrList = revPtrs.get(qualifiedName);
+      if (revPtrList == null) {
+        revPtrList = new ArrayList<ReversePointer>();
+        revPtrs.put(qualifiedName, revPtrList);
+      }
+      revPtrList.add(new ReversePointer(ptrDef, synset, word));
     }
 
     public void handleAdjectiveCluster(AdjectiveCluster adjectiveCluster) {
