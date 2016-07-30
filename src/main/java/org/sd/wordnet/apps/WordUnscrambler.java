@@ -18,9 +18,13 @@ package org.sd.wordnet.apps;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.sd.util.AnagramGenerator;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.lex.LexLoader;
+import org.sd.wordnet.lex.Synset;
 import org.sd.wordnet.util.NormalizeUtil;
 
 /**
@@ -31,13 +35,39 @@ import org.sd.wordnet.util.NormalizeUtil;
 public class WordUnscrambler implements AnagramGenerator.WordValidator {
   
   private LexDictionary lexDictionary;
+  private Map<String, List<Synset>> synsets;
 
   public WordUnscrambler(File dbFileDir) throws IOException {
     this.lexDictionary = new LexDictionary(new LexLoader(dbFileDir), false, false, true, false);
+    this.synsets = null;
+  }
+
+  public WordUnscrambler(LexDictionary lexDictionary) {
+    this.lexDictionary = lexDictionary;
+    this.synsets = lexDictionary.loadSynsets ? new HashMap<String, List<Synset>>() : null;
   }
 
   public boolean isValid(String word) {
-    return lexDictionary.lookupLexNames(NormalizeUtil.normalizeForLookup(word)) != null;
+    boolean result = false;
+    final String norm = NormalizeUtil.normalizeForLookup(word);
+
+    if (synsets != null && lexDictionary.loadSynsets) {
+      final List<Synset> lookup = lexDictionary.lookupSynsets(norm);
+      result = (lookup != null);
+
+      if (result) {
+        synsets.put(norm, lookup);
+      }
+    }
+    else {
+      result = (lexDictionary.lookupLexNames(norm) != null);
+    }
+
+    return result;
+  }
+
+  public Map<String, List<Synset>> getSynsets() {
+    return synsets;
   }
 
 

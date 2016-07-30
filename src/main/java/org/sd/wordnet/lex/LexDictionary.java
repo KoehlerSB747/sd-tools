@@ -36,10 +36,10 @@ public class LexDictionary {
   
   private LexLoader lexLoader;
   private MorphTool morphTool;
-  private boolean loadSynsets;
-  private boolean loadAdjClusters;
-  private boolean loadLexNames;
-  private boolean loadReversePointers;
+  public final boolean loadSynsets;
+  public final boolean loadAdjClusters;
+  public final boolean loadLexNames;
+  public final boolean loadReversePointers;
 
   private Map<String, List<Synset>> synsets;
   private Map<String, List<AdjectiveCluster>> adjClusters;
