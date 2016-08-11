@@ -19,6 +19,7 @@ package org.sd.wordnet.lex;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -40,6 +41,7 @@ public class LexDictionary {
   public final boolean loadAdjClusters;
   public final boolean loadLexNames;
   public final boolean loadReversePointers;
+  private int maxSpaceCount;
 
   private Map<String, List<Synset>> synsets;
   private Map<String, List<AdjectiveCluster>> adjClusters;
@@ -57,10 +59,12 @@ public class LexDictionary {
   public LexDictionary(LexLoader lexLoader, boolean loadSynsets, boolean loadAdjClusters, boolean loadLexNames, boolean loadReversePointers) throws IOException {
     this.lexLoader = lexLoader;
     this.morphTool = new MorphTool(lexLoader.getDbFileDir().getParentFile());
+    this.morphTool.setArchaic(true);  //todo: parameterize this
     this.loadSynsets = loadSynsets;
     this.loadAdjClusters = loadAdjClusters;
     this.loadLexNames = loadLexNames;
     this.loadReversePointers = loadReversePointers;
+    this.maxSpaceCount = 0;
 
     this.synsets = loadSynsets ? new HashMap<String, List<Synset>>() : null;
     this.adjClusters = loadAdjClusters ? new HashMap<String, List<AdjectiveCluster>>() : null;
@@ -81,10 +85,15 @@ public class LexDictionary {
   private final void init() throws IOException {
     final DictionaryEntryHandler handler = new DictionaryEntryHandler(synsets, adjClusters, lexNames, revPtrs);
     lexLoader.load(handler, null);
+    this.maxSpaceCount = handler.getMaxSpaceCount();
   }
 
   public long getSynsetCount() {
     return lexLoader.getSynsetCount();
+  }
+
+  public int getMaxSpaceCount() {
+    return maxSpaceCount;
   }
 
   public Set<String> lookupLexNames(String normInput) {
@@ -117,22 +126,25 @@ public class LexDictionary {
     Set<String> result = dlexNames == null ? null : dlexNames.get(normInput);
 
     if (result == null) {
-      for (MorphTool.Derivation derivation : morphTool.deriveBaseForms(normInput)) {
-        final Set<String> dLexNames = lexNames.get(derivation.baseForm);
-        if (dLexNames != null) {
-          if (result != null) result = new HashSet<String>(result);
-          for (String dLexName : dLexNames) {
-            // only add valid, if we have the synsets to verify; else add all
-            if (synsets == null || synsets.containsKey(dLexName)) {
-              if (result == null) result = new HashSet<String>();
-              result.add(dLexName);
+      final Collection<MorphTool.Derivation> derivations = morphTool.deriveBaseForms(normInput);
+      if (derivations != null) {
+        for (MorphTool.Derivation derivation : derivations) {
+          final Set<String> dLexNames = lexNames.get(derivation.baseForm);
+          if (dLexNames != null) {
+            if (result != null) result = new HashSet<String>(result);
+            for (String dLexName : dLexNames) {
+              // only add valid, if we have the synsets to verify; else add all
+              if (synsets == null || synsets.containsKey(dLexName)) {
+                if (result == null) result = new HashSet<String>();
+                result.add(dLexName);
+              }
             }
-          }
 
-          if (result != null) {
-            // preserve computation for subsequent lookups
-            if (dlexNames == null) dlexNames = new HashMap<String, Set<String>>();
-            dlexNames.put(normInput, result);
+            if (result != null) {
+              // preserve computation for subsequent lookups
+              if (dlexNames == null) dlexNames = new HashMap<String, Set<String>>();
+              dlexNames.put(normInput, result);
+            }
           }
         }
       }
@@ -171,20 +183,23 @@ public class LexDictionary {
     List<Synset> result = dsynsets == null ? null : dsynsets.get(normInput);
 
     if (result == null) {
-      for (MorphTool.Derivation derivation : morphTool.deriveBaseForms(normInput)) {
-        final List<Synset> dSynsets = synsets.get(derivation.baseForm);
-        if (dSynsets != null) {
-          for (Synset dSynset : dSynsets) {
-            if (derivation.matchesPOS(dSynset.getLexFileName())) {
-              if (result == null) result = new ArrayList<Synset>();
-              result.add(dSynset);
+      final Collection<MorphTool.Derivation> derivations = morphTool.deriveBaseForms(normInput);
+      if (derivations != null) {
+        for (MorphTool.Derivation derivation : derivations) {
+          final List<Synset> dSynsets = synsets.get(derivation.baseForm);
+          if (dSynsets != null) {
+            for (Synset dSynset : dSynsets) {
+              if (derivation.matchesPOS(dSynset.getLexFileName())) {
+                if (result == null) result = new ArrayList<Synset>();
+                result.add(dSynset);
+              }
             }
-          }
 
-          if (result != null) {
-            // preserve computation for subsequent lookups
-            if (dsynsets == null) dsynsets = new HashMap<String, List<Synset>>();
-            dsynsets.put(normInput, result);
+            if (result != null) {
+              // preserve computation for subsequent lookups
+              if (dsynsets == null) dsynsets = new HashMap<String, List<Synset>>();
+              dsynsets.put(normInput, result);
+            }
           }
         }
       }
@@ -552,6 +567,7 @@ public class LexDictionary {
     private Map<String, List<AdjectiveCluster>> adjClusters;
     private Map<String, Set<String>> lexNames;
     private Map<String, List<ReversePointer>> revPtrs;
+    private int maxSpaceCount;
 
     public DictionaryEntryHandler(Map<String, List<Synset>> synsets,
                                   Map<String, List<AdjectiveCluster>> adjClusters,
@@ -561,6 +577,11 @@ public class LexDictionary {
       this.adjClusters = adjClusters;
       this.lexNames = lexNames;
       this.revPtrs = revPtrs;
+      this.maxSpaceCount = 0;
+    }
+
+    public int getMaxSpaceCount() {
+      return maxSpaceCount;
     }
 
     public void handleSynset(Synset synset) {
@@ -575,6 +596,12 @@ public class LexDictionary {
 
           if ("".equals(normWord)) {
             final boolean stopHere = true;
+          }
+
+          // Update maxSpaceCount
+          final int spaceCount = word.getSpaceCount();
+          if (spaceCount > maxSpaceCount) {
+            maxSpaceCount = spaceCount;
           }
 
           // Add to synsets

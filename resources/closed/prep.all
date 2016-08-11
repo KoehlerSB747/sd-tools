@@ -1,0 +1,191 @@
+($RCSfile: prep.all,v $ $Revision: 1.0 $ $Date: 2016/08/04 13:12:00 $ $Name:  $ $State: Exp $)
+(Copyright (c) 2016 follows sd-tools licensing)
+
+(prep.all)
+
+{ per, a, an, (preposition: per)}
+{ aboard, (preposition: aboard) }
+{ about, 'bout, bout, (preposition: about) }
+{ above, bove, (preposition: above) }
+{ abreast, (preposition: abreast) }
+{ abroad, (preposition: abroad) }
+{ absent, (preposition: absent -- law) }
+{ across, cross, (preposition: across) }
+{ adjacent, (preposition: adjacent --  US, rare) }
+{ after, (preposition: after) }
+{ against, 'gainst, gainst, again, gain, (preposition: against) }
+{ along, 'long, alongst, (preposition: along) }
+{ alongside, (preposition: alongside) }
+{ amid, amidst, mid, midst, (preposition: amid) }
+{ among, amongst, 'mong, mong, 'mongst, (preposition: among) }
+{ apropos, (preposition: apropos (rare for apropos of)) }
+{ apud, (preposition: apud (formal)) }
+{ around, 'round, round, (preposition: around) }
+{ as, (preposition: as) }
+{ astride, (preposition: astride) }
+{ at, (preposition: at) }
+{ atop, ontop, (preposition: atop) }
+{ bar, (preposition: bar) }
+{ before, afore, tofore, B4, (preposition: before) }
+{ behind, ahind, (preposition: behind) }
+{ below, ablow, allow, (preposition: below) }
+{ beneath, 'neath, neath, (preposition: beneath) }
+{ beside, (preposition: beside) }
+{ besides, (preposition: besides) }
+{ between, atween, (preposition: between) }
+{ beyond, ayond, (preposition: beyond) }
+{ but, (preposition: but) }
+{ by, (preposition: by) }
+{ chez, (preposition: chez (rare)) }
+{ circa, c, ca, (preposition: circa) }
+{ come, dehors, (preposition: come) }
+{ despite, spite, (preposition: despite) }
+{ down, (preposition: down) }
+{ during, (preposition: during) }
+{ except, (preposition: except) }
+{ for, 4, (preposition: for) }
+{ from, (preposition: from) }
+{ in, (preposition: in) }
+{ inside, (preposition: inside) }
+{ into, (preposition: into) }
+{ less, (preposition: less) }
+{ like, (preposition: like) }
+{ minus, (preposition: minus) }
+{ near, nearer, nearest, anear, (preposition: near) }
+{ notwithstanding, (preposition: notwithstanding (also postpositional)) }
+{ of, o', (preposition: of) }
+{ off, (preposition: off) }
+{ on, (preposition: on) }
+{ onto, (preposition: onto) }
+{ opposite, (preposition: opposite) }
+{ out, outen, (preposition: out) }
+{ outside, (preposition: outside) }
+{ over, o'er, (preposition: over) }
+{ pace, (preposition: pace (formal)) }
+{ past, (preposition: past) }
+{ per, (preposition: per) }
+{ post, (preposition: post (often hyphenated)) }
+{ pre, (preposition: pre (often hyphenated)) }
+{ pro, (preposition: pro (often hyphenated)) }
+{ qua, (preposition: qua (formal)) }
+{ re, (preposition: re (often used with colon)) }
+{ sans, (preposition: sans (formal)) }
+{ save, sauf, (preposition: save) }
+{ short, (preposition: short) }
+{ since, sithence, (preposition: since) }
+{ than, (preposition: than) }
+{ through, thru, (preposition: through) }
+{ throughout, thruout, (preposition: throughout) }
+{ to, 2, (preposition: to) }
+{ toward, towards, (preposition: toward) }
+{ under, (preposition: under) }
+{ underneath, (preposition: underneath) }
+{ unlike, (preposition: unlike) }
+{ until, 'til, til, till, (preposition: until) }
+{ up, (preposition: up) }
+{ upon, 'pon, pon, (preposition: upon) }
+{ upside, (preposition: upside) }
+{ versus, vs, v, (preposition: versus) }
+{ via, (preposition: via) }
+{ vice, (preposition: vice (formal)) }
+{ vis-à-vis, (preposition: vis-à-vis (formal)) }
+{ with, w/, (preposition: with) }
+{ within, w/i, (preposition: within) }
+{ without, w/o, (preposition: without) }
+{ worth, (preposition: worth) }
+{ according_to, (preposition: according to) }
+{ adjacent_to, (preposition: adjacent to) }
+{ ahead_of, (preposition: ahead of) }
+{ apart_from, (preposition: apart from) }
+{ as_for, (preposition: as for) }
+{ as_of, (preposition: as of) }
+{ as_per, (preposition: as per) }
+{ as_regards, (preposition: as regards) }
+{ aside_from, (preposition: aside from) }
+{ astern_of, (preposition: astern of) }
+{ back_to, (preposition: back to) }
+{ because_of, (preposition: because of) }
+{ close_to, (preposition: close to) }
+{ due_to, (preposition: due to) }
+{ except_for, (preposition: except for) }
+{ far_from, (preposition: far from) }
+{ inside_of, (preposition: inside of) }
+{ instead_of, (preposition: instead of) }
+{ left_of, (preposition: left of) }
+{ near_to, (preposition: near to) }
+{ next_to, (preposition: next to) }
+{ opposite_of, (preposition: opposite of) }
+{ opposite_to, (preposition: opposite to) }
+{ out_from, (preposition: out from) }
+{ out_of, (preposition: out of) }
+{ outside_of, (preposition: outside of) }
+{ owing_to, (preposition: owing to) }
+{ prior_to, (preposition: prior to) }
+{ pursuant_to, (preposition: pursuant to) }
+{ rather_than, (preposition: rather than) }
+{ regardless_of, (preposition: regardless of) }
+{ right_of, (preposition: right of) }
+{ subsequent_to, (preposition: subsequent to) }
+{ such_as, (preposition: such as) }
+{ thanks_to, (preposition: thanks to) }
+{ up_to, (preposition: up to) }
+{ as_far_as, (preposition: as far as) }
+{ as_opposed_to, (preposition: as opposed to) }
+{ as_soon_as, (preposition: as soon as) }
+{ as_well_as, (preposition: as well as) }
+{ at_the_behest_of, (preposition: at the behest of) }
+{ by_means_of, (preposition: by means of) }
+{ by_virtue_of, (preposition: by virtue of) }
+{ for_the_sake_of, (preposition: for the sake of) }
+{ in_accordance_with, (preposition: in accordance with) }
+{ in_addition_to, (preposition: in addition to) }
+{ in_case_of, (preposition: in case of) }
+{ in_front_of, (preposition: in front of) }
+{ in_lieu_of, (preposition: in lieu of) }
+{ in_order_to, (preposition: in order to) }
+{ in_place_of, (preposition: in place of) }
+{ in_point_of, (preposition: in point of) }
+{ in_spite_of, (preposition: in spite of) }
+{ on_account_of, (preposition: on account of) }
+{ on_behalf_of, (preposition: on behalf of) }
+{ on_top_of, (preposition: on top of) }
+{ with_regard_to, w/r/t, wrt,, (preposition: with regard to) }
+{ with_respect_to, (preposition: with respect to) }
+{ with_a_view_to, (preposition: with a view to) }
+{ abaft, (preposition: abaft) }
+{ abeam, (preposition: abeam) }
+{ aboon, abun, abune, (preposition: aboon) }
+{ afront, (preposition: afront) }
+{ ajax, (preposition: ajax) }
+{ alongst, (preposition: alongst) }
+{ aloof, (preposition: aloof) }
+{ anenst, anent, (preposition: anenst) }
+{ athwart, (preposition: athwart) }
+{ atop, ontop, (preposition: atop) }
+{ behither, (preposition: behither) }
+{ ben, (preposition: ben) }
+{ betwixt, atwix, 'twixt, twixt, (preposition: betwixt) }
+{ bewest, (preposition: bewest) }
+{ benorth, (preposition: benorth) }
+{ emforth, (preposition: emforth) }
+{ ere, or, (preposition: ere) }
+{ forby, (preposition: forby) }
+{ foreanent, forenenst, (preposition: foreanent) }
+{ foregain, foregainst, (preposition: foregain) }
+{ forth, (preposition: forth) }
+{ fromward, froward, fromwards, (preposition: fromward) }
+{ furth, (preposition: furth) }
+{ gainward, (preposition: gainward) }
+{ imell, (preposition: imell) }
+{ inmid, inmiddes, (preposition: inmid) }
+{ mang, (preposition: mang) }
+{ mauger, maugre, (preposition: mauger) }
+{ nearhand, (preposition: nearhand) }
+{ next, (preposition: next (archaic for next to; originally superlative of nigh)) }
+{ nigh, anigh, anighst, (preposition: nigh) }
+{ outwith, (preposition: outwith) }
+{ overthwart, (preposition: overthwart) }
+{ quoad, (preposition: quoad) }
+{ umbe, umb, um, (preposition: umbe) }
+{ unto, (preposition: unto) }
+{ uptill, (preposition: uptill) }

@@ -95,11 +95,21 @@ public class MorphTool {
 
   private File dictDir;
   private Map<String, List<BaseForm>> exceptions;
+  private boolean archaic;
 
   public MorphTool(File dictDir) throws IOException {
     this.dictDir = dictDir;
     this.exceptions = new HashMap<String, List<BaseForm>>();
+    this.archaic = false;
     loadExceptions();
+  }
+
+  public void setArchaic(boolean archaic) {
+    this.archaic = archaic;
+  }
+
+  public boolean getArchaic() {
+    return archaic;
   }
 
   /**
@@ -110,32 +120,44 @@ public class MorphTool {
    * actual existing words.
    */
   public Collection<Derivation> deriveBaseForms(String normInput) {
+    if (normInput.indexOf(' ') >= 0) return null;
+
     Map<String, Derivation> base2derivation = new HashMap<String, Derivation>();
 
-    // add derivations from exceptions lists
-    addDerivationsFromExceptions(base2derivation, normInput);
+    // add derivations from exceptions lists and morphology rules
+    doAddDerivations(base2derivation, normInput, -1);
 
-    // compute derivations from morphology rules
-    addMorphologicalDerivations(base2derivation, normInput);
+    // test for archaic "Old English" forms
+    if (archaic) {
+      doArchaicDerivations(base2derivation, normInput);
+    }
 
-    return base2derivation.values();
+    return base2derivation == null ? null : base2derivation.values();
   }
 
-  final Map<String, Derivation> addDerivationsFromExceptions(Map<String, Derivation> base2derivation, String normInput) {
+  final void doAddDerivations(Map<String, Derivation> base2derivation, String normInput, int posMask) {
+    // add derivations from exceptions lists
+    addDerivationsFromExceptions(base2derivation, normInput, posMask);
+
+    // compute derivations from morphology rules
+    addMorphologicalDerivations(base2derivation, normInput, posMask);
+  }
+
+  final Map<String, Derivation> addDerivationsFromExceptions(Map<String, Derivation> base2derivation, String normInput, int posMask) {
     if (base2derivation == null) base2derivation = new HashMap<String, Derivation>();
 
     // add derivations from exceptions lists
     final List<BaseForm> exceptionsList = exceptions.get(normInput);
     if (exceptionsList != null) {
       for (BaseForm baseForm : exceptionsList) {
-        addDerivation(base2derivation, normInput, baseForm.base, "", baseForm.posBit);
+        addDerivation(base2derivation, normInput, baseForm.base, "", baseForm.posBit & posMask);
       }
     }    
 
     return base2derivation;
   }
 
-  final Map<String, Derivation> addMorphologicalDerivations(Map<String, Derivation> base2derivation, String normInput) {
+  final Map<String, Derivation> addMorphologicalDerivations(Map<String, Derivation> base2derivation, String normInput, int posMask) {
     if (base2derivation == null) base2derivation = new HashMap<String, Derivation>();
 
     // compute derivations from morphology rules
@@ -150,7 +172,7 @@ public class MorphTool {
       // apply all suffix changes of length 1: "s"->""(noun,verb)
       if (lm0 == 's') {
         final String stem = normInput.substring(0, len - 1);
-        addDerivation(base2derivation, normInput, stem, "s", NOUN_BIT | VERB_BIT);
+        addDerivation(base2derivation, normInput, stem, "s", (NOUN_BIT | VERB_BIT) & posMask);
       }
     }
 
@@ -164,8 +186,8 @@ public class MorphTool {
           final String stem = normInput.substring(0, len - 2);
           final String suffix = normInput.substring(len - 2);
           final int pos = (lm0 == 'r') ? ADJ_BIT : VERB_BIT;
-          addDerivation(base2derivation, normInput, stem, suffix, pos);
-          addDerivation(base2derivation, normInput, stem + "e", suffix, pos);
+          addDerivation(base2derivation, normInput, stem, suffix, pos & posMask);
+          addDerivation(base2derivation, normInput, stem + "e", suffix, pos & posMask);
         }
       }
     }
@@ -179,22 +201,22 @@ public class MorphTool {
         if (lm2 == 's' || lm2 == 'x' || lm2 == 'z') {  // "ses", "xes", "zes"
           final String suffix = normInput.substring(len - 3);
           final String stem = normInput.substring(0, len - 2);  // actually, this is the base form
-          addDerivation(base2derivation, normInput, stem, suffix, NOUN_BIT);
+          addDerivation(base2derivation, normInput, stem, suffix, NOUN_BIT & posMask);
         }
         else if (lm2 == 'i') {  // "ies"->"y"(noun,verb)
           final String suffix = normInput.substring(len - 3);
           final String stem = normInput.substring(0, len - 3);
-          addDerivation(base2derivation, normInput, stem + "y", suffix, NOUN_BIT | VERB_BIT);
+          addDerivation(base2derivation, normInput, stem + "y", suffix, (NOUN_BIT | VERB_BIT) & posMask);
         }
         else if (lm2 == 'h' && len > 4) {  // "hes"
           final char lm3 = normInput.charAt(len - 4);
           // apply all suffix changes of length 4:
-          //  "ches"->"ch"(noun), "shes"->"sh"(noun)
+          //  "ches"->"ch"(noun,verb), "shes"->"sh"(noun,verb)
 
           if (lm3 == 'c' || lm3 == 's') {  // "ches", "shes"
             final String suffix = normInput.substring(len - 4);
             final String stem = normInput.substring(0, len - 2);  // actually, this is the base form
-            addDerivation(base2derivation, normInput, stem, suffix, NOUN_BIT);
+            addDerivation(base2derivation, normInput, stem, suffix, (NOUN_BIT | VERB_BIT) & posMask);
           }
         }
       }
@@ -203,37 +225,125 @@ public class MorphTool {
       else if (lm0 == 'g' && lm1 == 'n' && lm2 == 'i') {  // "ing"
         final String suffix = normInput.substring(len - 3);
         final String stem = normInput.substring(0, len - 3);
-        addDerivation(base2derivation, normInput, stem, suffix, VERB_BIT);
-        addDerivation(base2derivation, normInput, stem + "e", suffix, VERB_BIT);
+        addDerivation(base2derivation, normInput, stem, suffix, VERB_BIT & posMask);
+        addDerivation(base2derivation, normInput, stem + "e", suffix, VERB_BIT & posMask);
       }
 
       //   "est"->""(adj), "est"->"e"(adj)
       else if (lm0 == 't' && lm1 == 's' && lm2 == 'e') {  // "est"
         final String suffix = normInput.substring(len - 3);
         final String stem = normInput.substring(0, len - 3);
-        addDerivation(base2derivation, normInput, stem, suffix, ADJ_BIT);
-        addDerivation(base2derivation, normInput, stem + "e", suffix, ADJ_BIT);
+        addDerivation(base2derivation, normInput, stem, suffix, ADJ_BIT & posMask);
+        addDerivation(base2derivation, normInput, stem + "e", suffix, ADJ_BIT & posMask);
       }
 
       //   "men"->"man"(noun)
       else if (lm0 == 'n' && lm1 == 'e' && lm2 == 'm') { // "men"
         final String suffix = normInput.substring(len - 3);
         final String stem = normInput.substring(0, len - 3);
-        addDerivation(base2derivation, normInput, stem + "man", suffix, NOUN_BIT);
+        addDerivation(base2derivation, normInput, stem + "man", suffix, NOUN_BIT & posMask);
+      }
+    }
+
+    if (len > 4) {
+      final char lm3 = normInput.charAt(len - 4);
+
+      //   "ings"->""(verb), "ings"->"e"(verb)  e.g., "prophesyings"
+      if (lm0 == 's' && lm1 == 'g' && lm2 == 'n' && lm3 == 'i') {
+        final String suffix = normInput.substring(len - 4);
+        final String stem = normInput.substring(0, len - 4);
+        addDerivation(base2derivation, normInput, stem, suffix, VERB_BIT & posMask);
+        addDerivation(base2derivation, normInput, stem + "e", suffix, VERB_BIT & posMask);
       }
     }
 
     return base2derivation;
   }
 
-  private final Derivation addDerivation(Map<String, Derivation> base2derivation, String normInput, String base, String suffix, int posMask) {
-    Derivation derivation = base2derivation.get(base);
-    if (derivation == null) {
-      derivation = new Derivation(normInput, base);
-      base2derivation.put(base, derivation);
+  private final void doArchaicDerivations(Map<String, Derivation> base2derivation, String normInput) {
+
+    final int len = normInput.length();
+    String stem = normInput;
+    if (len > 4) {
+      final char lm0 = normInput.charAt(len - 1);
+      final char lm1 = normInput.charAt(len - 2);
+      final char lm2 = normInput.charAt(len - 3);
+      if (lm2 == 'e' && lm1 == 't' && lm0 == 'h') {
+        // -eth (e.g., "lieth", "abhorreth", "commandeth")
+        //
+        // if results in ending in double consonant, remove one and add "s"
+        // else add "es"
+        stem = normInput.substring(0, len - 2);
+        doAddDerivations(base2derivation, stem, VERB_BIT);
+        addDerivationsFromExceptions(base2derivation, stem, VERB_BIT);
+        addDerivation(base2derivation, normInput, stem, "th", VERB_BIT);
+
+        stem = stem + "s";
+        doAddDerivations(base2derivation, stem, VERB_BIT);  // constrain to verbs only
+
+
+        if (lm2 == 'e') {  // ends in "est"  -- add more potential bases
+          // remove "est", if result ends in repeated consonant, remove one.
+          int clipAt = len - 3;  // clip off the "e"
+
+          if (len > 5) {
+            final char lm3 = normInput.charAt(len - 4);
+            final char lm4 = normInput.charAt(len - 5);
+            if (lm3 == lm4) {
+              clipAt = len - 4;  // clip off "Xest"
+            }
+          }
+
+          stem = normInput.substring(0, clipAt);
+
+          doAddDerivations(base2derivation, stem + "s", VERB_BIT); // constrain to verbs only
+
+          addDerivationsFromExceptions(base2derivation, stem, VERB_BIT);
+          addDerivation(base2derivation, normInput, stem, "eth", VERB_BIT);
+        }
+      }
+      else if (lm1 == 's' && lm0 == 't') {  // ends in "st"
+        // -[e]st (e.g., "canst") -- if results in ending in double consonant, remove one
+        stem = normInput.substring(0, len - 1);
+        doAddDerivations(base2derivation, stem, VERB_BIT);  // constrain to verbs only
+
+        stem = normInput.substring(0, len - 2); // take off the 's'
+        doAddDerivations(base2derivation, stem, VERB_BIT);
+        addDerivationsFromExceptions(base2derivation, stem, VERB_BIT);
+        addDerivation(base2derivation, normInput, stem, "st", VERB_BIT);
+
+        if (lm2 == 'e') {  // ends in "est"  -- add more potential bases
+          // remove "est", if result ends in repeated consonant, remove one.
+          int clipAt = len - 3;  // clip off the "e"
+
+          if (len > 5) {
+            final char lm3 = normInput.charAt(len - 4);
+            final char lm4 = normInput.charAt(len - 5);
+            if (lm3 == lm4) {
+              clipAt = len - 4;  // clip off "Xest"
+            }
+          }
+
+          stem = normInput.substring(0, clipAt);
+
+          doAddDerivations(base2derivation, stem + "s", VERB_BIT); // constrain to verbs only
+
+          addDerivationsFromExceptions(base2derivation, stem, VERB_BIT);
+          addDerivation(base2derivation, normInput, stem, "est", VERB_BIT);
+        }
+      }
     }
-    derivation.updateWith(posMask, suffix);
-    return derivation;
+  }
+
+  private final void addDerivation(Map<String, Derivation> base2derivation, String normInput, String base, String suffix, int posMask) {
+    if (posMask != 0) {
+      Derivation derivation = base2derivation.get(base);
+      if (derivation == null) {
+        derivation = new Derivation(normInput, base);
+        base2derivation.put(base, derivation);
+      }
+      derivation.updateWith(posMask, suffix);
+    }
   }
 
   private final void loadExceptions() throws IOException {
@@ -256,16 +366,17 @@ public class MorphTool {
           while ((line = reader.readLine()) != null) {
             if (!"".equals(line)) {
               final String[] pieces = line.split(" +");
-              if (pieces.length == 2) {
-                for (int i = 0; i < pieces.length; ++i) {
-                  pieces[i] = NormalizeUtil.normalizeForLookup(pieces[i]);
-                }
+              if (pieces.length > 1) {
+                pieces[0] = NormalizeUtil.normalizeForLookup(pieces[0]);
                 List<BaseForm> baseForms = exceptions.get(pieces[0]);
                 if (baseForms == null) {
                   baseForms = new ArrayList<BaseForm>();
                   exceptions.put(pieces[0], baseForms);
                 }
-                baseForms.add(new BaseForm(posBit, pieces[1]));
+                for (int i = 1; i < pieces.length; ++i) {
+                  pieces[i] = NormalizeUtil.normalizeForLookup(pieces[i]);
+                  baseForms.add(new BaseForm(posBit, pieces[i]));
+                }
               }
             }
           }

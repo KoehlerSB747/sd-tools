@@ -78,6 +78,10 @@ public class Word {
     return result == null ? "" : result;
   }
 
+  public int getSpaceCount() {
+    return simpleWord.getSpaceCount();
+  }
+
   public boolean matches(Word otherWord) {
     boolean result = false;
 

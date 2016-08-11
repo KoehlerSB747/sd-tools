@@ -48,12 +48,12 @@ public class StandardTokenizerOptions {
 
   /**
    * Specifies the maximum number of soft breaks that may comprise a token (e.g.,
-   * whie looking for a hard break or revising.)
+   * while looking for a hard break or revising.)
    */
   private int tokenBreakLimit;
   /**
    * Get the maximum number of soft breaks that may comprise a token (e.g.,
-   * whie looking for a hard break or revising.)
+   * while looking for a hard break or revising.)
    */
   public int getTokenBreakLimit() {
     return tokenBreakLimit;
@@ -453,7 +453,7 @@ public class StandardTokenizerOptions {
   }
 
   private void init(DataProperties options) {
-    this.options = options;
+    this.options = (options == null) ? new DataProperties() : options;
 
     // enum LSL, SO, LO, SL, LS
     String revisionStrategy = options.getString("revisionStrategy", "LSL");

@@ -1,0 +1,11 @@
+($RCSfile: det.all,v $ $Revision: 1.0 $ $Date: 2016/08/04 13:12:00 $ $Name:  $ $State: Exp $)
+(Copyright (c) 2016 follows sd-tools licensing)
+
+(det.all)
+
+{ the, a, an, some, both, (article (determiner)) }
+{ this, that, these, those, (demonstrative (determiner)) }
+{ my, your, his, her, their, our, (possessive determiner)) }
+{ which, what, whose, (interrogative and personal possessive determiner) }
+{ all, some, many, few, a_few, a_lot, a_lot_of, no, several, every, some, some_of, most, most_of, (quantifier (determiner)) }
+{ each, any, (distributive determiner) }

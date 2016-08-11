@@ -35,8 +35,17 @@ public class TestNormalizeUtil extends TestCase {
   public void testNormalize() {
     doNormalizeTest("This  is  a @#$%! Test", "this is a test");
     doNormalizeTest("This's  'a' \"Test\"", "this's a test");
+    doNormalizeTest("sanders'", "sanders");
+    doNormalizeTest("'a", "'a");
     doNormalizeTest("3.14159", "3.14159");
     doNormalizeTest(".14159", ".14159");
+  }
+
+  public void testTrimPossessive() {
+    doNormalizeTest("Jacob's", "jacob");
+    doNormalizeTest("brother's", "brother");
+    doNormalizeTest("MAJESTY'S", "majesty");
+    doNormalizeTest("ass's", "ass");
   }
 
   private final void doNormalizeTest(String input, String  expected) {

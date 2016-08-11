@@ -1,0 +1,1 @@
+Closed set words in the format of WordNet lexicographer files for the purpose of augmenting WordNet with these categories.

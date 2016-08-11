@@ -1,0 +1,21 @@
+($RCSfile: pronoun.all,v $ $Revision: 1.0 $ $Date: 2016/08/04 13:12:00 $ $Name:  $ $State: Exp $)
+(Copyright (c) 2016 follows sd-tools licensing)
+
+(pronoun.all)
+
+{ I, he, she, it, we, you, they, what, who, thou, ye, (subject (nominative) pronoun) }
+{ me, you, him, her, it, us, you, them, whom, what, thee, you, (objective pronoun) }
+{ mine, your, yours, his, hers, its, ours, theirs, thy, thine, (possessive pronoun) }
+{ myself, yourself, yourselves, himself, herself, oneself, itself, ourselves, themselves, thyself, (reflexive pronoun) }
+{ this, that, these, those, (demonstrative pronoun) }
+{ no_one, nobody, nothing, neither, none, none_of, (indefinite "no" pronoun) }
+{ everyone, everybody, everything, each, both, all, (indefinite "every" pronoun) }
+{ someone, somebody, something, some, (indefinite "some" pronoun) }
+{ anyone, anybody, anything, either, any, (indefinite "any" pronoun) }
+{ one, this, another, other, whatever, whichever, whoever, whosoever, whomever, whomsoever, whoso, others, such, one_another, each_other, (indefinite "other" pronoun) }
+{ enough, little, less, much, more, most, plenty, (uncountable (w/singular verb) quantifier pronoun) }
+{ one, (countable (singular verb) quantifier pronoun) }
+{ several, few, fewer, many, more, most, (countable (plural verb) quantifier pronoun) }
+{ where, whither, whence, when, how, why, whether, (interrogative (pro-adverb) pronoun) }
+{ who, whom, whose, what, which, (interrogative (relative) pronoun) }
+{ each, any, either, neither, others, (distributive pronoun) }

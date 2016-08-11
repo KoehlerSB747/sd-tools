@@ -48,7 +48,7 @@ public class StandardTokenizerFactory {
    * Get a StandardTokenizer for the given text using the given options.
    */
   public static StandardTokenizer getTokenizer(String text, StandardTokenizerOptions options) {
-    return new StandardTokenizer(text, options);
+    return new StandardTokenizer(text, (options == null) ? DEFAULT_OPTIONS : options);
   }
 
   /**
@@ -68,7 +68,7 @@ public class StandardTokenizerFactory {
    * further tokenization of the text.
    */
   public static Token getFirstToken(String text, StandardTokenizerOptions options) {
-    StandardTokenizer tokenizer = getTokenizer(text, options);
+    StandardTokenizer tokenizer = getTokenizer(text, (options == null) ? DEFAULT_OPTIONS : options);
     return tokenizer.getToken(0);
   }
 
@@ -84,6 +84,7 @@ public class StandardTokenizerFactory {
    */
   public static String[] tokenize(String text, StandardTokenizerOptions options) {
     final List<String> result = new ArrayList<String>();
+    if (options == null) options = DEFAULT_OPTIONS;
 
     for (Token token = getFirstToken(text, options); token != null; token = token.getNextToken()) {
       result.add(token.getText());
@@ -109,7 +110,7 @@ public class StandardTokenizerFactory {
    * each of their (parent) primary tokenizations.
    */
   public static Tree<Token> fullTokenization(String text, StandardTokenizerOptions options) {
-    final StandardTokenizer tokenizer = getTokenizer(text, options);
+    final StandardTokenizer tokenizer = getTokenizer(text, (options == null) ? DEFAULT_OPTIONS : options);
     return fullTokenization(tokenizer);
   }
 
@@ -134,7 +135,7 @@ public class StandardTokenizerFactory {
   }
 
   public static Tree<Token> showTokenization(PrintStream out, String text, StandardTokenizerOptions options) {
-    final Tree<Token> result = fullTokenization(text, options);
+    final Tree<Token> result = fullTokenization(text, (options ==  null) ? DEFAULT_OPTIONS : options);
     showTokenization(out, result);
     return result;
   }
@@ -175,6 +176,7 @@ public class StandardTokenizerFactory {
    */
   public static Tree<String> fullyTokenize(String text, StandardTokenizerOptions options) {
     final Tree<String> result = new Tree<String>(text);
+    if (options == null) options = DEFAULT_OPTIONS;
 
     for (Token primaryToken = getFirstToken(text, options); primaryToken != null; primaryToken = primaryToken.getNextToken()) {
       final Tree<String> primaryTokenNode = result.addChild(primaryToken.getText());

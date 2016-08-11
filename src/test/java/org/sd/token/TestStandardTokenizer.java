@@ -350,6 +350,51 @@ public class TestStandardTokenizer extends TestCase {
     assertTrue(tokenizeTest.runTest());
   }
 
+  public void testTokenBreakLimit3a() {
+    final StandardTokenizerOptions options = new StandardTokenizerOptions();
+    options.setTokenBreakLimit(3);
+    options.setRevisionStrategy(TokenRevisionStrategy.LS);
+
+    final StandardTokenizer tokenizer = StandardTokenizerFactory.getTokenizer("John Jacob Jingleheimer Schmidt", options);
+
+    final String[] expected = new String[] {
+      "John Jacob Jingleheimer",
+      "John Jacob",
+      "John",
+      "Jacob Jingleheimer Schmidt",
+      "Jacob Jingleheimer",
+      "Jacob",
+      "Jingleheimer Schmidt",
+      "Jingleheimer",
+      "Schmidt",
+    };
+
+    int idx = 0;
+    for (Token primaryToken = tokenizer.getToken(0); primaryToken != null; primaryToken = tokenizer.getNextToken(primaryToken)) {
+      String text = primaryToken.getText();
+      if (expected == null || expected.length == 0) {
+        System.out.println(idx + ":" + text);
+      }
+      else {
+        assertEquals(expected[idx], text);
+      }
+      ++idx;
+
+      for (Token revisedToken = tokenizer.revise(primaryToken); revisedToken != null ; revisedToken = tokenizer.revise(revisedToken)) {
+        primaryToken = revisedToken;
+        text = revisedToken.getText();
+
+        if (expected == null || expected.length == 0) {
+          System.out.println(idx + ":" + text);
+        }
+        else {
+          assertEquals(expected[idx], text);
+        }
+        ++idx;
+      }
+    }
+  }
+
   public void testBuildWords() {
     final StandardTokenizerOptions options = new StandardTokenizerOptions();
     final StandardTokenizer tokenizer = new StandardTokenizer("This here -- is a shortButSweet *Test*!", options);

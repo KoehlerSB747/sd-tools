@@ -1,0 +1,69 @@
+($RCSfile: conj.all,v $ $Revision: 1.0 $ $Date: 2016/08/04 13:12:00 $ $Name:  $ $State: Exp $)
+(Copyright (c) 2016 follows sd-tools licensing)
+
+(conj.all)
+
+{ for, (conjunction: for) }
+{ and, (conjunction: and) }
+{ nor, (conjunction: nor) }
+{ but, (conjunction: but) }
+{ or, (conjunction: or) }
+{ yet, (conjunction: yet) }
+{ so, (conjunction: so) }
+{ after, (conjunction: after) }
+{ although, (conjunction: although) }
+{ as, (conjunction: as) }
+{ as_far_as, (conjunction: as far as) }
+{ as_if, (conjunction: as if) }
+{ as_long_as, (conjunction: as long as) }
+{ as_soon_as, (conjunction: as soon as) }
+{ as_though, (conjunction: as though) }
+{ because, (conjunction: because) }
+{ before, (conjunction: before) }
+{ even_if, (conjunction: even if) }
+{ even_though, (conjunction: even though) }
+{ every_time, (conjunction: every time) }
+{ else, (conjunciton: else) }
+{ if, (conjunction: if) }
+{ in_order_that, (conjunction: in order that) }
+{ since, (conjunction: since) }
+{ so, (conjunction: so) }
+{ so_that, (conjunction: so that) }
+{ than, (conjunction: than) }
+{ though, (conjunction: though) }
+{ unless, (conjunction: unless) }
+{ until, (conjunction: until) }
+{ when, (conjunction: when) }
+{ whenever, (conjunction: whenever) }
+{ whensoever, (conjunction: whensoever) }
+{ where, (conjunction: where) }
+{ whereas, (conjunction: whereas) }
+{ wherever, (conjunction: wherever) }
+{ wherein, (conjunction: wherein) }
+{ whereinsoever, (conjunction: whereinsoever) }
+{ wherewith, (conjunction: wherewith) }
+{ whereabout, (conjunction: whereabout) }
+{ whereby, (conjunction: whereby) }
+{ whereof, (conjunction: whereof) }
+{ whereon, (conjunction: whereon) }
+{ whereunto, (conjunction: whereunto) }
+{ whereto, (conjunction: whereto) }
+{ whereupon, (conjunction: whereupon) }
+{ whereinto, (conjunction: whereinto) }
+{ whereunder, (conjunction: whereunder) }
+{ forasmuch, (conjunction: forasmuch) }
+{ forsomuch, (conjunction: forsomuch) }
+{ however, (conjunction: however) }
+{ howsoever, (conjunction: howsoever) }
+{ soever, (conjunction: soever) }
+{ whithersoever, (conjunction: whithersoever) }
+{ thereunto, (conjunction: thereunto) }
+{ thereat, (conjunction: thereat) }
+{ thereupon, (conjunction: thereupon) }
+{ thereout, (conjunction: thereout) }
+{ thereinto, (conjunction: thereinto) }
+{ hereunto, (conjunction: hereunto) }
+{ while, whilst, (conjunction: while) }
+{ whether, (conjunction: whether) }
+{ that, (conjunction: that) }
+{ howbeit, (conjunction: howbeit) }

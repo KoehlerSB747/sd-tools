@@ -33,6 +33,7 @@ public class NormalizeUtil {
       final int len = input.length();
       char lastC = (char)0;
       char embedC = (char)0;
+      boolean sawAPOS = false;
       for (int pos = 0; pos < len; ++pos) {
         char c = input.charAt(pos);
 
@@ -56,6 +57,7 @@ public class NormalizeUtil {
           if (c == '\'' || c == '/' || c == '.') {
             if (lastC != ' ') {
               embedC = c;
+              if (c == '\'') sawAPOS = true;
             }
             else {
               c = ' ';
@@ -66,6 +68,14 @@ public class NormalizeUtil {
           }
         }
         lastC = c;
+      }
+
+      // trim off "'s" at end of string
+      if (sawAPOS) {
+        final int nlen = result.length();
+        if (result.charAt(nlen - 2) == '\'' && result.charAt(nlen - 1) == 's') {
+          result.setLength(result.length() - 2);
+        }
       }
     }
 
