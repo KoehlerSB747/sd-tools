@@ -196,6 +196,9 @@ public class Token {
   public int getRevisionNumber() {
     return revisionNumber;
   }
+  public void setRevisionNumber(int revisionNumber) {
+    this.revisionNumber = revisionNumber;
+  }
 
   private int sequenceNumber;
   /**
@@ -203,6 +206,9 @@ public class Token {
    */
   public int getSequenceNumber() {
     return sequenceNumber;
+  }
+  public void setSequenceNumber(int sequenceNumber) {
+    this.sequenceNumber = sequenceNumber;
   }
 
   private int wordCount;

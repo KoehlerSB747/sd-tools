@@ -37,6 +37,7 @@ import org.sd.wordnet.token.WordNetTokenGenerator;
 public class UndefinedWordFinder {
   
   static boolean EMIT = true;
+  static boolean EMIT_TOKENS = false;
 
 
   private LexDictionary dict;
@@ -46,7 +47,7 @@ public class UndefinedWordFinder {
   public UndefinedWordFinder(File dbFileDir) throws IOException {
     this.dict = new LexDictionary(new LexLoader(dbFileDir));
     this.tokenGenerator = new WordNetTokenGenerator(dict);
-    this.lookupStrategy = new SimpleWordLookupStrategy();
+    this.lookupStrategy = new SimpleWordLookupStrategy(dict);
   }
 
   /** @return the number of words *not* found. */
@@ -64,23 +65,33 @@ public class UndefinedWordFinder {
     final TokenCollectionHandler tokenHandler = new TokenCollectionHandler();
     tokenGenerator.generate(tokenHandler, line, lookupStrategy);
 
-    for (WordNetToken wnToken : tokenHandler.getTokens()) {
-      if (wnToken.isUnknown()) {
-        // undefined
-        if (EMIT) {
-          System.out.println(wnToken.getInput() + "\t" + wnToken.getNorm());
-        }
+    if (EMIT_TOKENS) {  // emit tokens
+      if (EMIT) {
+        System.out.println(tokenHandler);
       }
-      else {
-        // is defined
-        if (wnToken.hasTags()) {
+    }
+    else {  // emit unknown (and tagged) words
+      for (WordNetToken wnToken : tokenHandler.getTokens()) {
+        if (wnToken.isUnknown()) {
+          // undefined
           if (EMIT) {
-            final String tagsString = getTagsString(wnToken.getTags());
-            System.err.println(tagsString + ": " + wnToken.getInput());
+            System.out.println(wnToken.getInput() + "\t" + wnToken.getNorm());
           }
         }
-        else {  // has synsets
-          //todo: show parts of speech?
+        else {
+          // is defined
+          if (wnToken.hasTags()) {
+            if (EMIT) {
+              final String tagsString = getTagsString(wnToken.getTags());
+              System.err.println(tagsString + ": " + wnToken.getInput());
+            }
+          }
+          else {  // has synsets
+            if (EMIT) {
+              final String label = getTagsString(wnToken.getCategories());
+              System.err.println(label + ": " + wnToken.getNorm());
+            }
+          }
         }
       }
     }

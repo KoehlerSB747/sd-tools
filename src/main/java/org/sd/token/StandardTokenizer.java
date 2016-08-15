@@ -866,7 +866,7 @@ public class StandardTokenizer implements Tokenizer {
    * indicate that the sequence of breaks should be considered as
    * hard.
    */
-  private final int findEndBreakForward(int startPosition, boolean softOnly) {
+  protected final int findEndBreakForward(int startPosition, boolean softOnly) {
     final Map<Integer, Break> pos2break = getPos2Break();
     return doFindEndBreakForward(pos2break, startPosition, softOnly);
   }

@@ -16,8 +16,6 @@
 package org.sd.wordnet.token;
 
 
-import org.sd.wordnet.lex.LexDictionary;
-
 /**
  * Interface for looking up a word.
  * <p>
@@ -26,13 +24,12 @@ import org.sd.wordnet.lex.LexDictionary;
 public interface WordLookupStrategy {
   
   /**
-   * Create a WordNetToken by looking it up using the given dictionary.
+   * Create a WordNetToken by looking it up for the given input/norm.
    * <p>
-   * @param dict  The word net dictionary to use
    * @param input  The input to look up
    * @param norm  The normalized input to look up
    *
    * @return a WordNetToken, with or without synsets and/or tags.
    */
-  public WordNetToken lookup(LexDictionary dict, String input, String norm);
+  public WordNetToken lookup(String input, String norm);
 }

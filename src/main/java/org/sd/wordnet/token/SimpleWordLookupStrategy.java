@@ -28,7 +28,14 @@ import org.sd.wordnet.lex.Word;
  */
 public class SimpleWordLookupStrategy implements WordLookupStrategy {
   
-  public SimpleWordLookupStrategy() {
+  private LexDictionary dict;
+
+  public SimpleWordLookupStrategy(LexDictionary dict) {
+    this.dict = dict;
+  }
+
+  public LexDictionary getLexDictionary() {
+    return dict;
   }
 
   /**
@@ -40,7 +47,7 @@ public class SimpleWordLookupStrategy implements WordLookupStrategy {
    *
    * @return a WordNetToken, with or without synsets and/or tags.
    */
-  public WordNetToken lookup(LexDictionary dict, String input, String norm) {
+  public WordNetToken lookup(String input, String norm) {
     final WordNetToken result = new WordNetToken().setInput(input).setNorm(norm).setSynsets(dict.lookupSynsets(norm));
 
     if (!result.hasSynsets()) {

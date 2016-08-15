@@ -22,7 +22,6 @@ import org.sd.token.StandardTokenizerOptions;
 import org.sd.token.Token;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.util.NormalizeUtil;
-import org.sd.xml.DataProperties;
 
 /**
  * Utility to generate WordNetToken instances.
@@ -31,42 +30,16 @@ import org.sd.xml.DataProperties;
  */
 public class WordNetTokenGenerator {
   
-  private static final String[] DEFAULT_TOKENIZER_OPTIONS_ARGS = new String[] {
-    "revisionStrategy=LS",
-    "lowerUpperBreak=ZERO_WIDTH_SOFT_BREAK",
-    "upperLowerBreak=NO_BREAK",
-    "upperDigitBreak=NO_BREAK",
-    "lowerDigitBreak=ZERO_WIDTH_SOFT_BREAK",
-    "digitUpperBreak=NO_BREAK",
-    "digitLowerBreak=NO_BREAK",
-    "nonEmbeddedDoubleDashBreak=SINGLE_WIDTH_HARD_BREAK",
-    "embeddedDoubleDashBreak=SINGLE_WIDTH_HARD_BREAK",
-    "leftBorderedDashBreak=SINGLE_WIDTH_HARD_BREAK",
-    "rightBorderedDashBreak=SINGLE_WIDTH_HARD_BREAK",
-    "freeStandingDashBreak=SINGLE_WIDTH_HARD_BREAK",
-    "whitespaceBreak=SINGLE_WIDTH_SOFT_BREAK",
-    "quoteAndParenBreak=SINGLE_WIDTH_HARD_BREAK",
-    "symbolBreak=SINGLE_WIDTH_HARD_BREAK",
-    "repeatingSymbolBreak=SINGLE_WIDTH_HARD_BREAK",
-    "slashBreak=SINGLE_WIDTH_SOFT_BREAK",
-    "embeddedApostropheBreak=NO_BREAK",
-    "embeddedPunctuationBreak=SINGLE_WIDTH_HARD_BREAK",
-  };
-  public static final StandardTokenizerOptions DEFAULT_TOKENIZER_OPTIONS =
-    new StandardTokenizerOptions(new DataProperties(DEFAULT_TOKENIZER_OPTIONS_ARGS));
-
-
   private LexDictionary dict;
   private StandardTokenizerOptions options;
 
   public WordNetTokenGenerator(LexDictionary dict) {
-    this(dict, DEFAULT_TOKENIZER_OPTIONS);
+    this(dict, null);
   }
 
   public WordNetTokenGenerator(LexDictionary dict, StandardTokenizerOptions options) {
     this.dict = dict;
-    this.options = new StandardTokenizerOptions(options);
-    this.options.setTokenBreakLimit(dict.getMaxSpaceCount());
+    this.options = TokenUtil.buildTokenizerOptions(dict, options);
   }
 
   public void generate(TokenHandler handler, String line, WordLookupStrategy lookupStrategy) {
@@ -80,14 +53,14 @@ public class WordNetTokenGenerator {
     for (Token primaryToken = tokenizer.getToken(0); primaryToken != null; primaryToken = tokenizer.getNextToken(primaryToken)) {
       String text = primaryToken.getText();
       String norm = NormalizeUtil.normalizeForLookup(text);
-      wnToken = lookupStrategy.lookup(dict, text, norm);
+      wnToken = lookupStrategy.lookup(text, norm);
       if (wnToken != null) wnToken.setToken(primaryToken);
       if (wnToken == null || wnToken.isUnknown()) {
         for (Token revisedToken = tokenizer.revise(primaryToken); revisedToken != null; revisedToken = tokenizer.revise(revisedToken)) {
           primaryToken = revisedToken;
           text = revisedToken.getText();
           norm = NormalizeUtil.normalizeForLookup(text);
-          wnToken = lookupStrategy.lookup(dict, text, norm);
+          wnToken = lookupStrategy.lookup(text, norm);
           if (wnToken != null) wnToken.setToken(revisedToken);
           if (wnToken != null && wnToken.hasCategories()) {
             // add defined token to handler

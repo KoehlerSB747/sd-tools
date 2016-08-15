@@ -53,6 +53,10 @@ public class WordNetToken {
     return this;
   }
 
+  public boolean isMultiWord() {
+    return norm != null && norm.indexOf(' ') > 0;
+  }
+
   public boolean hasNorm() {
     return norm != null && !"".equals(norm);
   }
@@ -75,7 +79,7 @@ public class WordNetToken {
   }
 
   public WordNetToken setSynsets(List<Synset> synsets) {
-    this.synsets = synsets;
+    this.synsets = (synsets == null) ? null : new ArrayList<Synset>(synsets);
     this._categories = null;
     return this;
   }
