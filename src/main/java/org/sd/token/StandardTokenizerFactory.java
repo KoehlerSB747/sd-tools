@@ -123,25 +123,43 @@ public class StandardTokenizerFactory {
   public static Tree<Token> fullTokenization(StandardTokenizer tokenizer) {
     final Tree<Token> result = new Tree<Token>(new Token(tokenizer, tokenizer.getText(), 0, tokenizer.getOptions().getRevisionStrategy(), 0, 0, tokenizer.getWordCount(), -1));
 
-    doAddFullTokenizationAndNext(result, tokenizer, tokenizer.getToken(0));
+    for (Token primaryToken = tokenizer.getToken(0); primaryToken != null; primaryToken = tokenizer.getNextToken(primaryToken)) {
+      final Tree<Token> primaryTokenNode = result.addChild(primaryToken);
+
+      for (Token revisedToken = tokenizer.revise(primaryToken); revisedToken != null; revisedToken = tokenizer.revise(revisedToken)) {
+        primaryTokenNode.addChild(revisedToken);
+      }
+    }
 
     return result;
   }
 
-  private static final void doAddFullTokenizationAndNext(Tree<Token> result, StandardTokenizer tokenizer, Token curToken) {
+  /**
+   * Recursively create a tree of tokens where each parent has as its children,
+   * all of its tokens, whose children are all revisions, including next tokens.
+   */
+  public static Tree<Token> completeTokenization(StandardTokenizer tokenizer) {
+    final Tree<Token> result = new Tree<Token>(new Token(tokenizer, tokenizer.getText(), 0, tokenizer.getOptions().getRevisionStrategy(), 0, 0, tokenizer.getWordCount(), -1));
+
+    doAddCompleteTokenizationAndNext(result, tokenizer, tokenizer.getToken(0));
+
+    return result;
+  }
+
+  private static final void doAddCompleteTokenizationAndNext(Tree<Token> result, StandardTokenizer tokenizer, Token curToken) {
     if (curToken == null) return;
 
     final Tree<Token> curTokenNode = result.addChild(curToken);
 
     // add all revisions as children to curTokenNode
     for (Token revisedToken = tokenizer.revise(curToken); revisedToken != null; revisedToken = tokenizer.revise(revisedToken)) {
-      doAddFullTokenizationAndNext(curTokenNode, tokenizer, revisedToken);
+      doAddCompleteTokenizationAndNext(curTokenNode, tokenizer, revisedToken);
     }
 
     // and add next node to result
     final Token nextToken = tokenizer.getNextToken(curToken);
     if (nextToken != null) {
-      doAddFullTokenizationAndNext(result, tokenizer, nextToken);
+      doAddCompleteTokenizationAndNext(result, tokenizer, nextToken);
     }
   }
 

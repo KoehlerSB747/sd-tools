@@ -115,10 +115,7 @@ public class TokenUtil {
   }
 
 
-  public static void doMain(StandardTokenizer tokenizer, String arg) {
-    final Tree<Token> tokens = StandardTokenizerFactory.fullTokenization(tokenizer);
-
-    System.out.println("\nFull Tokenization of '" + arg + "':\n");
+  public static void doMain(StandardTokenizer tokenizer, Tree<Token> tokens) {
     for (Iterator<Tree<Token>> iter = tokens.iterator(Tree.Traversal.DEPTH_FIRST); iter.hasNext(); ) {
       final Tree<Token> curNode = iter.next();
       for (int indentPos = 0; indentPos < curNode.depth(); ++indentPos) {
@@ -136,7 +133,9 @@ public class TokenUtil {
 
     for (String arg : args) {
       final StandardTokenizer tokenizer = StandardTokenizerFactory.getTokenizer(arg, tokenizerOptions);
-      doMain(tokenizer, arg);
+      final Tree<Token> tokens = StandardTokenizerFactory.fullTokenization(tokenizer);
+      System.out.println("\nFull Tokenization of '" + arg + "':\n");
+      doMain(tokenizer, tokens);
     }
   }
 }

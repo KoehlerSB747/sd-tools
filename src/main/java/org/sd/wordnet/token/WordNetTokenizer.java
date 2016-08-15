@@ -23,6 +23,7 @@ import java.util.Map;
 import org.sd.token.FeatureConstraint;
 import org.sd.token.Token;
 import org.sd.token.StandardTokenizer;
+import org.sd.token.StandardTokenizerFactory;
 import org.sd.token.StandardTokenizerOptions;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.lex.LexLoader;
@@ -298,7 +299,8 @@ public class WordNetTokenizer extends StandardTokenizer {
 
     for (String arg : args) {
       final WordNetTokenizer tokenizer = new WordNetTokenizer(dict, lookupStrategy, arg);
-      org.sd.token.TokenUtil.doMain(tokenizer, arg);
+      System.out.println("\nComplete Tokenization of '" + arg + "':\n");
+      org.sd.token.TokenUtil.doMain(tokenizer, StandardTokenizerFactory.completeTokenization(tokenizer));
     }
   }
 }
