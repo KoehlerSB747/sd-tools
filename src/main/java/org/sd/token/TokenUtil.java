@@ -115,6 +115,19 @@ public class TokenUtil {
   }
 
 
+  public static void doMain(StandardTokenizer tokenizer, String arg) {
+    final Tree<Token> tokens = StandardTokenizerFactory.fullTokenization(tokenizer);
+
+    System.out.println("\nFull Tokenization of '" + arg + "':\n");
+    for (Iterator<Tree<Token>> iter = tokens.iterator(Tree.Traversal.DEPTH_FIRST); iter.hasNext(); ) {
+      final Tree<Token> curNode = iter.next();
+      for (int indentPos = 0; indentPos < curNode.depth(); ++indentPos) {
+        System.out.print(' ');
+      }
+      System.out.println(curNode.getData().toString());
+    }
+  }
+
   public static void main(String[] args) {
     final DataProperties dataProperties = new DataProperties(args);
     args = dataProperties.getRemainingArgs();
@@ -122,16 +135,8 @@ public class TokenUtil {
     final StandardTokenizerOptions tokenizerOptions = new StandardTokenizerOptions(dataProperties);
 
     for (String arg : args) {
-      final Tree<Token> tokens = StandardTokenizerFactory.fullTokenization(arg, tokenizerOptions);
-
-      System.out.println("\nFull Tokenization of '" + arg + "':\n");
-      for (Iterator<Tree<Token>> iter = tokens.iterator(Tree.Traversal.DEPTH_FIRST); iter.hasNext(); ) {
-        final Tree<Token> curNode = iter.next();
-        for (int indentPos = 0; indentPos < curNode.depth(); ++indentPos) {
-          System.out.print(' ');
-        }
-        System.out.println(curNode.getData().toString());
-      }
+      final StandardTokenizer tokenizer = StandardTokenizerFactory.getTokenizer(arg, tokenizerOptions);
+      doMain(tokenizer, arg);
     }
   }
 }

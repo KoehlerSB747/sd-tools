@@ -84,6 +84,20 @@ public class WordNetToken {
     return this;
   }
 
+  public String getSynsetNames() {
+    // get a comma-delimited list of synset names, or empty string
+    final StringBuilder result = new StringBuilder();
+
+    if (hasSynsets()) {
+      for (Synset synset : synsets) {
+        if (result.length() > 0) result.append(',');
+        result.append(synset.getSynsetName());
+      }
+    }
+
+    return result.toString();
+  }
+
   public boolean hasTags() {
     return tags != null && tags.size() > 0;
   }
@@ -94,6 +108,20 @@ public class WordNetToken {
 
   public Set<String> getTags() {
     return tags;
+  }
+
+  public String getTagNames() {
+    // get a comma-delimited list of tag names, or empty string
+    final StringBuilder result = new StringBuilder();
+
+    if (hasTags()) {
+      for (String tag : tags) {
+        if (result.length() > 0) result.append(',');
+        result.append(tag);
+      }
+    }
+
+    return result.toString();
   }
 
   public WordNetToken addTag(String tag) {

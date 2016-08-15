@@ -344,14 +344,20 @@ public class Token {
   }
 
   /**
-   * Convenience method for getting the feature.
+   * Convenience method for getting the (first) feature.
    */
   public Feature getFeature(String type, Object source, Class featureValueType, boolean broaden) {
+    return getFeature(FeatureConstraint.getInstance(type, source, featureValueType), broaden);
+  }
+
+  /**
+   * Convenience method for getting the (first) feature.
+   */
+  public Feature getFeature(FeatureConstraint constraint, boolean broaden) {
+
     Feature result = null;
-    FeatureConstraint constraint = null;
 
     if (this.features != null) {
-      constraint = FeatureConstraint.getInstance(type, source, featureValueType);
       result = features.getFirst(constraint);
     }
 
@@ -361,9 +367,6 @@ public class Token {
            broaderToken != null;
            broaderToken = tokenizer.broadenStart(broaderToken)) {
         if (broaderToken.hasFeatures()) {
-          if (constraint == null) {
-            constraint = FeatureConstraint.getInstance(type, source, featureValueType);
-          }
           result = broaderToken.getFeatures().getFirst(constraint);
           if (result != null) break;
         }
@@ -388,14 +391,41 @@ public class Token {
   }
 
   /**
+   * Convenience method for getting the features.
+   */
+  public List<Feature> getFeatures(FeatureConstraint constraint) {
+    List<Feature> result = null;
+
+    if (this.features != null && constraint != null) {
+      result = features.getFeatures(constraint);
+    }
+
+    return result;
+  }
+
+  /**
    * Determine whether this token has a feature as specified by the params.
    * <p>
    * If valueToString is null, this will return true if the feature doesn't exist
    * or if there is a matching feature with a null value.
    */
   public boolean hasFeatureValue(String type, Object source, Class featureValueType, String valueToString) {
+    return doHasFeatureValue(getFeatures(type, source, featureValueType), valueToString);
+  }
+
+  /**
+   * Determine whether this token has a feature as specified by the params.
+   * <p>
+   * If valueToString is null, this will return true if the feature doesn't exist
+   * or if there is a matching feature with a null value.
+   */
+  public boolean hasFeatureValue(FeatureConstraint constraint, String valueToString) {
+    return doHasFeatureValue(getFeatures(constraint), valueToString);
+  }
+
+  private final boolean doHasFeatureValue(List<Feature> features, String valueToString) {
     boolean result = false;
-    final List<Feature> features = getFeatures(type, source, featureValueType);
+
     if (features != null) {
       for (Feature feature : features) {
         final Object value = feature.getValue();
@@ -413,6 +443,7 @@ public class Token {
     else if (valueToString == null) {
       result = true;
     }
+
     return result;
   }
 
@@ -425,10 +456,28 @@ public class Token {
    * return true.
    */
   public boolean hasMatchingFeatureValue(Token otherToken, String type, Object source, Class featureValueType) {
+    return doHasMatchingFeatureValue(
+      this.getFeatures(type, source, featureValueType),
+      otherToken.getFeatures(type, source, featureValueType));
+  }
+
+  /**
+   * Determine whether this token has a matching feature value to the other
+   * token for the specified feature.
+   * <p>
+   * If both this and the other token are missing the feature or if this
+   * token and the other have a null value for the feature, this will
+   * return true.
+   */
+  public boolean hasMatchingFeatureValue(Token otherToken, FeatureConstraint constraint) {
+    return doHasMatchingFeatureValue(
+      this.getFeatures(constraint),
+      otherToken.getFeatures(constraint));
+  }
+
+  private final boolean doHasMatchingFeatureValue(List<Feature> myFeatures, List<Feature> otherFeatures) {
     boolean result = false;
 
-    final List<Feature> myFeatures = getFeatures(type, source, featureValueType);
-    final List<Feature> otherFeatures = otherToken.getFeatures(type, source, featureValueType);
     if (myFeatures != null && myFeatures.size() > 0) {
       if (otherFeatures != null && otherFeatures.size() > 0) {
         for (Feature myFeature : myFeatures) {

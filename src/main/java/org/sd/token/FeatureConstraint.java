@@ -34,6 +34,14 @@ public class FeatureConstraint {
     return constraint;
   }
 
+  public static FeatureConstraint getInstance(String type, Class sourceClass, Class featureValueType) {
+    final FeatureConstraint constraint = new FeatureConstraint();
+    constraint.setType(type);
+    constraint.setClassType(sourceClass != null ? sourceClass : null);
+    constraint.setFeatureValueType(featureValueType != null ? featureValueType : null);
+    return constraint;
+  }
+
 
   private String type;
   public String getType() {
