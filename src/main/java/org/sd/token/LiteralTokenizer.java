@@ -66,55 +66,26 @@ public class LiteralTokenizer extends StandardTokenizer implements Publishable {
    * such that the first token's start offset is zero.
    */
   public LiteralTokenizer(String text, List<Token> tokens) {
-    super(text, OPTIONS);
+    super(null);  // we'll create and set the breakMaker later
 
+    this.tokenDatas = null;
+    this.tokens = null;
+
+    StandardBreakMaker breakMaker = null;
+    
     if (tokens != null && tokens.size() > 0) {
-      Integer zeroIndex = null;
-
       this.tokenDatas = new ArrayList<TokenData>();
-      int sequenceNumber = 0;
-      for (Token token : tokens) {
-        if (zeroIndex == null) zeroIndex = token.getStartIndex();
-        this.tokenDatas.add(new TokenData(zeroIndex, token, sequenceNumber++));
-      }
+      this.tokens = new HashMap<Integer, TokenData>();
+      breakMaker = new LiteralBreakMaker(text, tokens, this.tokenDatas, this.tokens, this);
     }
+    else {
+      breakMaker = new StandardBreakMaker(text, OPTIONS);
+    }
+
+    super.setBreakMaker(breakMaker);
 
     // force initialization
     getPos2Break();
-  }
-
-  protected Map<Integer, Break> createBreaks() {
-    final Map<Integer, Break> result = new HashMap<Integer, Break>();
-
-    this.tokens = new HashMap<Integer, TokenData>();
-
-    if (tokenDatas != null) {
-      int lastEnd = -1;
-      for (TokenData tokenData : tokenDatas) {
-        final Token token = tokenData.asToken(this);
-
-        final int tokenStart = token.getStartIndex();
-        final int tokenEnd = token.getEndIndex();
-
-        if (tokenStart > 0) {
-          for (int i = lastEnd + 1; i < tokenStart; ++i) {
-            setBreak(result, i, Break.SINGLE_WIDTH_HARD_BREAK);
-          }
-
-          final int leftOffset = tokenData.getLeftOffset();
-          setBreak(result, leftOffset, leftOffset == 0 ? Break.ZERO_WIDTH_HARD_BREAK : Break.SINGLE_WIDTH_HARD_BREAK);
-        }
-
-        final int rightBreakWidth = tokenData.getRightBreakWidth();
-        setBreak(result, tokenEnd, rightBreakWidth == 0 ? Break.ZERO_WIDTH_HARD_BREAK : Break.SINGLE_WIDTH_HARD_BREAK);
-
-        this.tokens.put(tokenStart, tokenData);
-
-        lastEnd = tokenEnd;
-      }
-    }
-
-    return result;
   }
 
   public Token getToken(int startPosition) {
@@ -183,6 +154,7 @@ public class LiteralTokenizer extends StandardTokenizer implements Publishable {
     return result;
   }
 
+  @Override
   public String getPostDelim(Token token) {
     String result = "";
     final TokenData tokenData = this.tokens.get(token.getStartIndex());
@@ -200,6 +172,7 @@ public class LiteralTokenizer extends StandardTokenizer implements Publishable {
     return result;
   }
 
+  @Override
   public String getPreDelim(Token token) {
     String result = "";
     final TokenData tokenData = this.tokens.get(token.getStartIndex());
@@ -219,7 +192,7 @@ public class LiteralTokenizer extends StandardTokenizer implements Publishable {
    * @param dataOutput  the data output to write to.
    */
   public void write(DataOutput dataOutput) throws IOException {
-    MessageHelper.writeString(dataOutput, text);
+    MessageHelper.writeString(dataOutput, getText());
     if (tokenDatas == null) dataOutput.writeInt(0);
     else {
       dataOutput.writeInt(tokenDatas.size());
@@ -240,7 +213,7 @@ public class LiteralTokenizer extends StandardTokenizer implements Publishable {
    * @param dataInput  the data output to write to.
    */
   public void read(DataInput dataInput) throws IOException {
-    this.text = MessageHelper.readString(dataInput);
+    this.setText(MessageHelper.readString(dataInput));
     final int numTokens = dataInput.readInt();
     if (numTokens > 0) {
       this.tokenDatas = new ArrayList<TokenData>();
@@ -265,6 +238,65 @@ public class LiteralTokenizer extends StandardTokenizer implements Publishable {
     }
 
     return result;
+  }
+
+
+  public static final class LiteralBreakMaker extends StandardBreakMaker {
+
+    private List<TokenData> tokenDatas;
+    private Map<Integer, TokenData> tokens;
+    private Tokenizer tokenizer;
+
+    public LiteralBreakMaker(String text, List<Token> theTokens, List<TokenData> tokenDatas, Map<Integer, TokenData> tokens, Tokenizer tokenizer) {
+      super(text, OPTIONS);
+
+      this.tokenDatas = tokenDatas;
+      this.tokens = tokens;
+      this.tokenizer = tokenizer;
+
+      Integer zeroIndex = null;
+
+      int sequenceNumber = 0;
+      for (Token token : theTokens) {
+        if (zeroIndex == null) zeroIndex = token.getStartIndex();
+        this.tokenDatas.add(new TokenData(zeroIndex, token, sequenceNumber++));
+      }
+    }
+
+    @Override
+    protected Map<Integer, Break> createBreaks() {
+      final Map<Integer, Break> result = new HashMap<Integer, Break>();
+
+      this.tokens.clear();
+
+      if (tokenDatas != null && tokenDatas.size() > 0) {
+        int lastEnd = -1;
+        for (TokenData tokenData : tokenDatas) {
+          final Token token = tokenData.asToken(tokenizer);
+
+          final int tokenStart = token.getStartIndex();
+          final int tokenEnd = token.getEndIndex();
+
+          if (tokenStart > 0) {
+            for (int i = lastEnd + 1; i < tokenStart; ++i) {
+              setBreak(result, i, Break.SINGLE_WIDTH_HARD_BREAK);
+            }
+
+            final int leftOffset = tokenData.getLeftOffset();
+            setBreak(result, leftOffset, leftOffset == 0 ? Break.ZERO_WIDTH_HARD_BREAK : Break.SINGLE_WIDTH_HARD_BREAK);
+          }
+
+          final int rightBreakWidth = tokenData.getRightBreakWidth();
+          setBreak(result, tokenEnd, rightBreakWidth == 0 ? Break.ZERO_WIDTH_HARD_BREAK : Break.SINGLE_WIDTH_HARD_BREAK);
+
+          this.tokens.put(tokenStart, tokenData);
+
+          lastEnd = tokenEnd;
+        }
+      }
+
+      return result;
+    }
   }
 
 
@@ -314,12 +346,12 @@ public class LiteralTokenizer extends StandardTokenizer implements Publishable {
       this.postDelim = token.getPostDelim();
       this._token = null;  //NOTE: initialized when "asToken" is called
 
-      final StandardTokenizer tokenizer = (StandardTokenizer)token.getTokenizer();
+      final StandardTokenizer tokenizer = token.getTokenizer().asStandardTokenizer();
 
       this.leftOffset = 0;
-      final Break preBreak = tokenizer.getBreak(tokenStart);
+      final Break preBreak = tokenizer.getBreakMaker().getBreak(tokenStart);
       if (preBreak == null && tokenStart > 0) leftOffset = -1;
-      final Break postBreak = tokenizer.getBreak(tokenEnd);
+      final Break postBreak = tokenizer.getBreakMaker().getBreak(tokenEnd);
       if (postBreak != null) this.rightBreakWidth = postBreak.getBWidth();
     }
 

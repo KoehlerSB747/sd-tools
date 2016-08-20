@@ -276,7 +276,7 @@ public class CompoundParser {
       if (verbose) {
         System.out.println("\nParser '" + this.id + ":" + id + "' parsing '" + input.getText() + "'...");
         System.out.println("Tokenization:");
-        StandardTokenizerFactory.showTokenization(System.out, currentTokenizer);
+        StandardTokenizerFactory.showTokenization(System.out, currentTokenizer.getStandardTokenizer());
       }
 
       if (traceflow) {

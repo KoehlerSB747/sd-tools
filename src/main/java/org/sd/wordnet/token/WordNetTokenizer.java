@@ -25,6 +25,7 @@ import org.sd.token.Token;
 import org.sd.token.StandardTokenizer;
 import org.sd.token.StandardTokenizerFactory;
 import org.sd.token.StandardTokenizerOptions;
+import org.sd.token.TokenFeatureAdder;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.lex.LexLoader;
 import org.sd.wordnet.util.NormalizeUtil;
@@ -85,6 +86,8 @@ public class WordNetTokenizer extends StandardTokenizer {
     this.dict = dict;
     this.lookupStrategy = lookupStrategy;
     this.pos2token = new HashMap<Integer, Token>();
+
+    super.setTokenFeatureAdder(new MyTokenFeatureAdder());
   }
 
   public LexDictionary getLexDictionary() {
@@ -182,9 +185,11 @@ public class WordNetTokenizer extends StandardTokenizer {
 
   
 
-  protected void addTokenFeatures(Token token) {
-    // if the wnToken feature doesn't exist, create and add it for this token
-    addTokenFeatures(token, null);
+  private final class MyTokenFeatureAdder implements TokenFeatureAdder {
+    public void addTokenFeatures(Token token) {
+      // if the wnToken feature doesn't exist, create and add it for this token
+      doAddTokenFeatures(token, null);
+    }
   }
 
   private final Token narrowToDefined(Token standardToken, int seqNum, int revNum) {
@@ -221,7 +226,7 @@ public class WordNetTokenizer extends StandardTokenizer {
         }
 
         // stow wnToken data as a feature(s) on theToken
-        addTokenFeatures(theToken, wnToken);
+        doAddTokenFeatures(theToken, wnToken);
       }
     }
 
@@ -247,7 +252,7 @@ public class WordNetTokenizer extends StandardTokenizer {
     return wnToken;
   }
 
-  private final WordNetToken addTokenFeatures(Token token, WordNetToken wnToken) {
+  private final WordNetToken doAddTokenFeatures(Token token, WordNetToken wnToken) {
     //NOTE: Only add features if we haven't already done so
     if (token == null || hasCustomTokenFeatures(token)) return wnToken;
 

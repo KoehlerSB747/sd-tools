@@ -498,6 +498,30 @@ public class FileUtil {
   }
 
   /**
+   * Load the given properties file into the result, creating if needed.
+   */
+  public static final Properties loadProperties(Properties result, File propertiesFile) throws IOException {
+    return loadProperties(result, propertiesFile, ".properties");
+  }
+
+  /**
+   * Load the given properties file into the result, creating if needed.
+   */
+  public static final Properties loadProperties(Properties result, File propertiesFile, String optionalExtension) throws IOException {
+    if (result == null) result = new Properties();
+    propertiesFile = addExtensionIfNeeded(propertiesFile, optionalExtension);
+
+    final BufferedReader reader = FileUtil.getReader(propertiesFile);
+    try {
+      result.load(reader);
+    }
+    finally {
+      if (reader != null) reader.close();
+    }
+    return result;
+  }
+
+  /**
    * Get a normal input stream or a gzip input stream depending on whether
    * filename's extension is ".gz".
    * <p>
@@ -1556,6 +1580,26 @@ public class FileUtil {
       if (!file.exists()) {
         result = curFilename;
         break;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * If the file doesn't exist and doesn't have the extension, then add the
+   * extension to it.
+   */
+  public static final File addExtensionIfNeeded(File file, String extension) {
+    File result = file;
+
+    if (extension == null) return result;
+
+    if (!result.exists()) {
+      final String filename = file.getName();
+      if (!filename.endsWith(extension)) {
+        final File parentFile = file.getParentFile();
+        result = new File(parentFile, filename + extension);
       }
     }
 

@@ -236,7 +236,7 @@ public class Token {
       this.breakCount = breakCount;
 
       this._preDelim = tokenizer.initializing() ? null : tokenizer.getPreDelim(this);
-      this._postDelim = tokenizer.initializing() ? null : tokenizer.getPostDelim(this);
+      this._postDelim = tokenizer.initializing() ? null : tokenizer.getPostDelim(this);;
 		}
 
   /**

@@ -32,8 +32,11 @@ import org.sd.token.CategorizedToken;
 import org.sd.token.Token;
 import org.sd.token.TokenInfo;
 import org.sd.token.TokenInfoContainer;
+import org.sd.token.StandardBreakMaker;
 import org.sd.token.StandardTokenizer;
 import org.sd.token.StandardTokenizerOptions;
+import org.sd.token.TokenFeatureAdder;
+import org.sd.token.Tokenizer;
 import org.sd.util.InputContext;
 import org.sd.util.range.IntegerRange;
 import org.sd.util.Usage;
@@ -49,10 +52,11 @@ import org.w3c.dom.NodeList;
  * @author Spence Koehler
  */
 @Usage(notes = "Primary org.sd.AtnParser tokenizer that wraps prior parses as tokens.")
-public class AtnParseBasedTokenizer extends StandardTokenizer {
+public class AtnParseBasedTokenizer implements Tokenizer {
   
   public static final String SOURCE_PARSE = "_sourceParse";
 
+  private StandardTokenizer standardTokenizer;
   private TreeMap<Integer, TokenInfoContainer<MyTokenInfo>> pos2tokenInfoContainer;
   private IntegerRange _parseSpans;
   private List<TokenInfo> hardBreaks;
@@ -67,19 +71,37 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
   }
 
   public AtnParseBasedTokenizer(ResourceManager resourceManager, DomElement tokenizerConfig, List<AtnParseResult> parseResults, InputContext inputContext, StandardTokenizerOptions tokenizerOptions) {
-    super(inputContext.getText(), tokenizerOptions);
     this.hardBreaks = null;
 
     NodeList tokenNodes = null;
     if (tokenizerConfig != null) {
+      // check for specification of a (Standard)Tokenizer to use
+      if (resourceManager != null) {
+        // <tokenizer ...attrs...>
+        //   <jclass>...classpath...</jclass>
+        //   ...other data...
+        // </tokenizer>
+        final DomNode tokenizerNode = tokenizerConfig.selectSingleNode("tokenizer");
+        if (tokenizerNode != null) {
+          // NOTE: class needs constructor of form X(DomElement resourceElt, ResourceManager resourceManger)
+          //       and receives the "tokenizer" elt
+          this.standardTokenizer = (StandardTokenizer)resourceManager.getResource(tokenizerNode.asDomElement(), null);
+        }
+      }
+
+      // check for hardwired tokens
       tokenNodes = tokenizerConfig.selectNodes("tokens/token");
     }
 
-    init(resourceManager, inputContext, parseResults, tokenNodes);
+    if (standardTokenizer == null) standardTokenizer = new StandardTokenizer(null); // NOTE: we'll set breakMaker later
+
+    init(resourceManager, inputContext, parseResults, tokenNodes, tokenizerOptions);
   }
 
-  private void init(ResourceManager resourceManager, InputContext inputContext, List<AtnParseResult> parseResults, NodeList tokenNodes) {
-    super.setInputContext(inputContext);
+  private void init(ResourceManager resourceManager, InputContext inputContext, List<AtnParseResult> parseResults, NodeList tokenNodes,
+    StandardTokenizerOptions tokenizerOptions) {
+    standardTokenizer.setInputContext(inputContext);
+
     this.pos2tokenInfoContainer = new TreeMap<Integer, TokenInfoContainer<MyTokenInfo>>();
 
     add(parseResults);
@@ -91,13 +113,90 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
       addOtherTokenInfos(parseInput.getTokenInfos());
       this.hardBreaks = parseInput.getHardBreaks();
     }
+
+    final MyBreakMaker breakMaker = new MyBreakMaker(inputContext.getText(), tokenizerOptions);
+    final MyTokenFeatureAdder tokenFeatureAdder = new MyTokenFeatureAdder();
+
+    standardTokenizer.setBreakMaker(breakMaker);
+    standardTokenizer.setTokenFeatureAdder(tokenFeatureAdder);
+    standardTokenizer.setSourceTokenizer(this);
   }
 
   public void setRetainEndBreaks(boolean retainEndBreaks) {
     if (retainEndBreaks != this.retainEndBreaks) {
       this.retainEndBreaks = retainEndBreaks;
-      this.reset();
+      standardTokenizer.reset();
     }
+  }
+
+  public StandardTokenizer getStandardTokenizer() {
+    return standardTokenizer;
+  }
+
+  public StandardTokenizerOptions getOptions() {
+    return standardTokenizer.getOptions();
+  }
+
+  /**
+   * Get the token that starts at the given position. To get the first
+   * token, use GetToken(0).
+   *
+   * @return The token at the positioni or null.
+   */
+  public Token getToken(int startPosition) {
+    return standardTokenizer.getToken(startPosition);
+  }
+
+  /**
+   * Get the smallest token after the given token.
+   */
+  public Token getNextSmallestToken(Token token) {
+    return standardTokenizer.getNextSmallestToken(token);
+  }
+
+  /**
+   * Get the smallest token that starts at the given position.
+   */
+  public Token getSmallestToken(int startPosition) {
+    return standardTokenizer.getSmallestToken(startPosition);
+  }
+
+  /**
+   * Get the delimiter text immediately following the token.
+   *
+   * @return A non-null but possibly empty string.
+   */
+  public String getPostDelim(Token token) {
+    return standardTokenizer.getPostDelim(token);
+  }
+
+  /**
+   * Get the delimiter text preceding the given token.
+   *
+   * @return A non-null but possibly empty string.
+   */
+  public String getPreDelim(Token token) {
+    return standardTokenizer.getPreDelim(token);
+  }
+
+  /**
+   * Determine whether the token follows a hard break.
+   * <p>
+   * A token follows a hard break if there is a hard break among the token's
+   * preDelim characters. Therefore, the first token of a string is *not*
+   * considered to follow a hard break.
+   */
+  public boolean followsHardBreak(Token token) {
+    return standardTokenizer.followsHardBreak(token);
+  }
+
+  /**
+   * Revise the token if possible.
+   *
+   * @return A revised token or null.
+   */
+  public Token revise(Token token) {
+    return standardTokenizer.revise(token);
   }
 
   /**
@@ -107,7 +206,6 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
    * NOTE: For the AtnParseBasedTokenizer, this finds broader tokens resulting
    *       from a prior parse.
    */
-  @Override
   public Token broadenStart(Token token) {
     Token result = null;
 
@@ -118,7 +216,7 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
       if (priorInfoContainer.getTokenInfoList().containsKey(token.getEndIndex())) {
         result = buildToken(priorEntry.getKey(), token.getEndIndex());
         if (result != null) {
-          addTokenFeatures(result);
+          standardTokenizer.addTokenFeatures(result);
           break;
         }
       }
@@ -126,6 +224,106 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
 
     return result;
   }
+
+  /**
+   * Get the next token after the given token if possible.
+   *
+   * @return The next token or null.
+   */
+  public Token getNextToken(Token token) {
+    return standardTokenizer.getNextToken(token);
+  }
+
+  /**
+   * Get the token preceding the given token if possible.
+   *
+   * @return The prior token or null.
+   */
+  public Token getPriorToken(Token token) {
+    return standardTokenizer.getPriorToken(token);
+  }
+
+  /**
+   * Get the full text being tokenized.
+   *
+   * @return The full text, possibly empty but not null.
+   */
+  public String getText() {
+    return standardTokenizer.getText();
+  }
+
+  /**
+   * Get the number of 'words' being tokenized by this instance.
+   */
+  public int getWordCount() {
+    return standardTokenizer.getWordCount();
+  }
+
+  /**
+   * Count the number of words encompassed from the start of the startToken
+   * to the end of the endToken.
+   */
+  public int computeWordCount(Token startToken, Token endToken) {
+    return standardTokenizer.computeWordCount(startToken, endToken);
+  }
+
+  /**
+   * Get the full text after the given token if possible.
+   *
+   * @return The full following text, possibly empty but not null.
+   */
+  public String getNextText(Token token) {
+    return standardTokenizer.getNextText(token);
+  }
+
+  /**
+   * Get the full text preceding the token.
+   *
+   * @return The full prior text, possibly empty but not null.
+   */
+  public String getPriorText(Token token) {
+    return standardTokenizer.getPriorText(token);
+  }
+
+  /**
+   * Get the input context associated with this tokenizer's input or null.
+   */
+  public InputContext getInputContext() {
+    return standardTokenizer.getInputContext();
+  }
+
+  /**
+   * Build a token for the identified substring from startPosition (inclusive)
+   * to endPosition (exclusive). Intended for expert use only.
+   * <p>
+   * NOTE: This is an atypical way to create a token as it bypasses the normal
+   *       sequencing but is provided for those rare cases where a specific
+   *       portion of the text is required as a token. The built token's sequence
+   *       number will be -1.
+   * <p>
+   * @return the token or null if the positions are out of range.
+   */
+  public Token buildToken(int startPosition, int endPosition) {
+    return standardTokenizer.buildToken(startPosition, endPosition);
+  }
+
+  /**
+   * Split the text from start to end position into words based on breaks.
+   */
+  public String[] getWords(int startPosition, int endPosition) {
+    return standardTokenizer.getWords(startPosition, endPosition);
+  }
+
+  /** Determine whether this instance is currently initializing. */
+  public boolean initializing() {
+    return standardTokenizer.initializing();
+  }
+
+  /** Safely cast this as a StandardTokenizer or get one suitable for limited use. */
+  public StandardTokenizer asStandardTokenizer() {
+    return standardTokenizer;
+  }
+
 
   public final void add(List<AtnParseResult> parseResults) {
     if (parseResults != null && parseResults.size() > 0) {
@@ -135,7 +333,7 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
         changed |= add(parseResult);
       }
 
-      if (changed) super.reset();
+      if (changed) standardTokenizer.reset();
     }
   }
 
@@ -145,7 +343,7 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
     final InputContext parseInputContext = parseResult.getInputContext();
 
     final int[] startPosition = new int[]{0};
-    if (super.getInputContext().getPosition(parseInputContext, startPosition)) {
+    if (standardTokenizer.getInputContext().getPosition(parseInputContext, startPosition)) {
       changed = true;
       addParseResult(parseResult, startPosition[0]);
     }
@@ -197,7 +395,7 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
       }
 
       // changed
-      super.reset();
+      standardTokenizer.reset();
     }
   }
 
@@ -220,7 +418,7 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
   public List<AtnParse> getParses(Map<String, Integer> compoundParserId2Rank) {
     final List<AtnParse> result = new ArrayList<AtnParse>();
 
-    final int textlen = text.length();
+    final int textlen = standardTokenizer.getText().length();
     for (int i = 0; i < textlen; ++i) {
       final TokenInfoContainer<MyTokenInfo> tic = pos2tokenInfoContainer.get(i);
       if (tic != null) {
@@ -268,193 +466,200 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
   }
 
   public void setTokenizerOptions(StandardTokenizerOptions tokenizerOptions) {
-    super.setOptions(tokenizerOptions);
+    standardTokenizer.setOptions(tokenizerOptions);
   }
 
-  private IntegerRange getParseSpans() {
-    if (_parseSpans == null) {
-      _parseSpans = new IntegerRange();
-      for (Map.Entry<Integer, TokenInfoContainer<MyTokenInfo>> mapEntry : pos2tokenInfoContainer.entrySet()) {
-        final int pos = mapEntry.getKey();
-        final TokenInfoContainer<MyTokenInfo> tic = mapEntry.getValue();
-        _parseSpans.add(pos + 1, tic.getTokenInfoList().lastKey() - 1, true);
-      }
-    }
-    return _parseSpans;
-  }
+  private final class MyBreakMaker extends StandardBreakMaker {
 
-  private final Set<Integer> getTokenEnds() {
-    final Set<Integer> result = new HashSet<Integer>();
-
-    for (TokenInfoContainer<MyTokenInfo> tic : pos2tokenInfoContainer.values()) {
-      result.addAll(tic.getTokenInfoList().keySet());
+    MyBreakMaker(String text, StandardTokenizerOptions tokenizerOptions) {
+      super(text, tokenizerOptions);
     }
 
-    return result;
-  }
+    protected Map<Integer, Break> createBreaks() {
+      final Map<Integer, Break> result = super.createBreaks();
+      final Map<Integer, Break> standardBreaks = retainEndBreaks ? new HashMap<Integer, Break>(result) : null;
+      final Set<Integer> tokenEnds = getTokenEnds();
 
-  protected Map<Integer, Break> createBreaks() {
-    final Map<Integer, Break> result = super.createBreaks();
-    final Map<Integer, Break> standardBreaks = retainEndBreaks ? new HashMap<Integer, Break>(result) : null;
-    final Set<Integer> tokenEnds = getTokenEnds();
+      // set hard breaks, if any
+      if (hardBreaks != null) {
+        for (TokenInfo hardBreak : hardBreaks) {
+          final int startPos = hardBreak.getTokenStart();
+          final int endPos = hardBreak.getTokenEnd();
+          final String breakType = hardBreak.getCategory();  // null or "h" for hard, "s" for soft, "n" for none
+          if (endPos > startPos) {
+            final Break theBreak =
+              "s".equals(breakType) ? Break.SINGLE_WIDTH_SOFT_BREAK :
+              "n".equals(breakType) ? Break.NO_BREAK :
+              Break.SINGLE_WIDTH_HARD_BREAK;
 
-    // set hard breaks, if any
-    if (hardBreaks != null) {
-      for (TokenInfo hardBreak : hardBreaks) {
-        final int startPos = hardBreak.getTokenStart();
-        final int endPos = hardBreak.getTokenEnd();
-        final String breakType = hardBreak.getCategory();  // null or "h" for hard, "s" for soft, "n" for none
-        if (endPos > startPos) {
-          final Break theBreak =
-            "s".equals(breakType) ? Break.SINGLE_WIDTH_SOFT_BREAK :
-            "n".equals(breakType) ? Break.NO_BREAK :
-            Break.SINGLE_WIDTH_HARD_BREAK;
-
-          for (int pos = startPos; pos < endPos; ++pos) {
-            result.put(pos, theBreak);
+            for (int pos = startPos; pos < endPos; ++pos) {
+              result.put(pos, theBreak);
+            }
           }
+          else {
+            final Break theBreak =
+              "s".equals(breakType) ? Break.ZERO_WIDTH_SOFT_BREAK :
+              "n".equals(breakType) ? null :
+              Break.ZERO_WIDTH_HARD_BREAK;
+
+            if (theBreak != null) {
+              result.put(startPos, theBreak);
+            }
+          }
+        }
+      }
+
+      // get the ranges covered by parses
+      final IntegerRange parseSpans = getParseSpans();
+      Map<Integer, Integer> p2ticAdjustments = null;
+
+      // turn boundaries between parses into hard breaks; within parse alternatives as soft breaks; clearing other breaks
+      for (Map.Entry<Integer, TokenInfoContainer<MyTokenInfo>> mapEntry : pos2tokenInfoContainer.entrySet()) {
+        int pos = mapEntry.getKey();
+        final TokenInfoContainer<MyTokenInfo> tic = mapEntry.getValue();
+        Map<Integer, Integer> ticEndAdjustments = null;
+
+        // Record adjustments for old tokens (parses) that start on a new break
+        if (result.containsKey(pos)) {
+          final int nextStartPos = doFindEndBreakForward(result, pos, false);
+          if (nextStartPos > pos) {
+            if (p2ticAdjustments == null) p2ticAdjustments = new HashMap<Integer, Integer>();
+            p2ticAdjustments.put(pos, nextStartPos);
+          }
+        }
+
+        // Set LHS break as Hard (or soft if contained w/in another parse)
+        final boolean isHard = !parseSpans.includes(pos);
+        setBreak(result, pos, true, isHard);
+
+        // Set parse boundaries as Soft
+        int tokenInfoListIndex = 0;
+        final int tokenInfoListIndexMax = tic.getTokenInfoList().size() - 1;
+        int lastEndPos = -1;
+        for (Integer endPos : tic.getTokenInfoList().keySet()) {
+
+          final Integer origEndPos = endPos;
+          if (standardBreaks != null) {
+            // adjust endPos back over breaks
+            for (int fallbackEndPos = endPos - 1; fallbackEndPos >= pos; --fallbackEndPos) {
+              final Break standardBreak = standardBreaks.get(fallbackEndPos);
+              if (standardBreak != null && standardBreak.breaks() && standardBreak.getBWidth() > 0) {
+                --endPos;
+              }
+              else break;
+            }
+          }
+
+          if (!origEndPos.equals(endPos)) {
+            if (ticEndAdjustments == null) ticEndAdjustments = new HashMap<Integer, Integer>();
+            ticEndAdjustments.put(origEndPos, endPos);
+          }
+
+          if (tokenInfoListIndex >= tokenInfoListIndexMax) {
+            lastEndPos = endPos;
+            break;
+          }
+
+          doClearBreaks(result, pos + 1, endPos, tokenEnds);
+          setBreak(result, endPos, false, false);
+          pos = endPos;
+
+          ++tokenInfoListIndex;
+        }
+
+        // Set RHS break as Hard (or soft if contained w/in another parse)
+        doClearBreaks(result, pos + 1, lastEndPos, tokenEnds);
+        setBreak(result, lastEndPos, false, !parseSpans.includes(lastEndPos));
+
+        if (ticEndAdjustments != null) {
+          for (Map.Entry<Integer, Integer> entry : ticEndAdjustments.entrySet()) {
+            tic.adjustEnd(entry.getKey(), entry.getValue());
+          }
+        }
+      }
+
+      // make (copy) adjustments
+      if (p2ticAdjustments != null) {
+        for (Map.Entry<Integer, Integer> adjustmentEntry : p2ticAdjustments.entrySet()) {
+          final Integer fromPos = adjustmentEntry.getKey();
+          final Integer toPos = adjustmentEntry.getValue();
+          final TokenInfoContainer<MyTokenInfo> fromContainer = pos2tokenInfoContainer.get(fromPos);
+          final TokenInfoContainer<MyTokenInfo> toContainer = pos2tokenInfoContainer.get(toPos);
+
+          if (fromContainer == null) continue;
+          if (toContainer == null) {
+            pos2tokenInfoContainer.put(toPos, fromContainer);
+          }
+          else {  // need to merge fromContainer into toContainer
+            final List<MyTokenInfo> myTis = new ArrayList<MyTokenInfo>();
+            for (List<MyTokenInfo> tiList : fromContainer.getTokenInfoList().values()) {
+              for (MyTokenInfo ti : tiList) {
+                myTis.add(ti);
+              }
+            }
+            for (MyTokenInfo ti : myTis) {
+              toContainer.add(ti, fromPos);
+            }
+          }
+        }
+      }
+
+      return result;
+    }
+
+    protected boolean hitsTokenBreakLimit(int startIdx, int breakIdx, int curBreakCount) {
+      boolean result = super.hitsTokenBreakLimit(startIdx, breakIdx, curBreakCount);
+
+      if (result) {
+        final IntegerRange parseSpans = getParseSpans();
+        if (parseSpans.includes(breakIdx)) {
+          result = false;
+        }
+      }
+
+      return result;
+    }
+
+    /**
+     * Clear the breaks in the range, but preserve "tokenEnds" as soft.
+     */
+    private final void doClearBreaks(Map<Integer, Break> result, int startPos, int endPos, Set<Integer> tokenEnds) {
+      for (int breakIndex = startPos; breakIndex < endPos; ++breakIndex) {
+        if (tokenEnds.contains(breakIndex)) {
+          // keep tokenEnd break(s), but flip from hard to soft
+          int bWidth = 1;
+          if (result.containsKey(breakIndex)) {
+            bWidth = result.get(breakIndex).getBWidth();
+          }
+          result.put(breakIndex, bWidth == 0 ? Break.ZERO_WIDTH_SOFT_BREAK : Break.SINGLE_WIDTH_SOFT_BREAK);
         }
         else {
-          final Break theBreak =
-            "s".equals(breakType) ? Break.ZERO_WIDTH_SOFT_BREAK :
-            "n".equals(breakType) ? null :
-            Break.ZERO_WIDTH_HARD_BREAK;
-
-          if (theBreak != null) {
-            result.put(startPos, theBreak);
-          }
+          result.remove(breakIndex);
         }
       }
     }
 
-    // get the ranges covered by parses
-    final IntegerRange parseSpans = getParseSpans();
-    Map<Integer, Integer> p2ticAdjustments = null;
-
-    // turn boundaries between parses into hard breaks; within parse alternatives as soft breaks; clearing other breaks
-    for (Map.Entry<Integer, TokenInfoContainer<MyTokenInfo>> mapEntry : pos2tokenInfoContainer.entrySet()) {
-      int pos = mapEntry.getKey();
-      final TokenInfoContainer<MyTokenInfo> tic = mapEntry.getValue();
-      Map<Integer, Integer> ticEndAdjustments = null;
-
-      // Record adjustments for old tokens (parses) that start on a new break
-      if (result.containsKey(pos)) {
-        final int nextStartPos = doFindEndBreakForward(result, pos, false);
-        if (nextStartPos > pos) {
-          if (p2ticAdjustments == null) p2ticAdjustments = new HashMap<Integer, Integer>();
-          p2ticAdjustments.put(pos, nextStartPos);
+    private IntegerRange getParseSpans() {
+      if (_parseSpans == null) {
+        _parseSpans = new IntegerRange();
+        for (Map.Entry<Integer, TokenInfoContainer<MyTokenInfo>> mapEntry : pos2tokenInfoContainer.entrySet()) {
+          final int pos = mapEntry.getKey();
+          final TokenInfoContainer<MyTokenInfo> tic = mapEntry.getValue();
+          _parseSpans.add(pos + 1, tic.getTokenInfoList().lastKey() - 1, true);
         }
       }
-
-      // Set LHS break as Hard (or soft if contained w/in another parse)
-      final boolean isHard = !parseSpans.includes(pos);
-      setBreak(result, pos, true, isHard);
-
-      // Set parse boundaries as Soft
-      int tokenInfoListIndex = 0;
-      final int tokenInfoListIndexMax = tic.getTokenInfoList().size() - 1;
-      int lastEndPos = -1;
-      for (Integer endPos : tic.getTokenInfoList().keySet()) {
-
-        final Integer origEndPos = endPos;
-        if (standardBreaks != null) {
-          // adjust endPos back over breaks
-          for (int fallbackEndPos = endPos - 1; fallbackEndPos >= pos; --fallbackEndPos) {
-            final Break standardBreak = standardBreaks.get(fallbackEndPos);
-            if (standardBreak != null && standardBreak.breaks() && standardBreak.getBWidth() > 0) {
-              --endPos;
-            }
-            else break;
-          }
-        }
-
-        if (!origEndPos.equals(endPos)) {
-          if (ticEndAdjustments == null) ticEndAdjustments = new HashMap<Integer, Integer>();
-          ticEndAdjustments.put(origEndPos, endPos);
-        }
-
-        if (tokenInfoListIndex >= tokenInfoListIndexMax) {
-          lastEndPos = endPos;
-          break;
-        }
-
-        doClearBreaks(result, pos + 1, endPos, tokenEnds);
-        setBreak(result, endPos, false, false);
-        pos = endPos;
-
-        ++tokenInfoListIndex;
-      }
-
-      // Set RHS break as Hard (or soft if contained w/in another parse)
-      doClearBreaks(result, pos + 1, lastEndPos, tokenEnds);
-      setBreak(result, lastEndPos, false, !parseSpans.includes(lastEndPos));
-
-      if (ticEndAdjustments != null) {
-        for (Map.Entry<Integer, Integer> entry : ticEndAdjustments.entrySet()) {
-          tic.adjustEnd(entry.getKey(), entry.getValue());
-        }
-      }
+      return _parseSpans;
     }
 
-    // make (copy) adjustments
-    if (p2ticAdjustments != null) {
-      for (Map.Entry<Integer, Integer> adjustmentEntry : p2ticAdjustments.entrySet()) {
-        final Integer fromPos = adjustmentEntry.getKey();
-        final Integer toPos = adjustmentEntry.getValue();
-        final TokenInfoContainer<MyTokenInfo> fromContainer = pos2tokenInfoContainer.get(fromPos);
-        final TokenInfoContainer<MyTokenInfo> toContainer = pos2tokenInfoContainer.get(toPos);
+    private final Set<Integer> getTokenEnds() {
+      final Set<Integer> result = new HashSet<Integer>();
 
-        if (fromContainer == null) continue;
-        if (toContainer == null) {
-          pos2tokenInfoContainer.put(toPos, fromContainer);
-        }
-        else {  // need to merge fromContainer into toContainer
-          final List<MyTokenInfo> myTis = new ArrayList<MyTokenInfo>();
-          for (List<MyTokenInfo> tiList : fromContainer.getTokenInfoList().values()) {
-            for (MyTokenInfo ti : tiList) {
-              myTis.add(ti);
-            }
-          }
-          for (MyTokenInfo ti : myTis) {
-            toContainer.add(ti, fromPos);
-          }
-        }
+      for (TokenInfoContainer<MyTokenInfo> tic : pos2tokenInfoContainer.values()) {
+        result.addAll(tic.getTokenInfoList().keySet());
       }
+
+      return result;
     }
-
-    return result;
-  }
-
-  /**
-   * Clear the breaks in the range, but preserve "tokenEnds" as soft.
-   */
-  private final void doClearBreaks(Map<Integer, Break> result, int startPos, int endPos, Set<Integer> tokenEnds) {
-    for (int breakIndex = startPos; breakIndex < endPos; ++breakIndex) {
-      if (tokenEnds.contains(breakIndex)) {
-        // keep tokenEnd break(s), but flip from hard to soft
-        int bWidth = 1;
-        if (result.containsKey(breakIndex)) {
-          bWidth = result.get(breakIndex).getBWidth();
-        }
-        result.put(breakIndex, bWidth == 0 ? Break.ZERO_WIDTH_SOFT_BREAK : Break.SINGLE_WIDTH_SOFT_BREAK);
-      }
-      else {
-        result.remove(breakIndex);
-      }
-    }
-  }
-
-  protected boolean hitsTokenBreakLimit(int startIdx, int breakIdx, int curBreakCount) {
-    boolean result = super.hitsTokenBreakLimit(startIdx, breakIdx, curBreakCount);
-
-    if (result) {
-      final IntegerRange parseSpans = getParseSpans();
-      if (parseSpans.includes(breakIdx)) {
-        result = false;
-      }
-    }
-
-    return result;
   }
 
   // /**
@@ -485,15 +690,17 @@ public class AtnParseBasedTokenizer extends StandardTokenizer {
     return result;
   }
 
-  // adds parse category features to token
-  protected void addTokenFeatures(Token token) {
-    if (token != null) {
-      final TokenInfoContainer<MyTokenInfo> tic = pos2tokenInfoContainer.get(token.getStartIndex());
-      if (tic != null) {
-        final List<MyTokenInfo> tokenInfos = tic.getAll(token.getEndIndex());
-        if (tokenInfos != null) {
-          for (MyTokenInfo tokenInfo : tokenInfos) {
-            tokenInfo.addTokenFeatures(token, this);
+  private final class MyTokenFeatureAdder implements TokenFeatureAdder {
+    // adds parse category features to token
+    public void addTokenFeatures(Token token) {
+      if (token != null) {
+        final TokenInfoContainer<MyTokenInfo> tic = pos2tokenInfoContainer.get(token.getStartIndex());
+        if (tic != null) {
+          final List<MyTokenInfo> tokenInfos = tic.getAll(token.getEndIndex());
+          if (tokenInfos != null) {
+            for (MyTokenInfo tokenInfo : tokenInfos) {
+              tokenInfo.addTokenFeatures(token, AtnParseBasedTokenizer.this);
+            }
           }
         }
       }

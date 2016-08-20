@@ -66,7 +66,7 @@ import org.sd.xml.XmlLite;
        " \n" +
        "   parseConfig -- (required) path to data properties (config) file (xml)\n" +
        "   supplementalConfig -- (optional) semicolon delimited list of paths to supplemental parse config files\n" +
-       "   resourcesDir -- (required) path to resources (e.g. \"${HOME}/co/ancestry/resources\")\n" +
+       "   resourcesDir -- (required) path to resources (e.g. \"${HOME}/resources/atn\")\n" +
        " \n" +
        "   inputLines -- path to input file whose lines are to be parsed\n" +
        "   inputHtml -- path to input html file to parse\n" +
@@ -618,7 +618,7 @@ public class AtnParseRunner {
     //
     //   parseConfig -- (required) path to data properties (config) file (xml)
     //   supplementalConfig -- (optional) semicolon delimited list of paths to supplemental parse config files
-    //   resourcesDir -- (required) path to resources (e.g. "${HOME}/co/ancestry/resources")
+    //   resourcesDir -- (required) path to resources (e.g. "${HOME}/resources/atn")
     //
     //   inputLines -- path to input file whose lines are to be parsed
     //   inputHtml -- path to input html file to parse

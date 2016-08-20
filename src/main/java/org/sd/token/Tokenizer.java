@@ -151,8 +151,9 @@ public interface Tokenizer {
    */
   public String[] getWords(int startPosition, int endPosition);
 
-  /**
-   * Determine whether this instance is still initializing.
-   */
+  /** Determine whether this instance is currently initializing. */
   public boolean initializing();
+
+  /** Safely cast this as a StandardTokenizer or get one suitable for limited use. */
+  public StandardTokenizer asStandardTokenizer();
 }

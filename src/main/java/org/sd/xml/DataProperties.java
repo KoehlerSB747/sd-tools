@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Properties;
+import org.sd.io.FileUtil;
 import org.sd.util.PropertiesParser;
 
 /**
@@ -113,6 +114,13 @@ public class DataProperties extends BaseDataProperties {
     }
 
     return result;
+  }
+
+  /** copy otherProperties into result */
+  private final void doCopy(Properties result, Properties otherProperties) {
+    for (String name : otherProperties.stringPropertyNames()) {
+      result.setProperty(name, otherProperties.getProperty(name));
+    }
   }
 
   private final String[] copy(String[] otherArgs) {
@@ -215,6 +223,26 @@ public class DataProperties extends BaseDataProperties {
   public Object buildInstance(DomNode domNode, String classXPath) {
     return domDataProperties.size() > 0 ? domDataProperties.getFirst().buildInstance(domNode, classXPath) : null;
   }
+
+  /**
+   * Incorporate the other properties into this instance's properties.
+   */
+  public void incorporate(Properties other) {
+    if (other != null) {
+      if (properties == null) properties = new Properties();
+      doCopy(properties, other);
+    }
+  }
+
+  /**
+   * Incorporate the given propertiesFile into this instance's properties,
+   * adding the optionalExtension if needed.
+   */
+  public DataProperties incorporateProperties(File propertiesFile, String optionalExtension) throws IOException {
+    // load the file, adding optionalExtension if needed
+    this.properties = FileUtil.loadProperties(this.properties, propertiesFile, optionalExtension);
+    return this;
+  }    
 
   /**
    * Add a new property or override an existing.

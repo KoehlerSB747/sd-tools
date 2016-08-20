@@ -34,12 +34,7 @@ import org.sd.xml.DataProperties;
  */
 public class SegmentTokenizer extends StandardTokenizer {
   
-  private DataProperties dataProperties;
-  private Map<String, List<SegmentPointer>> label2ptrs;
   private Map<Integer, SegmentPointer> pos2ptr;
-  
-  private Set<String> hardBoundaryLabels;
-  private Set<String> unbreakableLabels;
 
   //
   // properties:
@@ -47,105 +42,13 @@ public class SegmentTokenizer extends StandardTokenizer {
   //   segmentUnbreakables -- comma-delimited list of segment labels that have no internal breaking
 
   public SegmentTokenizer(SegmentPointerFinder ptrFinder, StandardTokenizerOptions tokenizerOptions, DataProperties dataProperties) {
-    super(ptrFinder.getInput(), tokenizerOptions);
-    this.dataProperties = dataProperties;
-    this.label2ptrs = new HashMap<String, List<SegmentPointer>>();
+    super(null);  // we'll create and set the breakMaker later
+
     this.pos2ptr = new HashMap<Integer, SegmentPointer>();
+    final SegmentBreakMaker breakMaker = new SegmentBreakMaker(ptrFinder, tokenizerOptions, dataProperties, this.pos2ptr);
 
-
-    this.hardBoundaryLabels = null;
-    this.unbreakableLabels = null;
-
-    if (dataProperties != null) {
-      final String[] segmentHardBoundaries = dataProperties.getString("segmentHardBoundaries", "").split(",");
-      for (String s : segmentHardBoundaries) {
-        if (!"".equals(s)) {
-          if (hardBoundaryLabels == null) hardBoundaryLabels = new HashSet<String>();
-          hardBoundaryLabels.add(s);
-        }
-      }
-
-      final String[] segmentUnbreakables = dataProperties.getString("segmentUnbreakables", "").split(",");
-      for (String s : segmentUnbreakables) {
-        if (!"".equals(s)) {
-          if (unbreakableLabels == null) unbreakableLabels = new HashSet<String>();
-          unbreakableLabels.add(s);
-        }
-      }
-    }
-
-
-    int seqNum = 0;
-    for (SegmentPointerIterator iter = new SegmentPointerIterator(ptrFinder); iter.hasNext(); ) {
-      final SegmentPointer ptr = iter.next();
-      ptr.setSeqNum(seqNum++);
-      final String label = ptr.getLabel();
-
-      List<SegmentPointer> ptrs = label2ptrs.get(label);
-      if (ptrs == null) {
-        ptrs = new ArrayList<SegmentPointer>();
-        label2ptrs.put(label, ptrs);
-      }
-      ptrs.add(ptr);
-
-      if (hardBoundaryLabels.contains(ptr.getLabel())) {
-        // NOTE: only hard boundary labels get a token feature
-        pos2ptr.put(ptr.getStartPtr(), ptr);
-      }
-    }
-  }
-
-  protected Map<Integer, Break> createBreaks() {
-    final Map<Integer, Break> result = super.createBreaks();
-
-    // mark hard boundaries and unbreakable segments
-    if (hardBoundaryLabels != null) {
-      for (String hardBoundaryLabel : hardBoundaryLabels) {
-        final List<SegmentPointer> ptrs = label2ptrs.get(hardBoundaryLabel);
-        if (ptrs != null) {
-          for (SegmentPointer ptr : ptrs) {
-            // Set LHS break as Hard
-            setBreak(result, ptr.getStartPtr(), true, true);
-
-            // Set RHS break as Hard
-            setBreak(result, ptr.getEndPtr(), false, true);
-          }
-        }
-      }
-    }
-
-    if (unbreakableLabels != null) {
-      for (String unbreakableLabel : unbreakableLabels) {
-        final List<SegmentPointer> ptrs = label2ptrs.get(unbreakableLabel);
-        if (ptrs != null) {
-          for (SegmentPointer ptr : ptrs) {
-            // clear breaks within segment
-            if (!ptr.hasInnerSegments()) {
-              clearBreaks(result, ptr.getStartPtr() + 1, ptr.getEndPtr());
-            }
-            else {
-              for (SegmentPointer.InnerSegment innerSegment : ptr.getInnerSegments()) {
-                // Set LHS, RHS breaks as Hard
-                setBreak(result, innerSegment.getStartPtr(), true, true);
-                setBreak(result, innerSegment.getEndPtr(), false, true);
-                clearBreaks(result, innerSegment.getStartPtr() + 1, innerSegment.getEndPtr());
-              }
-            }
-          }
-        }
-      }
-    }
-
-    return result;
-  }
-
-  protected void addTokenFeatures(Token token) {
-    if (token != null) {
-      final SegmentPointer ptr = pos2ptr.get(token.getStartIndex());
-      if (ptr != null && ptr.getEndPtr() >= token.getEndIndex()) {
-        token.setFeature(ptr.getLabel(), ptr, this);
-      }
-    }
+    super.setBreakMaker(breakMaker);
+    super.setTokenFeatureAdder(new SegmentTokenizerFeatureAdder());
   }
 
   /**
@@ -160,5 +63,125 @@ public class SegmentTokenizer extends StandardTokenizer {
     result.setClassType(SegmentTokenizer.class);
     result.setFeatureValueType(SegmentPointer.class);
     return result;
+  }
+
+
+  private final class SegmentTokenizerFeatureAdder implements TokenFeatureAdder {
+    SegmentTokenizerFeatureAdder() {
+    }
+    
+    public void addTokenFeatures(Token token) {
+      if (token != null) {
+        final SegmentPointer ptr = pos2ptr.get(token.getStartIndex());
+        if (ptr != null && ptr.getEndPtr() >= token.getEndIndex()) {
+          token.setFeature(ptr.getLabel(), ptr, this);
+        }
+      }
+    }
+  }
+
+  public static final class SegmentBreakMaker extends StandardBreakMaker {
+
+    private DataProperties dataProperties;
+    private Map<String, List<SegmentPointer>> label2ptrs;
+    private Map<Integer, SegmentPointer> pos2ptr;
+  
+    private Set<String> hardBoundaryLabels;
+    private Set<String> unbreakableLabels;
+
+    public SegmentBreakMaker(SegmentPointerFinder ptrFinder, StandardTokenizerOptions tokenizerOptions, DataProperties dataProperties,
+                             Map<Integer, SegmentPointer> pos2ptr) {
+      super(ptrFinder.getInput(), tokenizerOptions);
+      
+      this.dataProperties = dataProperties;
+      this.label2ptrs = new HashMap<String, List<SegmentPointer>>();
+      this.pos2ptr = pos2ptr;
+
+      this.hardBoundaryLabels = null;
+      this.unbreakableLabels = null;
+
+      if (dataProperties != null) {
+        final String[] segmentHardBoundaries = dataProperties.getString("segmentHardBoundaries", "").split(",");
+        for (String s : segmentHardBoundaries) {
+          if (!"".equals(s)) {
+            if (hardBoundaryLabels == null) hardBoundaryLabels = new HashSet<String>();
+            hardBoundaryLabels.add(s);
+          }
+        }
+
+        final String[] segmentUnbreakables = dataProperties.getString("segmentUnbreakables", "").split(",");
+        for (String s : segmentUnbreakables) {
+          if (!"".equals(s)) {
+            if (unbreakableLabels == null) unbreakableLabels = new HashSet<String>();
+            unbreakableLabels.add(s);
+          }
+        }
+      }
+
+
+      int seqNum = 0;
+      for (SegmentPointerIterator iter = new SegmentPointerIterator(ptrFinder); iter.hasNext(); ) {
+        final SegmentPointer ptr = iter.next();
+        ptr.setSeqNum(seqNum++);
+        final String label = ptr.getLabel();
+
+        List<SegmentPointer> ptrs = label2ptrs.get(label);
+        if (ptrs == null) {
+          ptrs = new ArrayList<SegmentPointer>();
+          label2ptrs.put(label, ptrs);
+        }
+        ptrs.add(ptr);
+
+        if (hardBoundaryLabels.contains(ptr.getLabel())) {
+          // NOTE: only hard boundary labels get a token feature
+          pos2ptr.put(ptr.getStartPtr(), ptr);
+        }
+      }
+    }
+
+    @Override
+    protected Map<Integer, Break> createBreaks() {
+      final Map<Integer, Break> result = super.createBreaks();
+
+      // mark hard boundaries and unbreakable segments
+      if (hardBoundaryLabels != null) {
+        for (String hardBoundaryLabel : hardBoundaryLabels) {
+          final List<SegmentPointer> ptrs = label2ptrs.get(hardBoundaryLabel);
+          if (ptrs != null) {
+            for (SegmentPointer ptr : ptrs) {
+              // Set LHS break as Hard
+              setBreak(result, ptr.getStartPtr(), true, true);
+
+              // Set RHS break as Hard
+              setBreak(result, ptr.getEndPtr(), false, true);
+            }
+          }
+        }
+      }
+
+      if (unbreakableLabels != null) {
+        for (String unbreakableLabel : unbreakableLabels) {
+          final List<SegmentPointer> ptrs = label2ptrs.get(unbreakableLabel);
+          if (ptrs != null) {
+            for (SegmentPointer ptr : ptrs) {
+              // clear breaks within segment
+              if (!ptr.hasInnerSegments()) {
+                clearBreaks(result, ptr.getStartPtr() + 1, ptr.getEndPtr());
+              }
+              else {
+                for (SegmentPointer.InnerSegment innerSegment : ptr.getInnerSegments()) {
+                  // Set LHS, RHS breaks as Hard
+                  setBreak(result, innerSegment.getStartPtr(), true, true);
+                  setBreak(result, innerSegment.getEndPtr(), false, true);
+                  clearBreaks(result, innerSegment.getStartPtr() + 1, innerSegment.getEndPtr());
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return result;
+    }
   }
 }
