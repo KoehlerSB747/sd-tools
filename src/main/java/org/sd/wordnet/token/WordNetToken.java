@@ -155,17 +155,23 @@ public class WordNetToken {
   }
 
   public Set<String> getCategories() {
-    if (_categories == null && (hasSynsets() || hasTags())) {
+    if (_categories == null) {
       _categories = new HashSet<String>();
-      if (hasSynsets()) {
-        for (Synset synset : synsets) {
-          final String lfm = synset.getLexFileName();
-          final int dotPos = lfm.indexOf('.');
-          _categories.add(dotPos > 0 ? lfm.substring(0, dotPos) : lfm);
+      if (hasSynsets() || hasTags()) {
+        if (hasSynsets()) {
+          for (Synset synset : synsets) {
+            final String[] lfmPieces = synset.getLexFileName().split("\\.");
+            for (String lfmPiece : lfmPieces) {
+              _categories.add(lfmPiece);
+            }
+          }
+        }
+        if (hasTags()) {
+          _categories.addAll(tags);
         }
       }
-      if (hasTags()) {
-        _categories.addAll(tags);
+      else {
+        _categories.add("unknown");
       }
     }
     return _categories;

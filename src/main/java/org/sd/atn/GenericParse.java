@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import org.sd.util.tree.NodePath;
 import org.sd.util.tree.Tree;
+import org.sd.xml.DomElement;
 import org.sd.xml.XmlLite;
 
 /**
@@ -257,5 +258,30 @@ public class GenericParse {
     }
 
     return result;
+  }
+
+  public String toString() {
+    final StringBuilder result = new StringBuilder();
+
+    result.append('"').append(getParsedText()).append("\" == ");
+
+    final Tree<String> parseTree = atnParse.getParseTree();
+    if (parseTree != null) {
+      result.append(parseTree.toString());
+    }
+    result.append(" [").append(getRuleId()).append(']');
+
+    if (interp != null) {
+      final Tree<XmlLite.Data> xmlTree = interp.getInterpTree();
+      if (xmlTree != null) {
+        final DomElement xml = xmlTree.getData().asDomNode().asDomElement();
+        if (xml != null) {
+          result.append('\n');
+          xml.asPrettyString(result, 2, 2);
+        }
+      }
+    }
+
+    return result.toString();
   }
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<parse>
+
+  <resources>
+    <resource name="wn-dict">
+      <jclass>org.sd.atnexec.WordNetDictionaryResource</jclass>
+    </resource>
+  </resources>
+
+  <compoundParser>
+    <id>VerbSequence</id>
+    <parser file="${resourcesDir}/atn/config/vs-config.xml" />
+  </compoundParser>
+
+  <compoundParser>
+    <id>NounPhrase</id>
+    <parser file="${resourcesDir}/atn/config/np-config.xml" />
+  </compoundParser>
+
+  <compoundParser>
+    <id>PrepPhrase</id>
+    <parser file="${resourcesDir}/atn/config/pp-config.xml" />
+  </compoundParser>
+
+  <compoundParser>
+    <id>WordNet</id>
+    <parser file="${resourcesDir}/atn/config/wordnet-config.xml" />
+  </compoundParser>
+
+</parse>

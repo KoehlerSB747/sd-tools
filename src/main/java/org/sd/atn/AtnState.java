@@ -1390,6 +1390,10 @@ public class AtnState {
   private static String stepThruRuleStep = null;
   private static String stepThruText = null;
 
+  public static boolean getTrace() {
+    return trace;
+  }
+
   public static final void setTrace(boolean traceValue) {
     trace = traceValue;
   }

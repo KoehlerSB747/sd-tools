@@ -19,7 +19,7 @@
 package org.sd.atn;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +57,7 @@ public class GenericParseResults {
                   final GenericParse parse = genericParseHelper.buildGenericParse(interp);
                   if (parse != null) {
                     if (parses == null) {
-                      this.parses = new HashMap<String, List<GenericParse>>();
+                      this.parses = new LinkedHashMap<String, List<GenericParse>>();
                     }
                     final String ruleId = parse.getRuleId();
                     List<GenericParse> parseList = parses.get(ruleId);
@@ -95,6 +95,18 @@ public class GenericParseResults {
 
   public boolean hasParse(String ruleId) {
     return parses != null && parses.containsKey(ruleId);
+  }
+
+  public int size() {
+    int result = 0;
+
+    if (parses != null) {
+      for (List<GenericParse> parses : parses.values()) {
+        result += parses.size();
+      }
+    }
+
+    return result;
   }
 
   public List<GenericParse> getParses(String ruleId) {
@@ -136,5 +148,21 @@ public class GenericParseResults {
 
   public ParseOutputCollector getParseOutput() {
     return parseOutput;
+  }
+
+  public String toString() {
+    final StringBuilder result = new StringBuilder();
+
+    if (parses != null) {
+      int num = 1;
+      for (List<GenericParse> parses : parses.values()) {
+        for (GenericParse parse : parses) {
+          if (result.length() > 0) result.append("\n");
+          result.append(num++).append('\t').append(parse.toString());
+        }
+      }
+    }
+
+    return result.toString();
   }
 }

@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.sd.atn.ResourceManager;
 import org.sd.token.FeatureConstraint;
 import org.sd.token.Token;
 import org.sd.token.StandardTokenizer;
@@ -30,6 +31,7 @@ import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.lex.LexLoader;
 import org.sd.wordnet.util.NormalizeUtil;
 import org.sd.xml.DataProperties;
+import org.sd.xml.DomElement;
 
 /**
  * Implementation of the Tokenizer interface linked with WordNet info.
@@ -76,6 +78,7 @@ public class WordNetTokenizer extends StandardTokenizer {
   private LexDictionary dict;
   private WordLookupStrategy lookupStrategy;
   private Map<Integer, Token> pos2token;
+  private boolean disableRevise = false;
 
   public WordNetTokenizer(LexDictionary dict, WordLookupStrategy lookupStrategy, String text) {
     this(dict, lookupStrategy, text, null);
@@ -88,6 +91,14 @@ public class WordNetTokenizer extends StandardTokenizer {
     this.pos2token = new HashMap<Integer, Token>();
 
     super.setTokenFeatureAdder(new MyTokenFeatureAdder());
+  }
+
+  public WordNetTokenizer(DomElement resourceElt, ResourceManager resourceManager, String text) {
+    this(getDict(resourceElt, resourceManager), getStrategy(resourceElt, resourceManager), text, null);
+
+    if (resourceElt.getAttributeBoolean("disableRevise", false)) {
+      this.disableRevise = true;
+    }
   }
 
   public LexDictionary getLexDictionary() {
@@ -131,9 +142,11 @@ public class WordNetTokenizer extends StandardTokenizer {
   public Token revise(Token token) {
     Token result = null;
 
-    final Token revisedToken = super.revise(token);
-    if (revisedToken != null) {
-      result = narrowToDefined(revisedToken, token.getSequenceNumber(), token.getRevisionNumber() + 1);
+    if (!disableRevise) {
+      final Token revisedToken = super.revise(token);
+      if (revisedToken != null) {
+        result = narrowToDefined(revisedToken, token.getSequenceNumber(), token.getRevisionNumber() + 1);
+      }
     }
     
     return result;
@@ -196,7 +209,7 @@ public class WordNetTokenizer extends StandardTokenizer {
     Token result = standardToken;
     WordNetToken wnToken = null;
 
-    if (standardToken != null) {
+    if (standardToken != null && !standardToken.hasFeatures()) {
       // build WordNetToken from standardToken
       wnToken = buildWordNetToken(standardToken);
 
@@ -284,6 +297,29 @@ public class WordNetTokenizer extends StandardTokenizer {
     }
 
     return wnToken;
+  }
+
+  private static final LexDictionary getDict(DomElement resourceElt, ResourceManager resourceManager) {
+    LexDictionary result = null;
+
+    final Object dict = resourceManager.getResource(resourceElt.getAttributeValue("dict", "wordNetDict"));
+    if (dict != null && dict instanceof LexDictionary) {
+      result = (LexDictionary)dict;
+    }
+
+    return result;
+  }
+
+  private static final WordLookupStrategy getStrategy(DomElement resourceElt, ResourceManager resourceManager) {
+    WordLookupStrategy result = null;
+
+    final LexDictionary dict = getDict(resourceElt, resourceManager);
+    if (dict != null) {
+      //todo: if/when we have another strategy, use resourceElt/resourceManager to construct it
+      result = new SimpleWordLookupStrategy(dict);
+    }
+
+    return result;
   }
 
 

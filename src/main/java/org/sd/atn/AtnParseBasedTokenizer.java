@@ -76,17 +76,18 @@ public class AtnParseBasedTokenizer implements Tokenizer {
     NodeList tokenNodes = null;
     if (tokenizerConfig != null) {
       // check for specification of a (Standard)Tokenizer to use
-      if (resourceManager != null) {
+      if (resourceManager != null && tokenizerConfig.selectSingleNode("jclass") != null) {
         // <tokenizer ...attrs...>
         //   <jclass>...classpath...</jclass>
         //   ...other data...
         // </tokenizer>
-        final DomNode tokenizerNode = tokenizerConfig.selectSingleNode("tokenizer");
-        if (tokenizerNode != null) {
-          // NOTE: class needs constructor of form X(DomElement resourceElt, ResourceManager resourceManger)
-          //       and receives the "tokenizer" elt
-          this.standardTokenizer = (StandardTokenizer)resourceManager.getResource(tokenizerNode.asDomElement(), null);
-        }
+
+        // NOTE: class needs constructor of form X(DomElement resourceElt, ResourceManager resourceManger)
+        //       and receives the "tokenizer" elt
+        this.standardTokenizer =
+          (StandardTokenizer)resourceManager.getResource(tokenizerConfig.asDomElement(),
+                                                         new String[]{inputContext.getText()});
+        tokenizerOptions = standardTokenizer.getOptions();
       }
 
       // check for hardwired tokens
