@@ -17,6 +17,8 @@ package org.sd.atnexec;
 
 
 import java.io.IOException;
+import org.sd.atn.GenericParseResults;
+import org.sd.atn.ResourceManager;
 import org.sd.analysis.AbstractAnalysisObject;
 import org.sd.analysis.AnalysisFunction;
 import org.sd.analysis.AnalysisObject;
@@ -24,7 +26,11 @@ import org.sd.analysis.BaseEvaluatorEnvironment;
 import org.sd.analysis.BasicAnalysisObject;
 import org.sd.analysis.EvaluatorEnvironment;
 import org.sd.analysis.NumericAnalysisObject;
-import org.sd.atn.GenericParseResults;
+import org.sd.token.Feature;
+import org.sd.token.Token;
+import org.sd.wordnet.lex.LexDictionary;
+import org.sd.wordnet.token.SimpleWordLookupStrategy;
+import org.sd.wordnet.token.WordNetTokenizer;
 import org.sd.xml.DataProperties;
 
 /**
@@ -63,8 +69,8 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     defineFunction("reset", new ResetFunction());
     defineFunction("parse", new ParseFunction());
     defineFunction("watch", new WatchFunction());  //watch {verbose, trace, traceflow} {true, false}
+    defineFunction("tokenize", new TokenizeFunction());
 //todo: add function to lookup a word to view definitions
-//todo: add tokenization function
   }
 
 
@@ -251,6 +257,154 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     @Override
     public NumericAnalysisObject asNumericAnalysisObject() {
       return null;
+    }
+  }
+
+  final class TokenizeFunction implements AnalysisFunction {
+
+    TokenizeFunction() {
+    }
+
+    @Override
+    public AnalysisObject execute(AnalysisObject[] args) {
+      AnalysisObject result = null;
+      final StringBuilder message = new StringBuilder();
+
+      if (args != null) {
+        if (args.length == 1) {
+          final String input = args[0].toString();
+
+          if (parser != null) {
+            final ResourceManager resourceManager =
+              parser.getAtnParseRunner().getParseConfig().getResourceManager();
+            final LexDictionary dict = (LexDictionary)resourceManager.getResource("wn-dict");
+            if (dict != null) {
+              final SimpleWordLookupStrategy strategy = new SimpleWordLookupStrategy(dict);
+              final WordNetTokenizer tokenizer = new WordNetTokenizer(dict, strategy, input);
+              result = new TokenizerAnalysisObject(input, tokenizer);
+            }
+            else {
+              message.append(" FAILED: ResourceManager has no wn-dict");
+            }
+          }
+          else {
+            message.append(" FAILED: No parser.");
+          }
+        }
+        else {
+          message.append(" FAILED: Bad number of args (").append(args.length).append(").");
+        }
+      }
+      else {
+        message.append(" FAILED: No args.");
+      }
+
+      if (result == null) {
+        message.append(" arg1=Input to parse");
+        result = new BasicAnalysisObject<String>(message.toString());
+      }
+
+      return result;
+    }
+  }
+
+  public final class TokenizerAnalysisObject extends AbstractAnalysisObject {
+    public final String input;
+    private WordNetTokenizer tokenizer;
+
+    public TokenizerAnalysisObject(String input, WordNetTokenizer tokenizer) {
+      this.input = input;
+      this.tokenizer = tokenizer;
+    }
+
+    public boolean hasTokenizer() {
+      return tokenizer != null;
+    }
+
+    @Override
+    public String toString() {
+      final StringBuilder result = new StringBuilder();
+      result.
+        append("#Tokenizer[").append(input).append("]");
+
+      return result.toString();
+    }
+
+    @Override
+    public String getHelpString() {
+      final StringBuilder result = new StringBuilder();
+      result.
+        append("\"show\" -- show the tokenization.");
+      
+      return result.toString();
+    }
+
+    /** Customization for "show" access. */
+    @Override
+    protected String getShowString() {
+      final StringBuilder result = new StringBuilder();
+
+      result.append("tokenizer(").append(input).append(")");
+        
+
+      if (hasTokenizer()) {
+        for (Token token = tokenizer.getToken(0); token != null; token = token.getNextToken()) {
+          result.append("\n");
+          showToken(result, token, 2);
+        }
+      }
+      else {
+        result.append(" -- NO DATA");
+      }
+
+      return result.toString();
+    }
+
+    @Override
+    protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
+      AnalysisObject result = null;
+
+      //todo: implement accessors here
+      // if ("".equals(ref)) {
+      // }
+
+      return result;
+    }
+
+    /** Get a numeric object representing this instance's value if applicable, or null. */
+    @Override
+    public NumericAnalysisObject asNumericAnalysisObject() {
+      return null;
+    }
+
+    private final void showToken(StringBuilder result, Token token, int indent) {
+      // show token and its revisions
+      addIndent(result, indent);
+      result.append(token.toString());
+      if (token.hasFeatures()) {
+        result.append("\n");
+        addIndent(result, indent + 1);
+        result.append("Features: ");
+
+        for (Feature feature : token.getFeatures().getFeatures()) {
+          result.append("  ").append(feature.getType()).append('=').append(feature.getValue());
+        }        
+      }
+
+      final Token revisedToken = token.getRevisedToken();
+      if (revisedToken != null) {
+        result.append("\n");
+        showToken(result, revisedToken, indent + 2);
+
+        final Token nextToken = revisedToken.getNextToken();
+        if (nextToken != null) {
+          showToken(result, revisedToken, indent + 4);
+        }
+      }
+    }
+
+    private final void addIndent(StringBuilder result, int indent) {
+      for (int i = 0; i < indent; ++i) result.append(' ');
     }
   }
 }

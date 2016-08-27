@@ -275,17 +275,18 @@ public class WordNetTokenizer extends StandardTokenizer {
 
     if (wnToken != null) {
       
-      // _wn_norm="..."
-      token.setFeature(NORM_FEATURE, wnToken.getNorm(), this);
+      boolean added = false;
 
       // _wn_synsets="sn1,sn2,..."
       if (wnToken.hasSynsets()) {
         token.setFeature(SYNSETS_FEATURE, wnToken.getSynsetNames(), this);
+        added = true;
       }
 
       // _wn_tags="tag1,tag2,..."
       if (wnToken.hasTags()) {
         token.setFeature(TAGS_FEATURE, wnToken.getTagNames(), this);
+        added = true;
       }
 
       // cat="_wn_cat" for each category
@@ -293,6 +294,12 @@ public class WordNetTokenizer extends StandardTokenizer {
         for (String category : wnToken.getCategories()) {
           token.setFeature(category, CATEGORY_VALUE, this);
         }
+        added = true;
+      }
+
+      if (added) {
+        // _wn_norm="..."
+        token.setFeature(NORM_FEATURE, wnToken.getNorm(), this);
       }
     }
 
