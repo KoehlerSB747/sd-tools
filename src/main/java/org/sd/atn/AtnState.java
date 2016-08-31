@@ -429,7 +429,7 @@ public class AtnState {
       final int nextStepNum = getNextStepNum();
       if (nextStepNum >= 0) {
 
-        if (incToken && !getRuleStep().consumeToken()) incToken = false;
+        if (incToken && !stepConsumesToken(nextStepNum)) incToken = false;
 
         if (!incToken || !reachedTokenLimit()) {
           final Token nextToken = incToken ? getNextToken(stopList) : this.inputToken;
@@ -441,6 +441,17 @@ public class AtnState {
           }
         }
       }
+    }
+
+    return result;
+  }
+
+  private final boolean stepConsumesToken(int stepNum) {
+    boolean result = true;
+
+    final AtnRuleStep ruleStep = rule.getSteps().get(stepNum);
+    if (ruleStep != null) {
+      result = ruleStep.consumeToken();
     }
 
     return result;

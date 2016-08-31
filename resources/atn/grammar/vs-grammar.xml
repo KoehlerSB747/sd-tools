@@ -39,13 +39,19 @@
           <jclass>org.sd.atnexec.ProgressionTokenTest</jclass>
           <seq order="modal,auxv,verb" />
           <seq reject="auxv" after="!auxv" />
+          <seq reject="noun" after="noun" />
+          <seq reject="verb" after="noun" />
         </test>
+      </vs-tok>
+
+      <!-- step to verify that the repeats ended on a good note -->
+      <verify terminal="true" ignoreToken="true" consumeToken="false" verbose="false" popTest="true">
         <!-- last token must be possible verb -->
-        <test onlyLastToken="true" revise="false" verbose="false">
+        <test revise="false" verbose="false">
           <jclass>org.sd.atn.TokenTest</jclass>
           <classifier cat="wn-verb" />
         </test>
-      </vs-tok>
+      </verify>
     </VS>
 
 	</rules>

@@ -377,11 +377,17 @@
     </S>
 
     <VP>
-      <VS repeats="true" />
+      <VS />
       <PP optional="true" verbose="false" />
       <NP optional="true" repeats="true" />
 
       <CVP optional="true" />
+    </VP>
+
+    <VP>
+      <S />
+
+      <CVP optional="true" repeats="true" />
     </VP>
 
     <CS>

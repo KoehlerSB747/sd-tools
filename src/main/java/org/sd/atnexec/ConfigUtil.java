@@ -56,7 +56,7 @@ public class ConfigUtil {
     this.resourcesDir = resourcesDir;
     this.options = (options == null) ? DEFAULT_OPTIONS : options;
     this.defaultProperties = initDefaultProperties();
-    this.dataProperties = null;
+    this.dataProperties = adjust(null);
   }
 
   /**
@@ -93,7 +93,6 @@ public class ConfigUtil {
   public ConfigUtil(String projectRootName, Class projectClass, Options options) {
     this.options = (options == null) ? DEFAULT_OPTIONS : options;
     this.resourcesDir = getProjectResources(projectRootName, projectClass, options.getResourcesDirName());
-    this.dataProperties = null;
 
     if (this.resourcesDir == null) {
       throw new IllegalArgumentException(
@@ -102,6 +101,7 @@ public class ConfigUtil {
     }
 
     this.defaultProperties = initDefaultProperties();
+    this.dataProperties = adjust(null);
   }
 
   /**

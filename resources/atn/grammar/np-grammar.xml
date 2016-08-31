@@ -97,15 +97,24 @@
         <test ignoreFirstToken="true" revise="false" verbose="false">
           <jclass>org.sd.atnexec.ProgressionTokenTest</jclass>
           <seq order="det,adj,noun" />
-          <seq reject="verb" after="noun" />
+          <seq reject="verb" after="verb" />
+          <seq reject="ProperNoun" after="det" />
+          <seq reject="pronoun" after="det" />
+          <seq reject="noun" after="pronoun" />
+          <seq reject="noun" after="ProperNoun" />
+          <seq reject="adj" after="verb" />
         </test>
-        <!-- last token must be possible noun -->
-        <test onlyLastToken="true" revise="false" verbose="false">
+      </np-tok>
+
+      <!-- step to verify that the repeats ended on a good note -->
+      <verify terminal="true" ignoreToken="true" consumeToken="false">
+        <!-- last repeat token must be possible noun -->
+        <test revise="false" verbose="false">
           <jclass>org.sd.atn.TokenTest</jclass>
           <classifier cat="wn-noun" />
         </test>
-        <!-- last token must not be a possible det, unless it's a possible pronoun -->
-        <test onlyLastToken="true" revise="false" reverse="true" verbose="false">
+        <!-- last repeat token must not be a possible det, unless it's a possible pronoun -->
+        <test revise="false" reverse="true" verbose="false">
           <jclass>org.sd.atn.TokenTest</jclass>
           <classifier cat="wn-det" />
           <condition>
@@ -115,8 +124,8 @@
             </test>
           </condition>
         </test>
-        <!-- reject last token if a verb followed by a det or adj w/out a delim -->
-        <test onlyLastToken="true" revise="false" reverse="true" verbose="false">
+        <!-- reject last repeat token if a verb followed by a det or adj w/out a delim -->
+        <test revise="false" reverse="true" verbose="false">
           <jclass>org.sd.atn.TokenTest</jclass>
           <classifier cat="wn-verb" />
           <condition>
@@ -131,7 +140,7 @@
             </predelim>
           </condition>
         </test>
-      </np-tok>
+      </verify>
 
       <!-- recursively accept conjoined noun phrases -->
       <CNP optional="true" />

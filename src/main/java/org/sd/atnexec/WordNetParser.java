@@ -67,6 +67,10 @@ public class WordNetParser {
     genericParser.close();
   }
 
+  public GenericParser getGenericParser() {
+    return genericParser;
+  }
+
   public AtnParseRunner getAtnParseRunner() {
     return genericParser.getParseRunner();
   }
