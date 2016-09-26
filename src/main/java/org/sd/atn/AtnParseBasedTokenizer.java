@@ -417,36 +417,58 @@ public class AtnParseBasedTokenizer implements Tokenizer {
    * </ul>
    */
   public List<AtnParse> getParses(Map<String, Integer> compoundParserId2Rank) {
-    final List<AtnParse> result = new ArrayList<AtnParse>();
+    final ParseOrTokenSequence sequence = getParsesAndTokens(compoundParserId2Rank);
+    return sequence.getParses();
+  }
+  
+  public ParseOrTokenSequence getParsesAndTokens(Map<String, Integer> compoundParserId2Rank) {
+    final ParseOrTokenSequence result = new ParseOrTokenSequence();
 
-    final int textlen = standardTokenizer.getText().length();
-    for (int i = 0; i < textlen; ++i) {
-      final TokenInfoContainer<MyTokenInfo> tic = pos2tokenInfoContainer.get(i);
-      if (tic != null) {
-        // get the longest parse's entry
-        final Map.Entry<Integer, List<MyTokenInfo>> lastEntry = tic.getTokenInfoList().lastEntry();
+    // here, we want to also add the longest parses and all missed tokens between the parses
 
-        // keep the most "complex" parse
-        MyTokenInfo ti = null;
-        AtnParse parse = null;
-        int complexity = 0;
-        int rank = 0;
-        for (MyTokenInfo curti : lastEntry.getValue()) {
-          final AtnParse curParse = curti.getParse();
-          if (curParse != null) {
-            final int curComplexity = curParse.getParseTree().countNodes();
-            final int curRank = getRank(curParse, compoundParserId2Rank);
-            if (ti == null || curRank > rank || (curRank == rank && curComplexity > complexity)) {
-              ti = curti;
-              complexity = curComplexity;
-              rank = curRank;
-            }
+    for (Token token = getToken(0); token != null; token = getNextSmallestToken(token)) {
+
+      final MyTokenInfo ti = getLongestParse(token.getStartIndex(), compoundParserId2Rank);
+      if (ti != null) {
+        result.add(ti.getParse());
+        token = buildToken(ti.getTokenStart(), ti.getTokenEnd());
+      }
+      else {
+        result.add(token);
+      }
+
+    }
+
+    return result;
+  }
+
+  private final MyTokenInfo getLongestParse(int startPos, Map<String, Integer> compoundParserId2Rank) {
+    MyTokenInfo result = null;
+
+    final TokenInfoContainer<MyTokenInfo> tic = pos2tokenInfoContainer.get(startPos);
+    if (tic != null) {
+      // get the longest parse's entry
+      final Map.Entry<Integer, List<MyTokenInfo>> lastEntry = tic.getTokenInfoList().lastEntry();
+
+      // keep the most "complex" parse
+      MyTokenInfo ti = null;
+      AtnParse parse = null;
+      int complexity = 0;
+      int rank = 0;
+      for (MyTokenInfo curti : lastEntry.getValue()) {
+        final AtnParse curParse = curti.getParse();
+        if (curParse != null) {
+          final int curComplexity = curParse.getParseTree().countNodes();
+          final int curRank = getRank(curParse, compoundParserId2Rank);
+          if (ti == null || curRank > rank || (curRank == rank && curComplexity > complexity)) {
+            ti = curti;
+            complexity = curComplexity;
+            rank = curRank;
           }
         }
-        if (ti != null) {
-          result.add(ti.getParse());
-          i = ti.getTokenEnd();
-        }
+      }
+      if (ti != null) {
+        result = ti;
       }
     }
 

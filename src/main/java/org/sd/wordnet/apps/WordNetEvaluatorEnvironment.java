@@ -37,6 +37,7 @@ import org.sd.wordnet.lex.PointerInstance;
 import org.sd.wordnet.lex.Synset;
 import org.sd.wordnet.lex.Word;
 import org.sd.wordnet.lex.WordGraph;
+import org.sd.wordnet.loader.WordNetLoader;
 import org.sd.wordnet.rel.ExpandedWord;
 import org.sd.wordnet.rel.GraphHelper;
 import org.sd.wordnet.rel.WordRelation;
@@ -54,14 +55,7 @@ public class WordNetEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
   public WordNetEvaluatorEnvironment(DataProperties dataProperties) {
     super(dataProperties);
-
-    final File dbFileDir = dataProperties.getFile("dbFileDir", "dir");
-    try {
-      this.lexDictionary = new LexDictionary(new LexLoader(dbFileDir));
-    }
-    catch (IOException ioe) {
-      throw new IllegalArgumentException(ioe);
-    }
+    this.lexDictionary = WordNetLoader.loadLexDictionary(dataProperties);
   }
 
   @Override

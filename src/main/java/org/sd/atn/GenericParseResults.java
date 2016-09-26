@@ -30,16 +30,21 @@ import java.util.Map;
  * @author Spence Koehler
  */
 public class GenericParseResults {
-  
+
+  private AtnParseRunner parseRunner;
   private ParseOutputCollector parseOutput;
   private GenericParseHelper genericParseHelper;
   private Map<String, List<GenericParse>> parses;  // by ruleID
+  private ParseOrTokenSequence sequence;
 
-  GenericParseResults(ParseOutputCollector parseOutput, GenericParseHelper genericParseHelper) {
+  GenericParseResults(AtnParseRunner parseRunner, ParseOutputCollector parseOutput, GenericParseHelper genericParseHelper) {
+    this.parseRunner = parseRunner;
     this.parseOutput = parseOutput;
     this.genericParseHelper = genericParseHelper;
     this.parses = null;
+    this.sequence = null;
     initParses();
+    initSequence();
   }
 
   private final void initParses() {
@@ -76,6 +81,18 @@ public class GenericParseResults {
     }
   }
 
+  private final void initSequence() {
+    if (parseOutput != null) {
+      final AtnParseBasedTokenizer outputTokenizer = (AtnParseBasedTokenizer)parseOutput.getOutputTokenizer();
+      if (outputTokenizer != null) {
+        this.sequence =
+          outputTokenizer.getParsesAndTokens(
+            parseRunner == null ? null :
+            parseRunner.getParseConfig().getCompoundParserId2RankMap());
+      }
+    }
+  }
+
   public boolean hasParses() {
     return parses != null;
   }
@@ -95,6 +112,14 @@ public class GenericParseResults {
 
   public boolean hasParse(String ruleId) {
     return parses != null && parses.containsKey(ruleId);
+  }
+
+  public boolean hasSequence() {
+    return sequence != null;
+  }
+
+  public ParseOrTokenSequence getSequence() {
+    return sequence;
   }
 
   public int size() {

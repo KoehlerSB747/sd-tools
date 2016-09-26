@@ -35,6 +35,8 @@ public class Synset {
   private List<Integer> frames;
   private String gloss;
   private String lexFileName;
+  private Sentiment sentiment;
+  private String[] _lexInfo;
 
   public Synset() {
     this.decoder = null;
@@ -43,6 +45,8 @@ public class Synset {
     this.frames = null;
     this.gloss = null;
     this.lexFileName = null;
+    this.sentiment = null;
+    this._lexInfo = null;
   }
 
   public String getSynsetName() {
@@ -163,6 +167,51 @@ public class Synset {
 
   public void setLexFileName(String lexFileName) {
     this.lexFileName = lexFileName;
+    this._lexInfo = null;
+  }
+
+  /**
+   * Get lexical info, where
+   * <ul>
+   * <li>lexInfo[0] is the partOfSpeech</li>
+   * <li>lexInfo[1] is the semantic type</li>
+   * </ul>
+   */
+  public String[] getLexInfo() {
+    if (_lexInfo == null && lexFileName != null) {
+      _lexInfo = lexFileName.split("\\.");
+    }
+    return _lexInfo;
+  }
+
+  public boolean hasSentiment() {
+    return sentiment != null;
+  }
+
+  public Sentiment getSentiment() {
+    return sentiment;
+  }
+
+  public double getPosScore() {
+    return (sentiment == null) ? 0.0 : sentiment.posScore;
+  }
+
+  public double getNegScore() {
+    return (sentiment == null) ? 0.0 : sentiment.negScore;
+  }
+
+  public double getObjScore() {
+    return (sentiment == null) ? 0.0 : sentiment.getObjScore();
+  }
+
+  public void setSentiment(double posScore, double negScore) {
+    if (posScore > 0 || negScore > 0) {
+      this.sentiment = new Sentiment(posScore, negScore);
+    }
+  }
+
+  public void setSentiment(Sentiment sentiment) {
+    this.sentiment = sentiment;
   }
 
   public String toString() {
@@ -194,6 +243,11 @@ public class Synset {
         append("\tgloss: ").
         append(glossFmt == null ? fix(htmlSafe, gloss) : glossFmt.format(gloss)).
         append('\n');
+    }
+
+    if (this.hasSentiment()) {
+      result.
+        append(String.format("\tsentiment: %1.4f (pos), %1.4f (neg)\n", getPosScore(), getNegScore()));
     }
 
     int ptrNum = 1;
@@ -279,5 +333,22 @@ public class Synset {
 
   private final String fix(boolean htmlSafe, String string) {
     return htmlSafe ? StringEscapeUtils.escapeHtml(string) : string;
+  }
+
+
+  public static class Sentiment {
+    public final double posScore;
+    public final double negScore;
+    private final double objScore;
+
+    public Sentiment(double posScore, double negScore) {
+      this.posScore = posScore;
+      this.negScore = negScore;
+      this.objScore = 1 - (posScore + negScore);
+    }
+
+    public double getObjScore() {
+      return objScore;
+    }
   }
 }

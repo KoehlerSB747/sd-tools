@@ -496,7 +496,7 @@ public class LexDictionary {
 
   /**
    * Find word(s) matching (case-insensitive) the given wordName, which can be
-   * of the form: <word><lexId> or <lexFileName>:<word><lexId>, for lexId &gt; 0.
+   * of the form: &lt;word&gt;&lt;lexId&gt; or &lt;lexFileName&gt;:&lt;word&gt;&lt;lexId&gt;, for lexId &gt; 0.
    * <p>
    * When lexFileName is used in the wordName, it overrides any lexFileNameHint.
    *

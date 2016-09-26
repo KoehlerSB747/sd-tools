@@ -24,13 +24,13 @@ package org.sd.wordnet.util;
 public class NormalizeUtil {
   
   public static final String normalizeForLookup(String input) {
-    //NOTE: we need to mirror operations from SimpleWord.fixWord,
-    //      which parses lexicographer input; but regular input
-    //      gets slightly different treatment.
+    return normalizeForLookup(input, (input == null) ? 0 : input.length());
+  }
+
+  public static final String normalizeForLookup(String input, int len) {
     final StringBuilder result = new StringBuilder();
 
     if (input != null && !"".equals(input)) {
-      final int len = input.length();
       char lastC = (char)0;
       char embedC = (char)0;
       boolean sawAPOS = false;
@@ -73,7 +73,7 @@ public class NormalizeUtil {
       // trim off "'s" at end of string
       if (sawAPOS) {
         final int nlen = result.length();
-        if (result.charAt(nlen - 2) == '\'' && result.charAt(nlen - 1) == 's') {
+        if (nlen > 2 && result.charAt(nlen - 2) == '\'' && result.charAt(nlen - 1) == 's') {
           result.setLength(result.length() - 2);
         }
       }

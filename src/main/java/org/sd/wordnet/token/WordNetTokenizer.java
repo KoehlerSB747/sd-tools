@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import org.sd.atn.ResourceManager;
+import org.sd.token.Feature;
 import org.sd.token.FeatureConstraint;
 import org.sd.token.Token;
 import org.sd.token.StandardTokenizer;
@@ -182,6 +183,18 @@ public class WordNetTokenizer extends StandardTokenizer {
     return token.hasFeatures() && token.getFeatures().hasFeature(CATEGORY_VALUE_CONSTRAINT);
   }
 
+  /** Get the categories if present or null */
+  public static final String getCategories(Token token) {
+    String result = null;
+
+    final Feature feature = token.getFeature(CATEGORY_VALUE_CONSTRAINT, false);
+    if (feature != null) {
+      result = feature.getValue().toString();
+    }
+
+    return result;
+  }
+
   /**
    * Determine whether the given token has found synsets.
    */
@@ -189,11 +202,35 @@ public class WordNetTokenizer extends StandardTokenizer {
     return token.hasFeatures() && token.getFeatures().hasFeature(SYNSETS_FEATURE_CONSTRAINT);
   }
 
+  /** Get the synsets if present or null */
+  public static final String getSynsets(Token token) {
+    String result = null;
+
+    final Feature feature = token.getFeature(SYNSETS_FEATURE_CONSTRAINT, false);
+    if (feature != null) {
+      result = feature.getValue().toString();
+    }
+
+    return result;
+  }
+
   /**
    * Determine whether the given token has found tags.
    */
   public static final boolean hasTags(Token token) {
     return token.hasFeatures() && token.getFeatures().hasFeature(TAGS_FEATURE_CONSTRAINT);
+  }
+
+  /** Get the tags if present or null */
+  public static final String getTags(Token token) {
+    String result = null;
+
+    final Feature feature = token.getFeature(TAGS_FEATURE_CONSTRAINT, false);
+    if (feature != null) {
+      result = feature.getValue().toString();
+    }
+
+    return result;
   }
 
   

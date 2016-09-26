@@ -42,8 +42,8 @@ public class GenericParseHelper {
     this.xpathApplicator = new XPathApplicator();
   }
 
-  public GenericParseResults buildGenericParseResults(ParseOutputCollector parseOutput) {
-    return new GenericParseResults(parseOutput, this);
+  public GenericParseResults buildGenericParseResults(AtnParseRunner parseRunner, ParseOutputCollector parseOutput) {
+    return new GenericParseResults(parseRunner, parseOutput, this);
   }
 
   public GenericParse buildGenericParse(ParseInterpretation interp) {

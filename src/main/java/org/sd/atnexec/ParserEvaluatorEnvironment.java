@@ -17,7 +17,9 @@ package org.sd.atnexec;
 
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 import org.sd.atn.GenericParseResults;
+import org.sd.atn.GenericParseResultsAsync;
 import org.sd.atn.ResourceManager;
 import org.sd.analysis.AbstractAnalysisObject;
 import org.sd.analysis.AnalysisFunction;
@@ -28,6 +30,7 @@ import org.sd.analysis.EvaluatorEnvironment;
 import org.sd.analysis.NumericAnalysisObject;
 import org.sd.token.Feature;
 import org.sd.token.Token;
+import org.sd.util.ThreadPoolUtil;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.token.SimpleWordLookupStrategy;
 import org.sd.wordnet.token.WordNetTokenizer;
@@ -42,6 +45,7 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
   
   private DataProperties dataProperties;
   private WordNetParser parser;
+  private ExecutorService threadPool;
 
   public ParserEvaluatorEnvironment(DataProperties dataProperties) {
     super(dataProperties);
@@ -49,6 +53,10 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     final ConfigUtil configUtil = new ConfigUtil(dataProperties); // configures dataProperties for parser
     this.dataProperties = configUtil.getDataProperties();
     this.parser = buildParser();
+
+    // create one thread for background parsing, with plan to stop prev parse
+    // if not done when next is invoked
+    this.threadPool = ThreadPoolUtil.createThreadPool("WordNetParser-", 1);
   }
 
   private final WordNetParser buildParser() {
@@ -73,6 +81,14 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 //todo: add function to lookup a word to view definitions
   }
 
+  /**
+   * Close this environment and any open resources.
+   */
+  @Override
+  public void close() {
+    ThreadPoolUtil.shutdownGracefully(threadPool, 1L);
+    super.close();
+  }
 
   final class ResetFunction implements AnalysisFunction {
 
@@ -157,6 +173,8 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
   final class ParseFunction implements AnalysisFunction {
 
+    private GenericParseResultsAsync prevResults;
+
     ParseFunction() {
     }
 
@@ -168,13 +186,16 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
       if (args != null) {
         if (args.length == 1) {
           final String input = args[0].toString();
-          final GenericParseResults parseResults = parser.parseInput(input, null);
-          if (parseResults != null && parseResults.size() > 0) {
-            result = new ParseAnalysisObject(input, parseResults);
+
+          if (prevResults != null) {
+            // abort previous parsing if not done
+            prevResults.close();
           }
-          else {
-            message.append(" FAILED: No parseResults for input=").append(input);
-          }
+
+          final GenericParseResultsAsync parseResultsAsync = parser.getGenericParser().parseAsync(threadPool, input, null);
+          result = new ParseAnalysisObject(input, parseResultsAsync);
+
+          prevResults = parseResultsAsync;
         }
         else {
           message.append(" FAILED: Bad number of args (").append(args.length).append(").");
@@ -195,22 +216,62 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
   public final class ParseAnalysisObject extends AbstractAnalysisObject {
     public final String input;
-    private GenericParseResults parseResults;
+    private GenericParseResultsAsync parseResultsAsync;
+    private GenericParseResults _parseResults;
+    private String mode;
 
-    public ParseAnalysisObject(String input, GenericParseResults parseResults) {
+    public ParseAnalysisObject(String input, GenericParseResultsAsync parseResultsAsync) {
       this.input = input;
-      this.parseResults = parseResults;
+      this.parseResultsAsync = parseResultsAsync;
+      this._parseResults = _parseResults;
+      this.mode = "parses";
     }
 
     public boolean hasParseResults() {
-      return parseResults != null && parseResults.hasParses();
+      boolean result = false;
+      final GenericParseResults parseResults = getParseResults();
+
+      if (parseResults != null && parseResults.hasParses()) {
+        result = true;
+      }
+
+      return result;
+    }
+
+    public boolean hasSequence() {
+      boolean result = false;
+      final GenericParseResults parseResults = getParseResults();
+
+      if (parseResults != null && parseResults.hasSequence()) {
+        result = true;
+      }
+
+      return result;
+    }
+
+    public GenericParseResults getParseResults() {
+      if (_parseResults == null && parseResultsAsync != null) {
+        _parseResults = parseResultsAsync.getParseResults();
+      }
+      return _parseResults;
+    }
+
+    public String getResultSize() {
+      String result = null;
+
+      final GenericParseResults parseResults = getParseResults();
+      if (parseResults != null) {
+        result = Integer.toString(parseResults.size());
+      }
+
+      return (result == null) ? "?" : result;
     }
 
     @Override
     public String toString() {
       final StringBuilder result = new StringBuilder();
       result.
-        append("#ParseResults[").append(input).append("]-").append(parseResults.size());
+        append("#ParseResults[").append(input).append("]-").append(getResultSize());
 
       return result.toString();
     }
@@ -219,7 +280,10 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     public String getHelpString() {
       final StringBuilder result = new StringBuilder();
       result.
-        append("\"show\" -- show the content of the parseResults.");
+        append("\"show\" -- show the content of the parseResults.\n").
+        append("\"mode[parses(default)|seq]\" -- show the parses or the parse-or-token sequence.\n").
+        append("\"stop\" -- stop async parsing.\n").
+        append("\"wait[<waitToDieMillis(default=100)>, <timeoutMillis(default=10000)>]\" -- wait for async parsing.");
       
       return result.toString();
     }
@@ -231,12 +295,33 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
       result.append("parseResults(").append(input).append(")");
         
+      boolean hasData = false;
 
-      if (hasParseResults()) {
-        result.append("\n").append(parseResults.toString());
+      if (hasParseResults() || hasSequence()) {
+        final GenericParseResults parseResults = getParseResults();
+        if (mode.startsWith("seq")) {
+          if (parseResults.hasSequence()) {
+            result.append("\n").append(parseResults.getSequence().toString());
+            hasData = true;
+          }
+        }
+        else {
+          if (hasParseResults()) {
+            result.append("\n").append(parseResults.toString());
+            hasData = true;
+          }
+        }
       }
-      else {
+
+      if (!hasData) {
         result.append(" -- NO DATA");
+
+        if (parseResultsAsync != null) {
+          result.
+            append("  done=").append(parseResultsAsync.isDone()).
+            append("  completed=").append(parseResultsAsync.completed()).
+            append("  stopped=").append(parseResultsAsync.stopped());
+        }
       }
 
       return result.toString();
@@ -246,9 +331,32 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     protected AnalysisObject doAccess(String ref, EvaluatorEnvironment env) {
       AnalysisObject result = null;
 
-      //todo: implement accessors here
-      // if ("".equals(ref)) {
-      // }
+      if ("stop".equals(ref)) {
+        if (parseResultsAsync != null) parseResultsAsync.stopParsing();
+        result = new BasicAnalysisObject<Boolean>(hasParseResults());
+      }
+      else if (ref.startsWith("mode")) {
+        final AnalysisObject[] argValues = getArgValues(ref, env);
+        if (argValues.length > 0) {
+          this.mode = argValues[0].toString().toLowerCase();
+        }
+        result = new BasicAnalysisObject<String>("mode=" + this.mode);
+      }
+      else if (ref.startsWith("wait")) {
+        if (_parseResults == null && parseResultsAsync != null) {
+          int waitToDieMillis = 100;
+          int timeoutMillis = 10000;
+
+          final AnalysisObject[] argValues = getArgValues(ref, env);
+          final int[] args = asIntValues(argValues, 0);
+          if (args != null && args.length > 0) {
+            waitToDieMillis = (args.length > 0) ? args[0] : waitToDieMillis;
+            timeoutMillis = (args.length > 1) ? args[1] : timeoutMillis;
+          }
+          _parseResults = parseResultsAsync.getParseResults(waitToDieMillis, timeoutMillis);
+        }
+        result = new BasicAnalysisObject<Boolean>(hasParseResults());
+      }
 
       return result;
     }

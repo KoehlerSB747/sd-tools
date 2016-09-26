@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<grammar>
+
+	<classifiers>
+
+    <!-- syntactic categories -->
+    <wn-prep>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='prep' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-prep>
+
+	</classifiers>
+
+	<rules>
+
+    <PP start="true" id="PP">
+      <wn-prep>
+        <postdelim>
+          <disallowall />
+        </postdelim>
+      </wn-prep>
+      <NP />
+      <PP optional="true" />
+    </PP>
+
+	</rules>
+
+</grammar>

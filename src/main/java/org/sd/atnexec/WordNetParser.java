@@ -1,3 +1,18 @@
+/*
+   Copyright 2008-2016 Semantic Discovery, Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
 package org.sd.atnexec;
 
 
@@ -24,43 +39,38 @@ public class WordNetParser {
   //
   // Properties
   //
-  //  resourcesDir -- path to resources (defaults to sd-tools/resources)
-  //  wordNetConfig -- (optional, default=generic-wordnet.config.xml) name of
-  //                   config relative to $resourcesDir/atn/config.
-  //                   NOTE: this takes precedence over parseConfig if both
-  //                   are present.
-  //  supplementalWordNetConfig -- (optional) name of spuplemental config
-  //                               relative to $resourcesDir/atn/config
-  //  parseConfig -- (optional) absolute path to wordnet-config.xml
-  //  supplementalConfig -- (optional) absolute path to supplement
+  //  Direct:
+  //    parseConfig -- (required) path to parseConfig
+  //    supplementalConfig -- (optional) path to supplemental parseConfig
+  //    parseFlow -- (optional) constraints on parse flow
   //
+  //  Indirect:
+  //    dbFileDir -- path to wordnet dbFiles dir
+  //    resourcesDir -- (required) path to resources (defaults to sd-tools/resources)
+  //    atnDir -- path to atn directory (defaults to ${resourcesDir}/atn/atn-general)
+  //    parserProperties -- path to parser properties (defaults to ${atnDir}/parser/parser.properties
+  //      (ultimately defines parseConfig, supplementalConfig, parseFlow, etc.)
+  // 
 
   public WordNetParser(DataProperties properties) throws IOException {
-    final boolean hasWordNetConfig = properties.hasProperty("wordNetConfig");
-    final boolean hasParseConfig = properties.hasProperty("parseConfig");
+    if (!properties.hasProperty("parseConfig")) {
+      loadIndirectProperties(properties);
+    }
+    this.genericParser = new GenericParser(properties);
+  }
 
-    if (hasWordNetConfig || !hasParseConfig) {
-      final String supplementalWordNetConfig = properties.getString("supplementalWordNetConfig", "");
-      //NOTE: assuming supplement follows same convention as primary config
+  private final void loadIndirectProperties(DataProperties properties) throws IOException {
+    final File resourcesDir = properties.getFile("resourcesDir", "workingDir");
 
-      final String wordNetConfig = properties.getString("wordNetConfig", "generic-wordnet.config.xml");
-      if (hasParseConfig) properties = new DataProperties(properties);
-      if (!"".equals(wordNetConfig) && wordNetConfig.charAt(0) == '/') {
-        // absolute path
-        properties.set("parseConfig", wordNetConfig);
-        properties.set("supplementalConfig", supplementalWordNetConfig);
-        properties.set("parseFlow", "");
-      }
-      else {
-        // relative path (to resources/atn/config)
-        final File resourcesDir = properties.getFile("resourcesDir", "workingDir");
-        properties.set("parseConfig", new File(resourcesDir, "atn/config/" + wordNetConfig).getAbsolutePath());
-        properties.set("supplementalConfig", "".equals(supplementalWordNetConfig) ? "" : "config/" + supplementalWordNetConfig);
-        properties.set("parseFlow", "");
-      }
+    if (!properties.hasProperty("atnDir")) {
+      properties.set("atnDir", "${resourcesDir}/atn/atn-general");
+    }
+    if (!properties.hasProperty("parserProperties")) {
+      properties.set("parserProperties", "${atnDir}/parser/parser.properties");
     }
 
-    this.genericParser = new GenericParser(properties);
+    final File parserProperties = properties.getFile("parserProperties", "workingDir");
+    properties.incorporateProperties(parserProperties, ".properties");
   }
 
   public void close() {

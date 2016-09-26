@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<grammar>
+
+	<classifiers>
+    <np-tok>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='adj' type='string' when='equals'>_wn_cat</feature>
+        <feature name='det' type='string' when='equals'>_wn_cat</feature>
+        <feature name='noun' type='string' when='equals'>_wn_cat</feature>
+        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
+        <feature name='conj' type='string' when='equals'>_wn_cat</feature>
+        <feature name='unknown' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+      <stopwords>
+        <feature name='ProperNoun' type='string' when='equals'>_wn_cat</feature>
+      </stopwords>
+    </np-tok>
+
+    <pn-tok>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='adj' type='string' when='equals'>_wn_cat</feature>
+        <feature name='det' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+      <stopwords>
+        <feature name='ProperNoun' type='string' when='equals'>_wn_cat</feature>
+      </stopwords>
+    </pn-tok>
+
+    <!-- syntactic categories -->
+    <wn-adj>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='adj' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-adj>
+    <wn-adv>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='adv' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-adv>
+    <wn-det>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='det' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-det>
+    <wn-noun>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='noun' type='string' when='equals'>_wn_cat</feature>
+        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
+        <feature name='unknown' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-noun>
+    <wn-properNoun>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='ProperNoun' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-properNoun>
+    <wn-pronoun>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-pronoun>
+    <wn-verb>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='verb' type='string' when='equals'>_wn_cat</feature>
+        <feature name='auxv' type='string' when='equals'>_wn_cat</feature>
+        <feature name='modal' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-verb>
+    <wn-conj>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='conj' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-conj>
+
+	</classifiers>
+
+	<rules>
+
+    <NP start="true" id="NP-detailed">
+      <wn-det optional="true">
+        <postdelim>
+          <disallowall />
+        </postdelim>
+      </wn-det>
+      <wn-adv optional="true" repeats="true">
+        <postdelim>
+          <disallowall />
+        </postdelim>
+      </wn-adv>
+      <wn-adj optional="true" repeats="true">
+        <postdelim>
+          <disallowall />
+        </postdelim>
+      </wn-adj>
+      <wn-noun repeats="true">
+        <postdelim>
+          <disallowall />
+        </postdelim>
+      </wn-noun>
+
+      <!-- recursively accept conjoined noun phrases -->
+      <CNP optional="true" />
+    </NP>
+
+    <NP start="true" id="NP-entity">
+      <wn-properNoun />
+
+      <!-- recursively accept conjoined noun phrases -->
+      <CNP optional="true" />
+    </NP>
+
+    <CNP>
+      <wn-conj />
+      <NP />
+    </CNP>
+
+    <CNP>
+      <NP>
+        <!-- first token must be preceded by a comma in lieu of a conjunction -->
+        <test>
+          <jclass>org.sd.atn.StateSelectionTest</jclass>
+          <selectState distance="0" gravity="firstMatch">
+            <predelim>
+              <require type="substring">,</require>
+            </predelim>
+          </selectState>
+        </test>
+      </NP>
+    </CNP>
+
+	</rules>
+
+</grammar>

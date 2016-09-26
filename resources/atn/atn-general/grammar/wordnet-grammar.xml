@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<grammar>
+
+	<classifiers>
+    <!-- syntactic categories -->
+    <wn-adj>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='adj' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-adj>
+    <wn-adv>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='adv' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-adv>
+    <wn-auxv>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='auxv' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-auxv>
+    <wn-conj>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='conj' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-conj>
+    <wn-det>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='det' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-det>
+    <wn-noun>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='noun' type='string' when='equals'>_wn_cat</feature>
+        <feature name='unknown' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-noun>
+    <wn-post>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='post' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-post>
+    <wn-pronoun>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-pronoun>
+    <wn-verb>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='verb' type='string' when='equals'>_wn_cat</feature>
+        <feature name='unknown' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-verb>
+
+    <!-- tags -->
+    <wn-Numeric>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='Numeric' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-Numeric>
+    <wn-properNoun>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='ProperNoun' type='string' when='equals'>_wn_cat</feature>
+<!--
+        <feature name='person' type='string' when='equals'>_wn_cat</feature>
+        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
+-->
+      </classifiers>
+    </wn-properNoun>
+
+    <!-- unknown -->
+    <wn-unknown>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='unknown' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-unknown>
+
+    <!-- semantic categories -->
+    <wn-all>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='all' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-all>
+    <wn-pert>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='pert' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-pert>
+    <wn-ppl>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='ppl' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-ppl>
+    <wn-act>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='act' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-act>
+    <wn-animal>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='animal' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-animal>
+    <wn-artifact>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='artifact' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-artifact>
+    <wn-attribute>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='attribute' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-attribute>
+    <wn-body>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='body' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-body>
+    <wn-body>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='body' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-body>
+    <wn-cognition>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='cognition' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-cognition>
+    <wn-communication>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='communication' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-communication>
+    <wn-event>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='event' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-event>
+    <wn-feeling>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='feeling' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-feeling>
+    <wn-food>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='food' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-food>
+    <wn-group>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='group' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-group>
+    <wn-location>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='location' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-location>
+    <wn-motive>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='motive' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-motive>
+    <wn-object>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='object' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-object>
+    <wn-person>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='person' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-person>
+    <wn-phenomenon>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='phenomenon' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-phenomenon>
+    <wn-plant>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='plant' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-plant>
+    <wn-possession>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='possession' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-possession>
+    <wn-process>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='process' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-process>
+    <wn-quantity>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='quantity' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-quantity>
+    <wn-relation>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='relation' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-relation>
+    <wn-shape>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='shape' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-shape>
+    <wn-state>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='state' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-state>
+    <wn-substance>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='substance' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-substance>
+    <wn-time>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='time' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-time>
+    <wn-Tops>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='Tops' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-Tops>
+    <wn-body>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='body' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-body>
+    <wn-change>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='change' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-change>
+    <wn-cognition>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='cognition' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-cognition>
+    <wn-communication>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='communication' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-communication>
+    <wn-competition>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='competition' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-competition>
+    <wn-consumption>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='consumption' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-consumption>
+    <wn-contact>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='contact' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-contact>
+    <wn-creation>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='creation' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-creation>
+    <wn-emotion>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='emotion' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-emotion>
+    <wn-modal>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='modal' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-modal>
+    <wn-motion>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='motion' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-motion>
+    <wn-perception>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='perception' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-perception>
+    <wn-possession>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='possession' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-possession>
+    <wn-social>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='social' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-social>
+    <wn-stative>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='stative' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-stative>
+    <wn-weather>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='weather' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </wn-weather>
+
+	</classifiers>
+
+	<rules>
+
+    <S start='true' id="S">
+      <PP optional="true" />
+      <NP repeats="true" />
+      <VP />
+      <CS optional="true" />
+    </S>
+
+    <VP>
+      <VS />
+      <DO optional="true" />
+
+      <CVP optional="true" repeats="true" />
+    </VP>
+
+    <DO>
+      <PP />
+    </DO>
+
+    <DO>
+      <NP repeats="true" />
+    </DO>
+
+    <DO>
+      <wn-adv optional="true" repeats="true" />
+      <wn-adj>
+        <test reverse="true">
+          <jclass>org.sd.atn.TokenTest</jclass>
+          <classifier cat="wn-noun" />
+        </test>
+      </wn-adj>
+    </DO>
+
+    <DO>
+      <S />
+    </DO>
+
+    <CS>
+      <wn-conj optional="true" />
+      <S />
+    </CS>
+
+    <CVP>
+      <wn-conj optional="true" />
+      <VP />
+    </CVP>
+
+	</rules>
+
+</grammar>

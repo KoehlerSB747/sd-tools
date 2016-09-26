@@ -21,6 +21,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.sd.atnexec.ConfigUtil;
+import org.sd.wordnet.loader.WordNetLoader;
+import org.sd.xml.DataProperties;
+import org.sd.wordnet.token.SimpleWordLookupStrategy;
+import org.sd.wordnet.token.WordNetTokenizer;
 
 /**
  * Utility to verify that lexicographer resources are being processed as expected.
@@ -127,10 +132,11 @@ public class LexChecker {
   }
 
   public static void main(String[] args) throws IOException {
-    // arg0: dbFileDir
-
     final long startTime = System.currentTimeMillis();
-    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])));
+    final ConfigUtil configUtil = new ConfigUtil(args);
+    final DataProperties dataProperties = configUtil.getDataProperties();
+    dataProperties.set("sentimentLoaderVerbose", "true");
+    final LexDictionary dict = WordNetLoader.loadLexDictionary(dataProperties);
     final long loadTime = System.currentTimeMillis() - startTime;
     System.out.println("Loaded " + dict.getSynsetCount() + " synsets in " + loadTime + "ms");
 

@@ -39,9 +39,14 @@ public class LRU<K, V> extends LinkedHashMap<K, V> {
     this.cacheSize = cacheSize;
   }
 
+  protected void prepareForRemoval(V value) {
+    //no-op
+  }
+
   protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
     boolean result = size() > this.cacheSize;
     if (result) {
+      prepareForRemoval(eldest.getValue());
       eldest.setValue(null);
     }
     return result;

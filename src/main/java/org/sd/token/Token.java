@@ -537,6 +537,19 @@ public class Token {
     return result.toString();
   }
 
+  public String getDetailedString() {
+    final StringBuilder result = new StringBuilder();
+
+    result.append(this.toString());
+    if (this.hasFeatures()) {
+      for (Feature feature : this.getFeatures().getFeatures()) {
+        result.append("\n\t").append(feature.toString());
+      }
+    }
+
+    return result.toString();
+  }
+
   private boolean computedPrevToken = false;
   private Token _prevToken;
   public Token getPrevToken() {

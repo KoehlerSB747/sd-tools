@@ -17,6 +17,8 @@ package org.sd.util;
 
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 import org.sd.io.FileUtil;
@@ -31,7 +33,27 @@ import org.sd.xml.CollapsedHistogram;
  */
 public class HistogramUtil {
 
+  public static final Histogram<String> loadHistogram(File inFile) throws IOException {
+    Histogram<String> result = null;
+
+    final BufferedReader reader = FileUtil.getReader(inFile);
+
+    // read key \t count
+    try {
+      result = loadHistogram(reader);
+    }
+    finally {
+      if (reader != null) {
+        reader.close();
+      }
+    }
+
+    return result;
+  }
+
   public static final Histogram<String> loadHistogram(BufferedReader reader) throws IOException {
+    // read key \t count
+
     Histogram<String> result = new Histogram<String>();
     String line = null;
     while ((line = reader.readLine()) != null) {
@@ -41,6 +63,28 @@ public class HistogramUtil {
       result.add(pieces[0], Long.parseLong(pieces[1]));
     }
     return result;
+  }
+
+  public static final void writeHistogram(File outFile, Histogram<?> histogram) throws IOException {
+    final BufferedWriter writer = FileUtil.getWriter(outFile);
+
+    // write key \t count
+    try {
+      writeHistogram(writer, histogram);
+    }
+    finally {
+      if (writer != null) {
+        writer.close();
+      }
+    }
+  }
+
+  public static final void writeHistogram(BufferedWriter writer, Histogram<?> histogram) throws IOException {
+    // write key \t count
+
+    for (Histogram<?>.Frequency<?> freq : histogram.getFrequencies()) {
+      writer.write(String.format("%s\t%d\n", freq.getElement().toString(), freq.getFrequency()));
+    }
   }
 
   public static void main(String[] args) throws IOException {

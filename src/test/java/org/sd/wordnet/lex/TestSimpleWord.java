@@ -19,6 +19,7 @@ package org.sd.wordnet.lex;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.sd.wordnet.util.NormalizeUtil;
 
 /**
  * JUnit Tests for the SimpleWord class.
@@ -68,6 +69,30 @@ public class TestSimpleWord extends TestCase {
     assertEquals("assault", simpleWord.getNormalizedWord());
     assertTrue(simpleWord.hasMarker());
     assertEquals("(p)", simpleWord.getMarker());
+  }
+
+  public void testNormalization() {
+    doNormalizationTest("mr._moto");
+    doNormalizationTest("mr.moto");
+    doNormalizationTest("st._elias_range");
+    doNormalizationTest("st._elmo's_fire");
+    doNormalizationTest("pigs'_knuckles");
+    doNormalizationTest("court_of_saint_james's");
+    doNormalizationTest("Achilles'_heel");
+    doNormalizationTest("shoot-'em-up");
+    doNormalizationTest("old_wives'_tale");
+  }
+
+  private final void doNormalizationTest(String wordText) {
+    final SimpleWord simpleWord = new SimpleWord();
+    simpleWord.setWord(wordText);
+    final String normalizedWord = NormalizeUtil.normalizeForLookup(wordText);
+    final String simpleNorm = simpleWord.getNormalizedWord();
+
+    // if (!simpleNorm.equals(normalizedWord)) {
+    //   System.out.println(wordText + "\t" + simpleNorm + "\t" + normalizedWord);
+    // }
+    assertEquals(wordText, simpleNorm, normalizedWord);
   }
 
 

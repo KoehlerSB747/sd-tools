@@ -20,6 +20,7 @@ package org.sd.atn;
 
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.sd.xml.DataProperties;
 
@@ -124,6 +125,10 @@ public class GenericParser {
       }
     }
 
-    return genericParseHelper.buildGenericParseResults(parseOutput);
+    return genericParseHelper.buildGenericParseResults(parseRunner, parseOutput);
+  }
+
+  public GenericParseResultsAsync parseAsync(ExecutorService threadPool, String inputText, DataProperties options) {
+    return new GenericParseResultsAsync(threadPool, this, inputText, options);
   }
 }

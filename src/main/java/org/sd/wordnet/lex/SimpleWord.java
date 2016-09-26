@@ -16,6 +16,8 @@
 package org.sd.wordnet.lex;
 
 
+import org.sd.wordnet.util.NormalizeUtil;
+
 /**
  * Container for a simple word from a lexicographer file.
  * <p>
@@ -134,17 +136,10 @@ public class SimpleWord {
         //word = word.substring(0, lastPos + 1);
       }
 
-      // squash '"', replace '-', '_' w/space, leave other delims ['/.], but squash [/.] when last
-      final StringBuilder builder = new StringBuilder();
-      for (int pos = 0; pos <= lastPos; ++pos) {
-        char c = word.charAt(pos);
-        if (c == '"') continue;
-        else if (c == '-' || c == '_') c = ' ';
-        else if (pos == lastPos && (c == '.' || c == '/')) break;
-        builder.append(c);
-        if (c == ' ') ++spaceCount;
-      }
-      word = builder.toString();
+      // squash '"', replace '-', '_' w/space,
+      // leave other delims ['/.] when between chars, otherwise squash
+      // trim "'s" at end of string
+      word = NormalizeUtil.normalizeForLookup(word, lastPos + 1);
     }
     return word;
   }
