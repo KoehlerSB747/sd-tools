@@ -506,25 +506,26 @@ public class LexDictionary {
    *
    * @return the found word(s)
    */
-  public final List<Word> findWords(String wordName, String lexFileNameHint) {
+  public final List<Word> findWords(String theWordName, String lexFileNameHint) {
     if (synsets == null) return null;
 
     List<Word> result = null;
 
+    String wordName = theWordName;
     final int cPos = wordName.indexOf(':');
     if (cPos >= 0) {
       lexFileNameHint = wordName.substring(0, cPos);
       wordName = wordName.substring(cPos + 1);
     }
 
-    final String norm = NormalizeUtil.normalizeForLookup(wordName);
+    final String norm = NormalizeUtil.trimDigits(NormalizeUtil.normalizeForLookup(wordName));
     final List<Synset> synsets = lookupSynsets(norm);
 
     if (synsets != null) {
       for (Synset synset : synsets) {
         if (lexFileNameHint == null || lexFileNameHint.equalsIgnoreCase(synset.getLexFileName())) {
           for (Word word : synset.getWords()) {
-            if (wordName.equals(word.getWordName())) {
+            if (theWordName.equals(word.getQualifiedWordName())) {
               if (result == null) result = new ArrayList<Word>();
               result.add(word);
               break;
@@ -555,6 +556,69 @@ public class LexDictionary {
           }
           if (lexFileNameHint != null) break;
         }
+      }
+    }
+
+    return result;
+  }
+
+
+  /**
+   * Select the synsets from the synsetNames, meeting the given constraints.
+   * <p>
+   * If frameConstraints are given, posConstraints are ignored and a "verb" is required.
+   * <p>
+   * If no constraints are given, then all synsetNames are selected.
+   */
+  public Collection<String> selectSynsets(Collection<String> synsetNames, String[] posConstraints, Set<Integer> frameConstraints) {
+    Collection<String> result = null;
+
+    if (synsetNames != null) {
+      if (posConstraints != null || frameConstraints != null) {
+        final List<String> selected = new ArrayList<String>();
+
+        for (String synsetName : synsetNames) {
+          boolean select = false;
+
+          if (frameConstraints != null) {
+            if (synsetName.startsWith("verb")) {
+              final List<Word> words = findWords(synsetName, null);
+              if (words != null) {
+                for (Word word : words) {
+                  final Synset synset = word.getSynset();
+                  if (synset.hasFrames()) {
+                    for (Integer frame : synset.getFrames()) {
+                      if (frameConstraints.contains(frame)) {
+                        select = true;
+                        break;
+                      }
+                    }
+                  }
+                  if (select) break;
+                }
+              }
+            }
+          }
+          else {
+            if (posConstraints != null) {
+              for (String posConstraint : posConstraints) {
+                if (synsetName.startsWith(posConstraint)) {
+                  select = true;
+                  break;
+                }
+              }
+            }
+          }
+
+          if (select) {
+            selected.add(synsetName);
+          }
+        }
+
+        result = selected;
+      }
+      else {
+        result = synsetNames;
       }
     }
 

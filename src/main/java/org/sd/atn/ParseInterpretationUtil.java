@@ -19,6 +19,7 @@
 package org.sd.atn;
 
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -146,6 +147,39 @@ public class ParseInterpretationUtil {
           if (result == null) result = new HashSet<String>();
           result.add(value.toString());
         }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Set a token feature on the token at a state for later retrieval from a
+   * successful parse.
+   */
+  public static final void setTokenFeature(Token token, AtnState atnState, String featureId, Serializable featureValue, Object source) {
+    // where actual feature name is <ruleStep.getLabel()>-<featureId>
+    final StringBuilder featureName = new StringBuilder();
+    featureName.append(atnState.getRuleStep().getRule().getRuleName()).append('-').append(featureId);
+    token.setFeature(featureName.toString(), featureValue, source);
+  }
+
+  public static final Object getTokenFeature(Tree<String> parseTreeNode, String featureId, Class featureValueClass, Class sourceClass) {
+    Object result = null;
+
+    final StringBuilder featureName = new StringBuilder();
+    final Tree<String> parentNode = parseTreeNode.getParent().getParent();
+    featureName.append(parentNode.getData()).append('-').append(featureId);
+    final CategorizedToken cToken = getCategorizedToken(parseTreeNode, false);
+    if (cToken != null && cToken.token.hasFeatures()) {
+      final Feature feature =
+        cToken.token.getFeature(
+          FeatureConstraint.getInstance(featureName.toString(),
+                                        sourceClass,
+                                        featureValueClass),
+          false);
+      if (feature != null) {
+        result = feature.getValue();
       }
     }
 

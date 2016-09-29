@@ -16,14 +16,11 @@
 package org.sd.wordnet.senti;
 
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.Collection;
+import org.sd.atn.AtnParse;
 import org.sd.atnexec.ConfigUtil;
-import org.sd.token.Token;
-import org.sd.wordnet.loader.WordNetLoader;
-import org.sd.wordnet.token.SimpleWordLookupStrategy;
-import org.sd.wordnet.token.WordNetTokenizer;
+import org.sd.util.tree.Tree;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.xml.DataProperties;
 
@@ -32,53 +29,41 @@ import org.sd.xml.DataProperties;
  * <p>
  * @author Spencer Koehler
  */
-public class SimpleSentimentizer {
+public class SimpleSentimentizer implements SynsetLineProcessor.SynsetLineHandler {
   
-  private LexDictionary lexDictionary;
-  private SimpleWordLookupStrategy strategy;
+  private SentimentCollector sentimentCollector;
 
-  public SimpleSentimentizer(LexDictionary lexDictionary) {
-    this.lexDictionary = lexDictionary;
-    this.strategy = new SimpleWordLookupStrategy(lexDictionary);
+  public SimpleSentimentizer() {
+    this.sentimentCollector = new SentimentCollector();
   }
 
-  public SentimentCollector sentimentize(String text) {
-    final SentimentCollector result = new SentimentCollector(lexDictionary);
+  @Override
+  public void startLine(String line) {
+    this.sentimentCollector.reset();
+  }
 
-    final WordNetTokenizer tokenizer = new WordNetTokenizer(lexDictionary, strategy, text);
-    for (Token token = tokenizer.getToken(0); token != null; token = token.getNextToken()) {
+  @Override
+  public void processSynsets(LexDictionary lexDictionary, Collection<String> synsetNames, AtnParse atnParse, Tree<String> tokenNode) {
+    for (String synsetName : synsetNames) {
       //todo: recognize negation terms and sentence boundaries
-      result.addWord(token.getText(), null, false);
+      sentimentCollector.addWord(lexDictionary, synsetName, null, false);
     }
+  }
 
-    return result;
+  @Override
+  public void endLine(String line, boolean fromParse) {
+    System.out.println(line + "\t" + sentimentCollector.toString());
   }
 
 
   public static void main(String[] args) throws IOException {
     final ConfigUtil configUtil = new ConfigUtil(args);
     final DataProperties dataProperties = configUtil.getDataProperties();
-    final LexDictionary dict = WordNetLoader.loadLexDictionary(dataProperties);
-    final SimpleSentimentizer sentimentizer = new SimpleSentimentizer(dict);
-    
     args = dataProperties.getRemainingArgs();
 
-    if (args != null && args.length > 0) {
-      for (String arg : args) {
-        final SentimentCollector sentiment = sentimentizer.sentimentize(arg);
-        System.out.println(arg + "\t" + sentiment);
-      }
-    }
-    else {
-      // read from stdin
-      final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-      String line = null;
-      while ((line = in.readLine()) != null) {
-        line = line.trim();
-        if ("".equals(line)) continue;
-        final SentimentCollector sentiment = sentimentizer.sentimentize(line);
-        System.out.println(line + "\t" + sentiment);
-      }
-    }
+    final SimpleSentimentizer sentimentizer = new SimpleSentimentizer();
+    final SynsetLineProcessor processor = new SynsetLineProcessor(sentimentizer, dataProperties);
+    processor.process(args);
+    processor.close();
   }
 }

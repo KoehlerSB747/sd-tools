@@ -35,13 +35,11 @@ public class SentimentCollector {
   public enum Sentiment { POSITIVE, NEGATIVE, NEUTRAL, UNKNOWN };
 
 
-  private LexDictionary lexDictionary;
   private StatsAccumulator posScores;
   private StatsAccumulator negScores;
   private SynsetSelector synsetSelector;
 
-  public SentimentCollector(LexDictionary lexDictionary) {
-    this.lexDictionary = lexDictionary;
+  public SentimentCollector() {
     this.posScores = new StatsAccumulator("positive");
     this.negScores = new StatsAccumulator("negative");
     this.synsetSelector = new SynsetSelector();
@@ -52,6 +50,11 @@ public class SentimentCollector {
    */
   public SynsetSelector getSynsetSelector() {
     return synsetSelector;
+  }
+
+  public void reset() {
+    this.posScores.clear();
+    this.negScores.clear();
   }
 
   /**
@@ -67,20 +70,20 @@ public class SentimentCollector {
    *
    * @return true if the word yielded sentiment information; otherwise, false.
    */
-  public boolean addWord(String wordName, String lexFileNameHint, boolean negate) {
+  public boolean addWord(LexDictionary lexDictionary, String wordName, String lexFileNameHint, boolean negate) {
     boolean result = false;
 
     final List<Word> words = lexDictionary.findWords(wordName, lexFileNameHint);
     if (words != null) {
       for (Word word : words) {
-        result |= doAddWord(word, negate);
+        result |= doAddWord(lexDictionary, word, negate);
       }
     }
 
     return result;
   }
 
-  private final boolean doAddWord(Word word, boolean negate) {
+  private final boolean doAddWord(LexDictionary lexDictionary, Word word, boolean negate) {
     boolean result = false;
 
     final Synset synset = word.getSynset();
@@ -104,7 +107,7 @@ public class SentimentCollector {
             final PointerDefinition ptrDef = pointer.getPointerDef();
             if ("@".equals(ptrDef.getPointerSymbol())) {
               final Word hypernym = pointer.getSpecificTarget();
-              if (hypernym != null && doAddWord(hypernym, negate)) {
+              if (hypernym != null && doAddWord(lexDictionary, hypernym, negate)) {
                 result = true;
 
                 // copy the parent's sentiment into this word's synset

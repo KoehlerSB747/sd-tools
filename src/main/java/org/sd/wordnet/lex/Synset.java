@@ -52,11 +52,8 @@ public class Synset {
   public String getSynsetName() {
     final StringBuilder result = new StringBuilder();
 
-    if (lexFileName != null) {
-      result.append(lexFileName).append(':');
-    }
     for (Word word : words) {
-      final String wordName = word.getWordName();
+      final String wordName = word.getQualifiedWordName();
       if (wordName != null) {
         result.append(wordName);
         break;

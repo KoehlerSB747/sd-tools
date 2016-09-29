@@ -20,11 +20,26 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.sd.atn.AtnParse;
 import org.sd.atn.AtnState;
-import org.sd.atn.AtnParseRunner;;
+import org.sd.atn.AtnParseBasedTokenizer;
+import org.sd.atn.AtnParseRunner;
 import org.sd.atn.GenericParser;
 import org.sd.atn.GenericParseResults;
+import org.sd.atn.ParseInterpretationUtil;
+import org.sd.token.CategorizedToken;
+import org.sd.token.Feature;
+import org.sd.token.Token;
+import org.sd.util.tree.Tree;
+import org.sd.wordnet.token.WordNetTokenizer;
+import org.sd.wordnet.lex.LexDictionary;
 import org.sd.xml.DataProperties;
 
 /**
@@ -121,6 +136,89 @@ public class WordNetParser {
   public GenericParseResults parseInput(String input, AtomicBoolean die) {
     final GenericParseResults results = genericParser.parse(input, null, die);
     return results;
+  }
+
+
+  public static final List<TokenData> getTokenData(AtnParse atnParse) {
+    final List<TokenData> result = new ArrayList<TokenData>();
+
+    final Tree<String> parseTree = atnParse.getParseTree();
+    for (Tree<String> tokenNode : parseTree.gatherLeaves()) {
+      final TokenData tokenData = new TokenData(tokenNode);
+      result.add(tokenData);
+    }
+
+    return result;
+  }
+
+  public static final List<String> getTokenSynsetNames(Token token) {
+    List<String> result = null;
+
+    if (token != null) {
+      final Feature synsetsFeature = token.getFeature(WordNetTokenizer.SYNSETS_FEATURE_CONSTRAINT, false);
+      if (synsetsFeature != null) {
+        result = Arrays.asList(synsetsFeature.getValue().toString().split(","));
+      }
+    }
+
+    return result;
+  }
+
+
+  public static final class TokenData {
+    public final Tree<String> tokenNode;
+    public final String[] posConstraints;
+    public final CategorizedToken cToken;
+    public final Token token;
+    public final Set<Integer> framesConstraint;
+    public final List<String> allSynsetNames;
+    public final Collection<String> selectedSynsetNames;
+
+    TokenData(Tree<String> tokenNode) {
+      this.tokenNode = tokenNode;
+      this.posConstraints = tokenNode.getParent().getData().split("-");
+      this.cToken = ParseInterpretationUtil.getCategorizedToken(tokenNode, false);
+      this.token = (cToken == null) ? null : cToken.token;
+      this.framesConstraint = getFramesConstraint(tokenNode);
+      this.allSynsetNames = getTokenSynsetNames(token);
+      this.selectedSynsetNames = getSelectedSynsetNames(token, posConstraints, allSynsetNames, framesConstraint);
+    }
+
+    public String toString() {
+      final StringBuilder result = new StringBuilder();
+
+      result.
+        append(token).
+        append(" synsets=").
+        append(selectedSynsetNames);
+
+      return result.toString();
+    }
+
+    private final Set<Integer> getFramesConstraint(Tree<String> tokenNode) {
+      Set<Integer> result = null;
+
+      final String framesConstraint = (String)ParseInterpretationUtil.getTokenFeature(tokenNode, "frames", String.class, VerbFrameCheck.class);
+      if (framesConstraint != null && !"".equals(framesConstraint)) {
+        result = new HashSet<Integer>();
+        for (String frame : framesConstraint.split(",")) {
+          result.add(new Integer(frame));
+        }
+      }
+
+      return result;
+    }
+
+    private final Collection<String> getSelectedSynsetNames(Token token, String[] posConstraints, List<String> allSynsetNames, Set<Integer> framesConstraint) {
+      Collection<String> result = null;
+
+      if (token != null) {
+        final LexDictionary lexDictionary = ((WordNetTokenizer)(((AtnParseBasedTokenizer)token.getTokenizer()).getStandardTokenizer())).getLexDictionary();
+        result = lexDictionary.selectSynsets(allSynsetNames, posConstraints, framesConstraint);
+      }
+
+      return result;
+    }
   }
 
 

@@ -16,18 +16,14 @@
 package org.sd.wordnet.senti;
 
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.Collection;
+import org.sd.atn.AtnParse;
 import org.sd.atnexec.ConfigUtil;
-import org.sd.token.Feature;
-import org.sd.token.Token;
 import org.sd.util.Histogram;
 import org.sd.util.HistogramUtil;
-import org.sd.wordnet.loader.WordNetLoader;
-import org.sd.wordnet.token.SimpleWordLookupStrategy;
-import org.sd.wordnet.token.WordNetTokenizer;
+import org.sd.util.tree.Tree;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.xml.DataProperties;
 
@@ -36,43 +32,41 @@ import org.sd.xml.DataProperties;
  * <p>
  * @author Spencer Koehler
  */
-public class HistogramGenerator {
+public class HistogramGenerator implements SynsetLineProcessor.SynsetLineHandler {
   
-  protected LexDictionary lexDictionary;
-  private final SimpleWordLookupStrategy strategy;
+  private SynsetSelector synsetSelector;
   private Histogram<String> nounHistogram;
   private Histogram<String> verbHistogram;
   private Histogram<String> adjHistogram;
   private Histogram<String> advHistogram;
-  private SynsetSelector synsetSelector;
 
-  protected HistogramGenerator(LexDictionary lexDictionary) {
-    this.lexDictionary = lexDictionary;
-    this.strategy = new SimpleWordLookupStrategy(lexDictionary);
+  protected HistogramGenerator() {
+    this.synsetSelector = new SynsetSelector();
     this.nounHistogram = new Histogram<String>();
     this.verbHistogram = new Histogram<String>();
     this.adjHistogram = new Histogram<String>();
     this.advHistogram = new Histogram<String>();
-    this.synsetSelector = new SynsetSelector();
   }
 
-  public void process(String line) {
-    final WordNetTokenizer tokenizer = new WordNetTokenizer(lexDictionary, strategy, line);
-    for (Token token = tokenizer.getToken(0); token != null; token = token.getNextToken()) {
-      final Feature normFeature = token.getFeature(WordNetTokenizer.NORM_FEATURE_CONSTRAINT, false);
-      final Feature synsetsFeature = token.getFeature(WordNetTokenizer.SYNSETS_FEATURE_CONSTRAINT, false);
-
-      if (synsetsFeature != null) {
-        final String[] synsetNames = synsetsFeature.getValue().toString().split(",");
-        process("noun", nounHistogram, synsetNames);
-        process("verb", verbHistogram, synsetNames);
-        process("adj", adjHistogram, synsetNames);
-        process("adv", advHistogram, synsetNames);
-      }
-    }
+  @Override
+  public void startLine(String line) {
+    //no-op
   }
 
-  private final void process(String prefix, Histogram<String> histogram, String[] synsetNames) {
+  @Override
+  public void processSynsets(LexDictionary lexDictionary, Collection<String> synsetNames, AtnParse atnParse, Tree<String> tokenNode) {
+    process("noun", nounHistogram, synsetNames);
+    process("verb", verbHistogram, synsetNames);
+    process("adj", adjHistogram, synsetNames);
+    process("adv", advHistogram, synsetNames);
+  }
+
+  @Override
+  public void endLine(String line, boolean fromParse) {
+    //no-op
+  }
+
+  private final void process(String prefix, Histogram<String> histogram, Collection<String> synsetNames) {
     if (shouldInclude(prefix, synsetNames)) {
       for (String synsetName : synsetNames) {
         if (synsetName.startsWith(prefix)) {
@@ -98,7 +92,7 @@ public class HistogramGenerator {
     return advHistogram;
   }
 
-  protected boolean shouldInclude(String prefix, String[] synsetNames) {
+  protected boolean shouldInclude(String prefix, Collection<String> synsetNames) {
     boolean result = false;
 
     if (shouldInclude2(synsetNames)) {
@@ -114,7 +108,7 @@ public class HistogramGenerator {
   }
 
   // include if possibly an open-set word
-  protected boolean shouldInclude1(String[] synsetNames) {
+  protected boolean shouldInclude1(Collection<String> synsetNames) {
     boolean result = false;
 
     //todo: pare down or select from synsetNames by additional criteria
@@ -130,7 +124,7 @@ public class HistogramGenerator {
   }
 
   // exclude if possibly not an open-set word
-  protected boolean shouldInclude2(String[] synsetNames) {
+  protected boolean shouldInclude2(Collection<String> synsetNames) {
     boolean result = true;
 
     //todo: pare down or select from synsetNames by additional criteria
@@ -155,26 +149,12 @@ public class HistogramGenerator {
 
     final ConfigUtil configUtil = new ConfigUtil(args);
     final DataProperties dataProperties = configUtil.getDataProperties();
-    final LexDictionary dict = WordNetLoader.loadLexDictionary(dataProperties);
-    final HistogramGenerator generator = new HistogramGenerator(dict);
-    
     args = dataProperties.getRemainingArgs();
 
-    if (args != null && args.length > 0) {
-      for (String arg : args) {
-        generator.process(arg);
-      }
-    }
-    else {
-      // read from stdin
-      final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-      String line = null;
-      while ((line = in.readLine()) != null) {
-        line = line.trim();
-        if ("".equals(line)) continue;
-        generator.process(line);
-      }
-    }
+    final HistogramGenerator generator = new HistogramGenerator();
+    final SynsetLineProcessor processor = new SynsetLineProcessor(generator, dataProperties);
+    processor.process(args);
+    processor.close();
 
     final Histogram<String> nounHistogram = generator.getNounHistogram();
     final File nounFile = dataProperties.getFile("nounfile", "workingDir");

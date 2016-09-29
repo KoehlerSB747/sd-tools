@@ -59,8 +59,9 @@ import org.w3c.dom.NodeList;
  * name as the feature in the file, when the rote list is used in a classifier
  * with a different name.
  * <p>
- * If classFeature is non-empty, then all terms will receive a feature with
- * "class" as the the key and the classifer's name as the value.
+ * If classFeature is non-empty, then all successfully classified terms will
+ * receive a feature with "class" as the the key and the classFeature's value
+ * as the value.
  * 
  * @author Spence Koehler
  */

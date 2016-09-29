@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<parse>
+
+  <resources>
+    <resource name="wn-dict">
+      <jclass>org.sd.atnexec.WordNetDictionaryResource</jclass>
+    </resource>
+  </resources>
+
+  <compoundParser>
+    <id>WordNet</id>
+    <parser file="${atnDir}/config/wordnet-config.xml" />
+  </compoundParser>
+
+</parse>

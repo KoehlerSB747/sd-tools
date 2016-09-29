@@ -81,4 +81,24 @@ public class NormalizeUtil {
 
     return result.toString();
   }
+
+  public static final String trimDigits(String string) {
+    String result = null;
+
+    if (string != null && !"".equals(string)) {
+      final int len = string.length();
+      int lastCharPos = len;
+      for (; lastCharPos > 0; --lastCharPos) {
+        final char c = string.charAt(lastCharPos - 1);
+        if (c > '9' || c < '0') {
+          break;
+        }
+      }
+      if (lastCharPos > 0 && lastCharPos < len) {
+        result = string.substring(0, lastCharPos);
+      }
+    }
+
+    return result == null ? string : result;
+  }
 }

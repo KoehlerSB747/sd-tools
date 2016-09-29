@@ -17,9 +17,12 @@ package org.sd.atnexec;
 
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.sd.atn.GenericParseResults;
 import org.sd.atn.GenericParseResultsAsync;
+import org.sd.atn.ParseOrToken;
+import org.sd.atn.ParseOrTokenSequence;
 import org.sd.atn.ResourceManager;
 import org.sd.analysis.AbstractAnalysisObject;
 import org.sd.analysis.AnalysisFunction;
@@ -301,7 +304,8 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
         final GenericParseResults parseResults = getParseResults();
         if (mode.startsWith("seq")) {
           if (parseResults.hasSequence()) {
-            result.append("\n").append(parseResults.getSequence().toString());
+            final ParseOrTokenSequence seq = parseResults.getSequence();
+            result.append("\n").append(buildShowString(seq));
             hasData = true;
           }
         }
@@ -365,6 +369,38 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
     @Override
     public NumericAnalysisObject asNumericAnalysisObject() {
       return null;
+    }
+
+    private final String buildShowString(ParseOrTokenSequence seq) {
+      final StringBuilder result = new StringBuilder();
+
+      if (seq != null) {
+        int num = 1;
+        for (ParseOrToken item : seq.getSequence()) {
+          if (result.length() > 0) result.append("\n");
+          result.append(num++).append('\t').append(buildShowString(item));
+        }
+      }
+
+      return result.toString();
+    }
+
+    private final String buildShowString(ParseOrToken item) {
+      final StringBuilder result = new StringBuilder();
+
+      if (item.hasParse()) {
+        result.append(item.getParse().toString());
+
+        final List<WordNetParser.TokenData> tokenDatas = WordNetParser.getTokenData(item.getParse());
+        for (WordNetParser.TokenData tokenData : tokenDatas) {
+          result.append("\n\t").append(tokenData.toString());
+        }
+      }
+      else {
+        result.append(item.getToken().getDetailedString());
+      }
+
+      return result.toString();
     }
   }
 

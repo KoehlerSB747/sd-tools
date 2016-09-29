@@ -48,9 +48,23 @@ public class TestNormalizeUtil extends TestCase {
     doNormalizeTest("ass's", "ass");
   }
 
+  public void testTrimDigits() {
+    doTrimDigitsTest("order1", "order");
+    doTrimDigitsTest("say9", "say");
+    doTrimDigitsTest("99", "99");
+    doTrimDigitsTest("okay", "okay");
+    doTrimDigitsTest("fall8", "fall");
+    doTrimDigitsTest("light12", "light");
+  }
+
   private final void doNormalizeTest(String input, String  expected) {
     final String norm = NormalizeUtil.normalizeForLookup(input);
     assertEquals(expected, norm);
+  }
+
+  private final void doTrimDigitsTest(String input, String expected) {
+    final String trimmed = NormalizeUtil.trimDigits(input);
+    assertEquals(expected, trimmed);
   }
 
   public static Test suite() {

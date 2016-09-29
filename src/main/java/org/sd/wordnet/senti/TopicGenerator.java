@@ -16,22 +16,17 @@
 package org.sd.wordnet.senti;
 
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.sd.atn.AtnParse;
 import org.sd.atnexec.ConfigUtil;
-import org.sd.token.Feature;
-import org.sd.token.Token;
 import org.sd.util.Histogram;
 import org.sd.util.HistogramUtil;
-import org.sd.wordnet.loader.WordNetLoader;
-import org.sd.wordnet.token.SimpleWordLookupStrategy;
-import org.sd.wordnet.token.WordNetTokenizer;
+import org.sd.util.tree.Tree;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.xml.DataProperties;
 
@@ -40,43 +35,39 @@ import org.sd.xml.DataProperties;
  * <p>
  * @author Spencer Koehler
  */
-public class TopicGenerator {
+public class TopicGenerator implements SynsetLineProcessor.SynsetLineHandler {
   
-  protected LexDictionary lexDictionary;
-  private final SimpleWordLookupStrategy strategy;
   private Histogram<String> nounHistogram;
   private Histogram<String> verbHistogram;
   private Histogram<String> adjHistogram;
   private Histogram<String> advHistogram;
-  private SynsetSelector synsetSelector;
 
-  protected TopicGenerator(LexDictionary lexDictionary, File nounfile, File verbfile, File adjfile, File advfile) throws IOException {
-    this.lexDictionary = lexDictionary;
-    this.strategy = new SimpleWordLookupStrategy(lexDictionary);
+  private final Set<String> synsetNames = new HashSet<String>();
+
+  protected TopicGenerator(File nounfile, File verbfile, File adjfile, File advfile) throws IOException {
     this.nounHistogram = HistogramUtil.loadHistogram(nounfile);
     this.verbHistogram = HistogramUtil.loadHistogram(verbfile);
     this.adjHistogram = HistogramUtil.loadHistogram(adjfile);
     this.advHistogram = HistogramUtil.loadHistogram(advfile);
-    this.synsetSelector = new SynsetSelector();
   }
 
-  public void process(String line) {
-    final Set<String> synsetNames = new HashSet<String>();
-    
-    final WordNetTokenizer tokenizer = new WordNetTokenizer(lexDictionary, strategy, line);
-    for (Token token = tokenizer.getToken(0); token != null; token = token.getNextToken()) {
-      final Feature synsetsFeature = token.getFeature(WordNetTokenizer.SYNSETS_FEATURE_CONSTRAINT, false);
+  @Override
+  public void startLine(String line) {
+    this.synsetNames.clear();
+  }
 
-      if (synsetsFeature != null) {
-        synsetNames.addAll(Arrays.asList(synsetsFeature.getValue().toString().split(",")));
-      }
-    }
+  @Override
+  public void processSynsets(LexDictionary lexDictionary, Collection<String> synsetNames, AtnParse atnParse, Tree<String> tokenNode) {
+    this.synsetNames.addAll(synsetNames);
+  }
 
+  @Override
+  public void endLine(String line, boolean fromParse) {
     final String topNounSynsets = getTopSynsets(nounHistogram, synsetNames);
     final String topVerbSynsets = getTopSynsets(verbHistogram, synsetNames);
     final String topAdjSynsets = getTopSynsets(adjHistogram, synsetNames);
     final String topAdvSynsets = getTopSynsets(advHistogram, synsetNames);
-    System.out.println(String.format("%s\t%s\t%s\t%s\t%s", line, topNounSynsets, topVerbSynsets, topAdjSynsets, topAdvSynsets));
+    System.out.println(String.format("%s\t%s\t%s\t%s\t%s\t%s", line, topNounSynsets, topVerbSynsets, topAdjSynsets, topAdvSynsets, fromParse ? "PARSE" : "TOKENS"));
   }
 
   private final String getTopSynsets(Histogram<String> histogram, Set<String> synsetNames) {
@@ -129,29 +120,16 @@ public class TopicGenerator {
 
     final ConfigUtil configUtil = new ConfigUtil(args);
     final DataProperties dataProperties = configUtil.getDataProperties();
-    final LexDictionary dict = WordNetLoader.loadLexDictionary(dataProperties);
+    args = dataProperties.getRemainingArgs();
+
     final File nounFile = dataProperties.getFile("nounfile", "workingDir");
     final File verbFile = dataProperties.getFile("verbfile", "workingDir");
     final File adjFile = dataProperties.getFile("adjfile", "workingDir");
     final File advFile = dataProperties.getFile("advfile", "workingDir");
-    final TopicGenerator generator = new TopicGenerator(dict, nounFile, verbFile, adjFile, advFile);
-    
-    args = dataProperties.getRemainingArgs();
 
-    if (args != null && args.length > 0) {
-      for (String arg : args) {
-        generator.process(arg);
-      }
-    }
-    else {
-      // read from stdin
-      final BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-      String line = null;
-      while ((line = in.readLine()) != null) {
-        line = line.trim();
-        if ("".equals(line)) continue;
-        generator.process(line);
-      }
-    }
+    final TopicGenerator topicGenerator = new TopicGenerator(nounFile, verbFile, adjFile, advFile);
+    final SynsetLineProcessor processor = new SynsetLineProcessor(topicGenerator, dataProperties);
+    processor.process(args);
+    processor.close();
   }
 }
