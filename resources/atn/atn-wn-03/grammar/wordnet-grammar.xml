@@ -80,8 +80,8 @@
         <feature name='ProperNoun' type='string' when='equals'>_wn_cat</feature>
 <!--
         <feature name='person' type='string' when='equals'>_wn_cat</feature>
-        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
 -->
+        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
       </classifiers>
     </wn-properNoun>
 
@@ -393,14 +393,13 @@
       </terms>
     </pre-verb11>
 
-    <adj-noun>
+    <pfct-have>
       <jclass>org.sd.atn.RoteListClassifier</jclass>
-      <classifiers>
-        <feature name='adj' type='string' when='equals'>_wn_cat</feature>
-        <feature name='noun' type='string' when='equals'>_wn_cat</feature>
-        <feature name='unknown' type='string' when='equals'>_wn_cat</feature>
-      </classifiers>
-    </adj-noun>
+      <terms caseSensitive="false">
+        <term>have</term>
+        <term>had</term>
+      </terms>
+    </pfct-have>
 
     <tobe>
       <jclass>org.sd.atn.RoteListClassifier</jclass>
@@ -410,6 +409,19 @@
       </terms>
     </tobe>
 
+    <functional>
+      <jclass>org.sd.atn.RoteListClassifier</jclass>
+      <classifiers>
+        <feature name='adv' type='string' when='equals'>_wn_cat</feature>
+        <feature name='auxv' type='string' when='equals'>_wn_cat</feature>
+        <feature name='conj' type='string' when='equals'>_wn_cat</feature>
+        <feature name='det' type='string' when='equals'>_wn_cat</feature>
+        <feature name='modal' type='string' when='equals'>_wn_cat</feature>
+        <feature name='post' type='string' when='equals'>_wn_cat</feature>
+        <feature name='prep' type='string' when='equals'>_wn_cat</feature>
+        <feature name='pronoun' type='string' when='equals'>_wn_cat</feature>
+      </classifiers>
+    </functional>
 	</classifiers>
 
 	<rules>
@@ -463,11 +475,25 @@
     </C-CMD>
 
 
+    <CLAUSE start="true">
+       <NP />
+       <PP optional="true" />
+    </CLAUSE>
+
+    <CLAUSE start="true">
+       <PP />
+    </CLAUSE>
+
     <NP start="false" id="NP-detailed">
-      <wn-det>
+      <wn-det optional="true">
         <postdelim>
           <disallowall />
         </postdelim>
+        <test reverse="true">
+          <jclass>org.sd.atn.TokenTest</jclass>
+          <classifier cat="wn-adv" />
+          <classifier cat="wn-adj" />
+        </test>
       </wn-det>
       <wn-adv optional="true" repeats="true">
         <postdelim>
@@ -478,23 +504,36 @@
         <postdelim>
           <disallowall />
         </postdelim>
+        <test reverse="true">
+          <jclass>org.sd.atn.TokenTest</jclass>
+          <classifier cat="wn-det" />
+          <classifier cat="wn-adv" />
+        </test>
       </wn-adj>
       <wn-noun repeats="true">
         <predelim>
           <disallowall />
         </predelim>
+        <test reverse="true">
+          <jclass>org.sd.atn.TokenTest</jclass>
+          <classifier cat="functional" />
+        </test>
       </wn-noun>
 
       <!-- recursively accept conjoined noun phrases -->
       <CNP optional="true" />
     </NP>
 
-    <NP start="false" id="NP-simple">
-      <wn-noun />
+    <!-- NP start="false" id="NP-simple">
+      <wn-noun>
+        <test reverse="true">
+          <jclass>org.sd.atn.TokenTest</jclass>
+          <classifier cat="functional" />
+        </test>
+      </wn-noun>
 
-      <!-- recursively accept conjoined noun phrases -->
       <CNP optional="true" />
-    </NP>
+    </NP -->
 
     <NP start="false" id="NP-entity">
       <wn-properNoun />
@@ -504,7 +543,7 @@
     </NP>
 
 
-    <NP start="false" id="NP-plural">
+    <!-- NP start="false" id="NP-plural">
       <wn-adv optional="true" repeats="true">
         <postdelim>
           <disallowall />
@@ -527,11 +566,14 @@
             <regex type="find">^.+s$</regex>
           </regexes>
         </test>
+        <test reverse="true">
+          <jclass>org.sd.atn.TokenTest</jclass>
+          <classifier cat="functional" />
+        </test>
       </wn-noun>
 
-      <!-- recursively accept conjoined noun phrases -->
       <CNP optional="true" />
-    </NP>
+    </NP -->
 
     <CNP>
       <wn-conj />
@@ -569,11 +611,16 @@
     </VPx>
 
     <VP1>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="1,2" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
     </VP1>
 
     <VPx>
@@ -581,13 +628,18 @@
     </VPx>
 
     <VP2>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
-        <test frames="8,9,10,11" wn-dict="wn-dict">
+        <test frames="6,8,9,10,11" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <NP />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
     </VP2>
 
     <VPx>
@@ -595,13 +647,20 @@
     </VPx>
 
     <VP3>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="28,29,32,33,35" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <pre-verb3 optional="true" />
+      <wn-adv optional="true" />
       <wn-verb />
+      <wn-adv optional="true" />
     </VP3>
 
     <VPx>
@@ -609,12 +668,17 @@
     </VPx>
 
     <VP4>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="6,7" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
-      <adj-noun />
+      <wn-adv optional="true" />
+      <wn-adj repeats="true" />
     </VP4>
 
     <VPx>
@@ -622,11 +686,16 @@
     </VPx>
 
     <VP5>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="12,13,22,27" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <PP />
     </VP5>
 
@@ -635,11 +704,16 @@
     </VPx>
 
     <VP6>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="6,7" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <that />
       <S />
     </VP6>
@@ -649,15 +723,20 @@
     </VPx>
 
     <VP7>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
-        <test frames="14" wn-dict="wn-dict">
+        <test frames="5,14" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <NP />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
       <NP />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
     </VP7>
 
     <VPx>
@@ -665,15 +744,18 @@
     </VPx>
 
     <VP8>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="5" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
       <NP />
-      <!-- PP optional="true" / -->
-      <adj-noun />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
+      <wn-adj repeats="true" />
     </VP8>
 
     <VPx>
@@ -681,12 +763,18 @@
     </VPx>
 
     <VP9>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="15,16,17,18,19,20,21,31" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <NP />
+      <wn-adv optional="true" />
       <PP />
     </VP9>
 
@@ -695,15 +783,23 @@
     </VPx>
 
     <VP10a>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="24,25" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <NP />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
+      <wn-adv optional="true" />
       <pre-verb10 optional="true" />
+      <wn-adv optional="true" />
       <wn-verb />
+      <wn-adv optional="true" />
     </VP10a>
 
     <VPx>
@@ -711,11 +807,16 @@
     </VPx>
 
     <VP10b>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="25" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <S />
     </VP10b>
 
@@ -724,6 +825,8 @@
     </VPx>
 
     <VP10c>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
       <wn-verb verbose="false">
         <test frames="24" wn-dict="wn-dict" verbose="false">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
@@ -737,17 +840,25 @@
     </VPx>
 
     <VP11>
+      <wn-adv optional="true" />
+      <pre-verb10 optional="true" />
+      <wn-modal optional="true" unless="pre-verb10" />
+      <pfct-have optional="true" />
       <wn-verb>
         <test frames="30" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <NP />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
+      <wn-adv optional="true" />
       <pre-verb11 optional="true" />
+      <wn-adv optional="true" />
       <wn-verb />
+      <wn-adv optional="true" />
       <NP />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
     </VP11>
 
     <VPx>
@@ -756,12 +867,13 @@
 
     <VP12>
       <NP />
-      <!-- PP optional="true" / -->
+      <PP optional="true" />
       <wn-verb>
         <test frames="23" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
     </VP12>
 
     <VPx>
@@ -775,6 +887,7 @@
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
     </VP13>
 
     <VPx>
@@ -783,11 +896,13 @@
 
     <VP14>
       <tobe />
+      <wn-adv optional="true" />
       <wn-verb>
         <test frames="3" wn-dict="wn-dict">
           <jclass>org.sd.atnexec.VerbFrameCheck</jclass>
         </test>
       </wn-verb>
+      <wn-adv optional="true" />
       <PP />
     </VP14>
 

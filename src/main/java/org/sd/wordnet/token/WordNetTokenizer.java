@@ -31,6 +31,7 @@ import org.sd.token.TokenFeatureAdder;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.lex.LexLoader;
 import org.sd.wordnet.util.NormalizeUtil;
+import org.sd.wordnet.util.TransformUtil;
 import org.sd.xml.DataProperties;
 import org.sd.xml.DomElement;
 
@@ -383,7 +384,7 @@ public class WordNetTokenizer extends StandardTokenizer {
     final SimpleWordLookupStrategy lookupStrategy = new SimpleWordLookupStrategy(dict);
 
     for (String arg : args) {
-      final WordNetTokenizer tokenizer = new WordNetTokenizer(dict, lookupStrategy, arg);
+      final WordNetTokenizer tokenizer = new WordNetTokenizer(dict, lookupStrategy, TransformUtil.applyTransformations(arg));
       System.out.println("\nComplete Tokenization of '" + arg + "':\n");
       org.sd.token.TokenUtil.doMain(tokenizer, StandardTokenizerFactory.completeTokenization(tokenizer));
     }

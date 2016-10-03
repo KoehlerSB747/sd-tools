@@ -34,6 +34,7 @@ import org.sd.wordnet.loader.WordNetLoader;
 import org.sd.wordnet.token.SimpleWordLookupStrategy;
 import org.sd.wordnet.token.WordNetTokenizer;
 import org.sd.wordnet.lex.LexDictionary;
+import org.sd.wordnet.util.TransformUtil;
 import org.sd.xml.DataProperties;
 
 /**
@@ -116,10 +117,27 @@ public class SynsetLineProcessor {
     synsetLineHandler.endLine(line, fromParse);
   }
 
+  protected boolean shouldProcessSynsets(Collection<String> synsetNames) {
+    boolean result = false;
+
+    if (synsetNames != null && synsetNames.size() > 0) {
+      result = true;
+      for (String synsetName : synsetNames) {
+        // to refrain from getting "personal"!
+        if (synsetName.startsWith("noun.person")) {
+          result = false;
+          break;
+        }
+      }
+    }
+
+    return result;
+  }
+
   private final boolean parseLine(String line) {
     boolean result = false;
 
-    final GenericParseResultsAsync parseResultsAsync = parser.getGenericParser().parseAsync(threadPool, line, null);
+    final GenericParseResultsAsync parseResultsAsync = parser.parseInputAsync(threadPool, line);
     final GenericParseResults parseResults = parseResultsAsync.getParseResults(dieWait, timeLimit);
 //    final GenericParseResults parseResults = parser.parseInput(line, null);
     if (parseResults != null && parseResults.hasSequence() && parseResults.getSequence().hasParses()) {
@@ -127,8 +145,10 @@ public class SynsetLineProcessor {
         final List<WordNetParser.TokenData> tokenDatas = WordNetParser.getTokenData(atnParse);
         for (WordNetParser.TokenData tokenData : tokenDatas) {
           if (tokenData.selectedSynsetNames != null && tokenData.selectedSynsetNames.size() > 0) {
-            synsetLineHandler.processSynsets(lexDictionary, tokenData.selectedSynsetNames, atnParse, tokenData.tokenNode);
-            result = true;
+            if (shouldProcessSynsets(tokenData.selectedSynsetNames)) {
+              synsetLineHandler.processSynsets(lexDictionary, tokenData.selectedSynsetNames, atnParse, tokenData.tokenNode);
+              result = true;
+            }
           }
         }
       }
@@ -139,12 +159,14 @@ public class SynsetLineProcessor {
 
   private final boolean tokenizeLine(String line) {
     boolean result = false;
-    final WordNetTokenizer tokenizer = new WordNetTokenizer(lexDictionary, strategy, line);
+    final WordNetTokenizer tokenizer = new WordNetTokenizer(lexDictionary, strategy, TransformUtil.applyTransformations(line));
     for (Token token = tokenizer.getToken(0); token != null; token = token.getNextToken()) {
       final List<String> tokenSynsetNames = WordNetParser.getTokenSynsetNames(token);
       if (tokenSynsetNames != null) {
-        synsetLineHandler.processSynsets(lexDictionary, tokenSynsetNames, null, null);
-        result = true;
+        if (shouldProcessSynsets(tokenSynsetNames)) {
+          synsetLineHandler.processSynsets(lexDictionary, tokenSynsetNames, null, null);
+          result = true;
+        }
       }
     }
     return result;

@@ -429,7 +429,8 @@ public class AtnState {
       final int nextStepNum = getNextStepNum();
       if (nextStepNum >= 0) {
 
-        if (incToken && !stepConsumesToken(nextStepNum)) incToken = false;
+        if (incToken && !getRuleStep().consumeToken()) incToken = false;
+        //if (incToken && !stepConsumesToken(nextStepNum)) incToken = false;
 
         if (!incToken || !reachedTokenLimit()) {
           final Token nextToken = incToken ? getNextToken(stopList) : this.inputToken;
@@ -1538,7 +1539,7 @@ public class AtnState {
       }
       else {
         nextstate = curstate.getNextStepState(nextStateNode, inc, stopList);
-        if (nextstate != null) {
+        for (; nextstate != null; nextstate = nextstate.getSkipOptionalState()) {
           addState(grammar, states, skipStates, nextstate, stopList);
         }
       }

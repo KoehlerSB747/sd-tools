@@ -37,6 +37,7 @@ import org.sd.util.ThreadPoolUtil;
 import org.sd.wordnet.lex.LexDictionary;
 import org.sd.wordnet.token.SimpleWordLookupStrategy;
 import org.sd.wordnet.token.WordNetTokenizer;
+import org.sd.wordnet.util.TransformUtil;
 import org.sd.xml.DataProperties;
 
 /**
@@ -195,7 +196,7 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
             prevResults.close();
           }
 
-          final GenericParseResultsAsync parseResultsAsync = parser.getGenericParser().parseAsync(threadPool, input, null);
+          final GenericParseResultsAsync parseResultsAsync = parser.parseInputAsync(threadPool, input);
           result = new ParseAnalysisObject(input, parseResultsAsync);
 
           prevResults = parseResultsAsync;
@@ -416,7 +417,7 @@ public class ParserEvaluatorEnvironment extends BaseEvaluatorEnvironment {
 
       if (args != null) {
         if (args.length == 1) {
-          final String input = args[0].toString();
+          final String input = TransformUtil.applyTransformations(args[0].toString());
 
           if (parser != null) {
             final ResourceManager resourceManager =

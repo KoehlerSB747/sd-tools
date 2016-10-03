@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.sd.atn.AtnParse;
 import org.sd.atn.AtnState;
@@ -33,6 +34,7 @@ import org.sd.atn.AtnParseBasedTokenizer;
 import org.sd.atn.AtnParseRunner;
 import org.sd.atn.GenericParser;
 import org.sd.atn.GenericParseResults;
+import org.sd.atn.GenericParseResultsAsync;
 import org.sd.atn.ParseInterpretationUtil;
 import org.sd.token.CategorizedToken;
 import org.sd.token.Feature;
@@ -40,6 +42,7 @@ import org.sd.token.Token;
 import org.sd.util.tree.Tree;
 import org.sd.wordnet.token.WordNetTokenizer;
 import org.sd.wordnet.lex.LexDictionary;
+import org.sd.wordnet.util.TransformUtil;
 import org.sd.xml.DataProperties;
 
 /**
@@ -134,7 +137,18 @@ public class WordNetParser {
    * @return the parse results
    */
   public GenericParseResults parseInput(String input, AtomicBoolean die) {
-    final GenericParseResults results = genericParser.parse(input, null, die);
+    final String text = TransformUtil.applyTransformations(input);
+    final GenericParseResults results = genericParser.parse(text, null, die);
+    return results;
+  }
+
+  public GenericParseResultsAsync parseInputAsync(String input) {
+    return parseInputAsync(null, input);
+  }
+
+  public GenericParseResultsAsync parseInputAsync(ExecutorService threadPool, String input) {
+    final String text = TransformUtil.applyTransformations(input);
+    final GenericParseResultsAsync results = genericParser.parseAsync(threadPool, text, null);
     return results;
   }
 
