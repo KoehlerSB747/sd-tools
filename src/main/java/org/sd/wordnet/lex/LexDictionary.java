@@ -77,10 +77,10 @@ public class LexDictionary {
     init();
   }
 
-  Map<String, List<Synset>> getSynsets() { return synsets; }
-  Map<String, List<AdjectiveCluster>> getAdjClusters() { return adjClusters; }
-  Map<String, Set<String>> getLexNames() { return lexNames; }
-  Map<String, List<ReversePointer>> getRevPtrs() { return revPtrs; }
+  public Map<String, List<Synset>> getSynsets() { return synsets; }
+  public Map<String, List<AdjectiveCluster>> getAdjClusters() { return adjClusters; }
+  public Map<String, Set<String>> getLexNames() { return lexNames; }
+  public Map<String, List<ReversePointer>> getRevPtrs() { return revPtrs; }
 
   private final void init() throws IOException {
     final DictionaryEntryHandler handler = new DictionaryEntryHandler(synsets, adjClusters, lexNames, revPtrs);

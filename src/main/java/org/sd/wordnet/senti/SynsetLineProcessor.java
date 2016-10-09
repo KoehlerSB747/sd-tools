@@ -42,7 +42,7 @@ import org.sd.xml.DataProperties;
  * <p>
  * @author Spencer Koehler
  */
-public class SynsetLineProcessor {
+public class SynsetLineProcessor extends SynsetProcessor {
   
   public interface SynsetLineHandler {
     public void startLine(String line);
@@ -64,10 +64,8 @@ public class SynsetLineProcessor {
   private ExecutorService threadPool;
 
   public SynsetLineProcessor(SynsetLineHandler synsetLineHandler, DataProperties dataProperties) throws IOException {
+    super(dataProperties);
     this.synsetLineHandler = synsetLineHandler;
-
-    this.lexDictionary = WordNetLoader.loadLexDictionary(dataProperties);
-    this.strategy = new SimpleWordLookupStrategy(lexDictionary);
 
     this.timeLimit = dataProperties.getInt("timeLimit", DEFAULT_TIME_LIMIT);
     this.dieWait = dataProperties.getInt("dieWait", DEFAULT_DIE_WAIT);
@@ -76,14 +74,12 @@ public class SynsetLineProcessor {
     this.threadPool = ThreadPoolUtil.createThreadPool("SynsetLineProcessorParser-", 1);
   }
 
+  @Override
   public void close() {
     ThreadPoolUtil.shutdownGracefully(threadPool, 1L);
   }
 
-  public LexDictionary getLexDictionary() {
-    return lexDictionary;
-  }
-
+  @Override
   public void process(String[] args) throws IOException {
     if (args != null && args.length > 0) {
       for (String arg : args) {

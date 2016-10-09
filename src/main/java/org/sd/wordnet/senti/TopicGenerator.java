@@ -31,7 +31,7 @@ import org.sd.wordnet.lex.LexDictionary;
 import org.sd.xml.DataProperties;
 
 /**
- * Utility to generate a histogram from select corpus words.
+ * Utility to generate a topics from sentence lines and their pre-generated histograms.
  * <p>
  * @author Spencer Koehler
  */
