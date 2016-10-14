@@ -22,6 +22,7 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.sd.wordnet.util.NormalizeUtil;
 
 /**
  * JUnit Tests for the LexDictionary class.
@@ -119,6 +120,14 @@ public class TestLexDictionary extends TestCase {
     assertEquals(2, samples.size());
     assertTrue(samples.contains("verb.emotion:feel"));
     assertTrue(samples.contains("verb.cognition:feel1"));
+
+    // make sure we can lookup the right synsets using the names
+    for (String sample : samples) {
+      final List<Word> words = lexDictionary.findWords(sample, null);
+      assertNotNull(words);
+      assertEquals(1, words.size());
+      assertEquals(sample, words.get(0).getQualifiedWordName());
+    }
   }
 
 

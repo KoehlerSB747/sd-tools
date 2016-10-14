@@ -24,7 +24,7 @@ package org.sd.wordnet.util;
 public class NormalizeUtil {
   
   public static final String normalizeForLookup(String input) {
-    return normalizeForLookup(input, (input == null) ? 0 : input.length());
+    return trimDigits(normalizeForLookup(input, (input == null) ? 0 : input.length()));
   }
 
   public static final String normalizeForLookup(String input, int len) {
@@ -90,7 +90,7 @@ public class NormalizeUtil {
       int lastCharPos = len;
       for (; lastCharPos > 0; --lastCharPos) {
         final char c = string.charAt(lastCharPos - 1);
-        if (c > '9' || c < '0') {
+        if ((c > '9' || c < '0') && c != '.') {
           break;
         }
       }

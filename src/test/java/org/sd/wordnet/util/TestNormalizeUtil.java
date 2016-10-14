@@ -55,6 +55,8 @@ public class TestNormalizeUtil extends TestCase {
     doTrimDigitsTest("okay", "okay");
     doTrimDigitsTest("fall8", "fall");
     doTrimDigitsTest("light12", "light");
+    doTrimDigitsTest("3.14159", "3.14159");
+    doTrimDigitsTest(".14159", ".14159");
   }
 
   private final void doNormalizeTest(String input, String  expected) {

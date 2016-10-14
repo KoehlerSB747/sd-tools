@@ -206,7 +206,7 @@ public class LexDictionary {
   public List<Synset> lookupDerivedSynsets(String normInput) {
     List<Synset> result = dsynsets == null ? null : dsynsets.get(normInput);
 
-    if (result == null) {
+    if (result == null && morphTool != null) {
       final Collection<MorphTool.Derivation> derivations = morphTool.deriveBaseForms(normInput);
       if (derivations != null) {
         for (MorphTool.Derivation derivation : derivations) {
@@ -542,7 +542,7 @@ public class LexDictionary {
       wordName = wordName.substring(cPos + 1);
     }
 
-    final String norm = NormalizeUtil.trimDigits(NormalizeUtil.normalizeForLookup(wordName));
+    final String norm = NormalizeUtil.normalizeForLookup(wordName);
     final List<Synset> synsets = lookupSynsets(norm);
 
     if (synsets != null) {
