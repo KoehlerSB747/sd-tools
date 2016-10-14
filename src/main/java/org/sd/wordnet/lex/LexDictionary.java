@@ -52,14 +52,13 @@ public class LexDictionary {
   private Map<String, List<Synset>> dsynsets;
   private Map<String, Set<String>> dlexNames;
 
-  public LexDictionary(LexLoader lexLoader) throws IOException {
+  public LexDictionary(LexLoader lexLoader) {
     this(lexLoader, true, true, true, true);
   }
 
-  public LexDictionary(LexLoader lexLoader, boolean loadSynsets, boolean loadAdjClusters, boolean loadLexNames, boolean loadReversePointers) throws IOException {
+  public LexDictionary(LexLoader lexLoader, boolean loadSynsets, boolean loadAdjClusters, boolean loadLexNames, boolean loadReversePointers) {
     this.lexLoader = lexLoader;
-    this.morphTool = new MorphTool(lexLoader.getDbFileDir().getParentFile());
-    this.morphTool.setArchaic(true);  //todo: parameterize this
+    this.morphTool = buildMorphTool(lexLoader);
     this.loadSynsets = loadSynsets;
     this.loadAdjClusters = loadAdjClusters;
     this.loadLexNames = loadLexNames;
@@ -82,10 +81,27 @@ public class LexDictionary {
   public Map<String, Set<String>> getLexNames() { return lexNames; }
   public Map<String, List<ReversePointer>> getRevPtrs() { return revPtrs; }
 
-  private final void init() throws IOException {
+  private final void init() {
     final DictionaryEntryHandler handler = new DictionaryEntryHandler(synsets, adjClusters, lexNames, revPtrs);
-    lexLoader.load(handler, null);
+    lexLoader.load(handler);
     this.maxSpaceCount = handler.getMaxSpaceCount();
+  }
+
+  private final MorphTool buildMorphTool(LexLoader lexLoader) {
+    MorphTool result = null;
+
+    if (lexLoader instanceof FileLexLoader) {
+      final FileLexLoader fileLexLoader = (FileLexLoader)lexLoader;
+      try {
+        result = new MorphTool(fileLexLoader.getDbFileDir().getParentFile());
+        result.setArchaic(true);  //todo: parameterize this
+      }
+      catch (IOException ioe) {
+        throw new IllegalStateException(ioe);
+      }
+    }
+
+    return result;
   }
 
   public long getSynsetCount() {
@@ -94,6 +110,14 @@ public class LexDictionary {
 
   public int getMaxSpaceCount() {
     return maxSpaceCount;
+  }
+
+  public void setMorphTool(MorphTool morphTool) {
+    this.morphTool = morphTool;
+  }
+
+  public MorphTool getMorphTool() {
+    return morphTool;
   }
 
   public Set<String> lookupLexNames(String normInput) {
@@ -766,7 +790,7 @@ public class LexDictionary {
     // arg0: dbFileDir
     
     final long startTime = System.currentTimeMillis();
-    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])));
+    final LexDictionary dict = new LexDictionary(new FileLexLoader(new File(args[0])));
     final long loadTime = System.currentTimeMillis() - startTime;
     //System.out.println("Loaded " + dict.getSynsetCount() + " synsets in " + loadTime + "ms");
 

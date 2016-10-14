@@ -52,9 +52,10 @@ public class VerbFrameExampleFinder {
 
     for (List<Synset> synsetsList : synsets.values()) {
       for (Synset synset : synsetsList) {
+        final boolean synsetHasFrames = synset.hasFrames();
         for (Word word : synset.getWords()) {
-          if (word.hasFrames()) {
-            final List<Integer> frames = word.getFrames();
+          if (word.hasFrames() || synset.hasFrames()) {
+            final Set<Integer> frames = word.getAllFrames();
             for (Integer frame : frames) {
               Set<String> frameWords = samples.get(frame);
               if (frameWords == null) {

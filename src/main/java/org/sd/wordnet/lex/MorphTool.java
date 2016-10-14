@@ -347,7 +347,7 @@ public class MorphTool {
   }
 
   private final void loadExceptions() throws IOException {
-    final File[] exceptionFiles = this.dictDir.listFiles(new FilenameFilter() {
+    final File[] exceptionFiles = dictDir == null ? null : this.dictDir.listFiles(new FilenameFilter() {
         public boolean accept(File dir, String name) {
           return name.endsWith(".exc");
         }

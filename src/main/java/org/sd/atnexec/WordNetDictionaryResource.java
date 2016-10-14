@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import org.sd.atn.ResourceManager;
 import org.sd.wordnet.lex.LexDictionary;
-import org.sd.wordnet.lex.LexLoader;
+import org.sd.wordnet.lex.FileLexLoader;
 import org.sd.wordnet.senti.SentimentLoader;
 import org.sd.xml.DomElement;
 
@@ -41,9 +41,9 @@ public class WordNetDictionaryResource extends LexDictionary {
     }
   }
 
-  private static final LexLoader buildLexLoader(DomElement resourceElt, ResourceManager resourceManager) {
+  private static final FileLexLoader buildLexLoader(DomElement resourceElt, ResourceManager resourceManager) {
     final File dbFileDir = resourceManager.getOptions().getFile("dbFileDir", "workingDir");
-    final LexLoader lexLoader = new LexLoader(dbFileDir);
+    final FileLexLoader lexLoader = new FileLexLoader(dbFileDir);
     return lexLoader;
   }
 

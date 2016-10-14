@@ -17,6 +17,7 @@ package org.sd.wordnet.lex;
 
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -160,6 +161,7 @@ public class Word {
     return frames != null && frames.size() > 0;
   }
 
+  /** Get frames specific to just this word. */
   public List<Integer> getFrames() {
     return frames;
   }
@@ -167,6 +169,23 @@ public class Word {
   public void addFrame(int frame) {
     if (frames == null) frames = new ArrayList<Integer>();
     frames.add(frame);
+  }
+
+  /** Get frames specific to this word and its synset. */
+  public Set<Integer> getAllFrames() {
+    Set<Integer> result = null;
+
+    if (this.hasFrames()) {
+      if (result == null) result = new HashSet<Integer>();
+      result.addAll(this.frames);
+    }
+
+    if (this.hasSynset() && synset.hasFrames()) {
+      if (result == null) result = new HashSet<Integer>();
+      result.addAll(synset.getFrames());
+    }
+
+    return result;
   }
 
   public String toString() {

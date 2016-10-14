@@ -29,7 +29,7 @@ import org.sd.token.StandardTokenizerFactory;
 import org.sd.token.StandardTokenizerOptions;
 import org.sd.token.TokenFeatureAdder;
 import org.sd.wordnet.lex.LexDictionary;
-import org.sd.wordnet.lex.LexLoader;
+import org.sd.wordnet.lex.FileLexLoader;
 import org.sd.wordnet.util.NormalizeUtil;
 import org.sd.wordnet.util.TransformUtil;
 import org.sd.xml.DataProperties;
@@ -380,7 +380,7 @@ public class WordNetTokenizer extends StandardTokenizer {
     args = dataProperties.getRemainingArgs();
 
     final File dbFileDir = new File(dataProperties.getString("dbFileDir"));
-    final LexDictionary dict = new LexDictionary(new LexLoader(dbFileDir));
+    final LexDictionary dict = new LexDictionary(new FileLexLoader(dbFileDir));
     final SimpleWordLookupStrategy lookupStrategy = new SimpleWordLookupStrategy(dict);
 
     for (String arg : args) {

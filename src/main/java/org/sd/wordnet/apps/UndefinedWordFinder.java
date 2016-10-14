@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Set;
 import org.sd.io.FileUtil;
 import org.sd.wordnet.lex.LexDictionary;
-import org.sd.wordnet.lex.LexLoader;
+import org.sd.wordnet.lex.FileLexLoader;
 import org.sd.wordnet.token.SimpleWordLookupStrategy;
 import org.sd.wordnet.token.TokenCollectionHandler;
 import org.sd.wordnet.token.WordLookupStrategy;
@@ -45,7 +45,7 @@ public class UndefinedWordFinder {
   private WordLookupStrategy lookupStrategy;
 
   public UndefinedWordFinder(File dbFileDir) throws IOException {
-    this.dict = new LexDictionary(new LexLoader(dbFileDir));
+    this.dict = new LexDictionary(new FileLexLoader(dbFileDir));
     this.tokenGenerator = new WordNetTokenGenerator(dict);
     this.lookupStrategy = new SimpleWordLookupStrategy(dict);
   }

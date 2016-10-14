@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import org.sd.util.AnagramGenerator;
 import org.sd.wordnet.lex.LexDictionary;
-import org.sd.wordnet.lex.LexLoader;
+import org.sd.wordnet.lex.FileLexLoader;
 import org.sd.wordnet.lex.Synset;
 import org.sd.wordnet.util.NormalizeUtil;
 
@@ -38,7 +38,7 @@ public class WordUnscrambler implements AnagramGenerator.WordValidator {
   private Map<String, List<Synset>> synsets;
 
   public WordUnscrambler(File dbFileDir) throws IOException {
-    this.lexDictionary = new LexDictionary(new LexLoader(dbFileDir), false, false, true, false);
+    this.lexDictionary = new LexDictionary(new FileLexLoader(dbFileDir), false, false, true, false);
     this.synsets = null;
   }
 

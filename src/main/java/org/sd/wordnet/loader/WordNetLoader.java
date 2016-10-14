@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import org.sd.atnexec.ConfigUtil;
 import org.sd.wordnet.lex.LexDictionary;
-import org.sd.wordnet.lex.LexLoader;
+import org.sd.wordnet.lex.FileLexLoader;
 import org.sd.wordnet.senti.SentimentLoader;
 import org.sd.xml.DataProperties;
 
@@ -78,12 +78,7 @@ public class WordNetLoader {
 
     final File dbFileDir = dataProperties.getFile("dbFileDir", "workingDir");
     if (dbFileDir != null) {
-      try {
-        result = new LexDictionary(new LexLoader(dbFileDir));
-      }
-      catch (IOException ioe) {
-        throw new IllegalStateException(ioe);
-      }
+      result = new LexDictionary(new FileLexLoader(dbFileDir));
 
       final File sentiWordNet = dataProperties.getFile("sentiWordNet", "workingDir");
       if (sentiWordNet != null) {

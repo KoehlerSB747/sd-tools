@@ -16,16 +16,12 @@
 package org.sd.wordnet.lex;
 
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-
 /**
  * Utility for loading all lex files.
  * <p>
  * @author Spencer Koehler
  */
-public class LexLoader {
+public interface LexLoader {
   
   public interface EntryHandler {
     public void handleSynset(Synset synset);
@@ -33,21 +29,7 @@ public class LexLoader {
   }
 
 
-  private File dbFileDir;
-  private long synsetCount;
-
-  public LexLoader(File dbFileDir) {
-    this.dbFileDir = dbFileDir;
-    this.synsetCount = 0L;
-  }
-
-  public File getDbFileDir() {
-    return dbFileDir;
-  }
-
-  public long getSynsetCount() {
-    return synsetCount;
-  }
+  public long getSynsetCount();
 
   /**
    * Load all synsets and adjective clusters within all files in the dbfiles directory.
@@ -56,27 +38,5 @@ public class LexLoader {
    * @param filter  FileFilter to select files to load. If null, all files of
    *                form X.Y in dbFileDir will be loaded.
    */
-  public void load(EntryHandler entryHandler, FileFilter filter) throws IOException {
-    for (File file : (filter == null ? dbFileDir.listFiles() : dbFileDir.listFiles(filter))) {
-      final String fileName = file.getName();
-      if (filter != null || (file.isFile() && fileName.indexOf('.') > 0)) {
-        if (fileName.startsWith("adj.")) {
-          // load AdjectiveCluster
-          for (AdjectiveClusterFileIterator iter = new AdjectiveClusterFileIterator(file); iter.hasNext(); ) {
-            final AdjectiveCluster adjCluster = iter.next();
-            entryHandler.handleAdjectiveCluster(adjCluster);
-            synsetCount += adjCluster.getSynsetCount();
-          }
-        }
-        else {
-          // load Synset
-          for (SynsetFileIterator iter = new SynsetFileIterator(file); iter.hasNext(); ) {
-            final Synset synset = iter.next();
-            ++synsetCount;
-            entryHandler.handleSynset(synset);
-          }
-        }
-      }
-    }
-  }
+  public void load(EntryHandler entryHandler);
 }

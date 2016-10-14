@@ -39,7 +39,7 @@ public class ReverseWordGraph {
     final int maxDist = (args.length > 2 ? Integer.parseInt(args[2]) : -1);
     final String symbolConstraint = (args.length > 3 ? args[3] : null);
 
-    final LexDictionary dict = new LexDictionary(new LexLoader(dbFileDir));
+    final LexDictionary dict = new LexDictionary(new FileLexLoader(dbFileDir));
     final List<PointerInstance> allPointers = dict.getReversePointers(null, wordName, null, maxDist, symbolConstraint);
 
     final WordGraph wordGraph = new WordGraph(null, allPointers);

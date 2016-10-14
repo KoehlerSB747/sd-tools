@@ -253,7 +253,7 @@ public class WordGraph implements DotWriter {
     // arg0: dbFileDir
     // arg1: normalizedWord
 
-    final LexDictionary dict = new LexDictionary(new LexLoader(new File(args[0])));
+    final LexDictionary dict = new LexDictionary(new FileLexLoader(new File(args[0])));
     final List<Synset> synsets = dict.lookupSynsets(args[1]);
     final List<PointerInstance> allPointers = dict.getForwardPointers(null, synsets);
 

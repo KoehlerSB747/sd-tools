@@ -310,7 +310,7 @@ public class Synset {
         if (word.hasFrames()) {
           frmNum = 0;
           result.append("\t\t\tFrames: ");
-          for (Integer frame : frames) {
+          for (Integer frame : word.getFrames()) {
             if (frmNum > 0) result.append(", ");
             if (frameFmt == null) {
               result.append(frame);
