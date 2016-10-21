@@ -48,7 +48,9 @@ public class SimpleWordLookupStrategy implements WordLookupStrategy {
    * @return a WordNetToken, with or without synsets and/or tags.
    */
   public WordNetToken lookup(String input, String norm) {
-    final WordNetToken result = new WordNetToken().setInput(input).setNorm(norm).setSynsets(dict.lookupSynsets(norm));
+    final WordNetToken result = new WordNetToken();
+
+    result.setInput(input).setNorm(norm).setSynsets(dict.lookupSynsets(norm));
 
     if (!result.hasSynsets()) {
       addTags(result, dict, input, norm);

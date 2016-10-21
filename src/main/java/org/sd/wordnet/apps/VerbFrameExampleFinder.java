@@ -54,7 +54,8 @@ public class VerbFrameExampleFinder {
       for (Synset synset : synsetsList) {
         final boolean synsetHasFrames = synset.hasFrames();
         for (Word word : synset.getWords()) {
-          if (word.hasFrames() || synset.hasFrames()) {
+          final String wordName = word.getQualifiedWordName();
+          if (wordName.indexOf(' ') < 0 && (word.hasFrames() || synset.hasFrames())) {
             final Set<Integer> frames = word.getAllFrames();
             for (Integer frame : frames) {
               Set<String> frameWords = samples.get(frame);

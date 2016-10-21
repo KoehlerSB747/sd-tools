@@ -108,6 +108,97 @@ public class ConllSentence {
     }
   }
 
+  public ConllToken getRoot() {
+    return getFirstToken(ConllField.HEAD, "0");
+  }
+
+  public List<ConllToken> getChildren(ConllToken parent) {
+    List<ConllToken> result = null;
+
+    if (parent != null) {
+      final String parentId = parent.getData(ConllField.ID);
+      result = getAllTokens(ConllField.HEAD, parentId);
+    }
+
+    return result;
+  }
+
+  public List<ConllToken> getChildren(ConllToken parent, ConllField field, String value) {
+    List<ConllToken> result = null;
+
+    if (parent != null) {
+      final String parentId = parent.getData(ConllField.ID);
+      result = getAllTokens(new ConllField[]{ConllField.HEAD, field}, new String[]{parentId, value});
+    }
+
+    return result;
+  }
+
+  public List<ConllToken> getChildren(ConllToken parent, ConllField[] fields, String[] values) {
+    List<ConllToken> result = null;
+
+    if (parent != null) {
+      final String parentId = parent.getData(ConllField.ID);
+      result = getAllTokens(fieldsArray(ConllField.HEAD, fields), valuesArray(parentId, values));
+    }
+
+    return result;
+  }
+
+  public ConllToken getFirstChild(ConllToken parent, ConllField field, String value) {
+    ConllToken result = null;
+
+    if (parent != null) {
+      final String parentId = parent.getData(ConllField.ID);
+      result = getFirstToken(new ConllField[]{ConllField.HEAD, field}, new String[]{parentId, value});
+    }
+
+    return result;
+  }
+
+  public ConllToken getFirstChild(ConllToken parent, ConllField[] fields, String[] values) {
+    ConllToken result = null;
+
+    if (parent != null) {
+      final String parentId = parent.getData(ConllField.ID);
+      result = getFirstToken(fieldsArray(ConllField.HEAD, fields), valuesArray(parentId, values));
+    }
+
+    return result;
+  }
+
+  public List<ConllToken> getDeepChildren(ConllToken parent, ConllField[] fields, String[] values) {
+    List<ConllToken> result = null;
+
+    final List<ConllToken> candidates = getAllTokens(fields, values);
+    if (candidates != null) {
+      for (ConllToken candidate : candidates) {
+        if (isParent(parent, candidate)) {
+          if (result == null) result = new ArrayList<ConllToken>();
+          result.add(candidate);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  public ConllToken getFirstDeepChild(ConllToken parent, ConllField[] fields, String[] values) {
+    ConllToken result = null;
+
+    final List<ConllToken> candidates = getAllTokens(fields, values);
+    if (candidates != null) {
+      for (ConllToken candidate : candidates) {
+        if (isParent(parent, candidate)) {
+          result = candidate;
+          break;
+        }
+      }
+    }
+
+    return result;
+  }
+
   public ConllToken getFirstToken(ConllField field, String value) {
     ConllToken result = null;
 
@@ -121,11 +212,37 @@ public class ConllSentence {
     return result;
   }
 
+  public ConllToken getFirstToken(ConllField[] fields, String[] values) {
+    ConllToken result = null;
+
+    for (ConllToken token : tokens) {
+      if (token.matches(fields, values)) {
+        result = token;
+        break;
+      }
+    }
+
+    return result;
+  }
+
   public List<ConllToken> getAllTokens(ConllField field, String value) {
     List<ConllToken> result = null;
 
     for (ConllToken token : tokens) {
       if (token.matches(field, value)) {
+        if (result == null) result = new ArrayList<ConllToken>();
+        result.add(token);
+      }
+    }
+
+    return result;
+  }
+
+  public List<ConllToken> getAllTokens(ConllField[] fields, String[] values) {
+    List<ConllToken> result = null;
+
+    for (ConllToken token : tokens) {
+      if (token.matches(fields, values)) {
         if (result == null) result = new ArrayList<ConllToken>();
         result.add(token);
       }
@@ -182,5 +299,50 @@ public class ConllSentence {
     }
 
     return result.toString();
+  }
+
+  public boolean isParent(ConllToken parent, ConllToken child) {
+    boolean result = false;
+
+    if (parent != null) {
+      final String parentId = parent.getData(ConllField.ID);
+      while (child != null) {
+        final String head = child.getData(ConllField.HEAD);
+        if (parentId.equals(head)) {
+          result = true;
+          break;
+        }
+        child = getFirstToken(ConllField.ID, head);
+      }
+    }
+
+    return result;
+  }
+
+  public ConllToken getParent(ConllToken child) {
+    ConllToken result = null;
+
+    if (child != null) {
+      final String head = child.getData(ConllField.HEAD);
+      result = getFirstToken(ConllField.ID, head);
+    }
+
+    return result;
+  }
+
+  private final ConllField[] fieldsArray(ConllField field, ConllField[] fields) {
+    final ConllField[] result = new ConllField[fields.length + 1];
+    int idx = 0;
+    result[idx++] = field;
+    for (ConllField f : fields) result[idx++] = f;
+    return result;
+  }
+
+  private final String[] valuesArray(String value, String[] values) {
+    final String[] result = new String[values.length + 1];
+    int idx = 0;
+    result[idx++] = value;
+    for (String v : values) result[idx++] = v;
+    return result;
   }
 }

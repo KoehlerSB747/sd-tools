@@ -292,7 +292,8 @@ public class WordNetTokenizer extends StandardTokenizer {
     final String text = token.getText();
     final String norm = NormalizeUtil.normalizeForLookup(text);
     if (lookupStrategy == null) {
-      wnToken = new WordNetToken().setInput(text).setNorm(norm);
+      wnToken = new WordNetToken();
+      wnToken.setInput(text).setNorm(norm);
       wnToken.setToken(token);
     }
     else {

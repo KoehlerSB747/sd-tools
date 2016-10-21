@@ -21,7 +21,7 @@ package org.sd.nlp.conll;
  * <p>
  * @author Spencer Koehler
  */
-public class ConllToken {
+public class ConllToken implements Comparable<ConllToken> {
   
   private String[] fields;
   private int id;
@@ -88,6 +88,31 @@ public class ConllToken {
     }
 
     return result;
+  }
+
+  public boolean matches(ConllField[] fields, String[] values) {
+    boolean result = true;
+
+    for (int i = 0; i < fields.length; ++i) {
+      if (i < values.length) {
+        if (!this.matches(fields[i], values[i])) {
+          result = false;
+          break;
+        }
+      }
+      else {
+        if (!isEmpty(this.getData(fields[i]))) {
+          result = false;
+          break;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  public int compareTo(ConllToken other) {
+    return this.getId() - other.getId();
   }
 
   public String toString() {
