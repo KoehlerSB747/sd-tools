@@ -33,11 +33,13 @@ public class ConllSentence {
   private List<ConllToken> tokens;
   private Tree<ConllNodeData> _tree;
   private Map<Integer, ConllToken> _id2token;
+  private StringBuilder text;
     
   public ConllSentence() {
     this.tokens = new ArrayList<ConllToken>();
     this._tree = null;
     this._id2token = null;
+    this.text = new StringBuilder();
   }
 
   public int size() {
@@ -49,7 +51,18 @@ public class ConllSentence {
   }
 
   public void addToken(ConllToken token) {
-    this.tokens.add(token);
+    if (token != null) {
+      final String tokenText = token.getText();
+      if (tokenText != null && !"".equals(tokenText)) {
+        if (token.hasLetterOrDigit() && text.length() > 0) {
+          text.append(' ');
+        }
+        token.setStartPos(text.length());
+        text.append(tokenText);
+        token.setEndPos(text.length());
+      }
+      this.tokens.add(token);
+    }
   }
 
   public List<ConllToken> getTokens() {
@@ -280,14 +293,7 @@ public class ConllSentence {
   }
 
   public String getText() {
-    final StringBuilder result = new StringBuilder();
-
-    for (ConllToken token : tokens) {
-      if (result.length() > 0) result.append(' ');
-      result.append(token.getText());
-    }
-
-    return result.toString();
+    return text.toString();
   }
 
   public String toString() {

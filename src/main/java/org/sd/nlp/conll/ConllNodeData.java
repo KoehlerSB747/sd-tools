@@ -31,6 +31,29 @@ import java.util.Map;
  */
 public class ConllNodeData {
   
+  /**
+   * Get a matcher that matches a node with any one of the given values
+   * in the given field.
+   */
+  public static final ConllNodeDataMatcher getMatcher(final ConllField field, final String[] values) {
+    return new ConllNodeDataMatcher() {
+      public boolean matches(ConllNodeData nodeData) {
+        boolean result = false;
+
+        if (nodeData != null && nodeData.hasToken() && values != null) {
+          for (String value : values) {
+            if (nodeData.getToken().matches(field, value)) {
+              result = true;
+              break;
+            }
+          }
+        }
+
+        return result;
+      }
+    };
+  }
+
   private String nodeName;
   private ConllToken token;
   private Map<String, String> attributes;

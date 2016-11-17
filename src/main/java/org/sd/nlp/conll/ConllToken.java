@@ -25,10 +25,14 @@ public class ConllToken implements Comparable<ConllToken> {
   
   private String[] fields;
   private int id;
+  private int startPos;  // char position of start in sentence, inclusive
+  private int endPos;    // char position of end in sentence, exclusive
 
   public ConllToken(String tokenLine) {
     this.fields = tokenLine.split("\\t");
     this.id = 0;
+    this.startPos = -1;
+    this.endPos = -1;
   }
 
   public int getId() {
@@ -45,6 +49,22 @@ public class ConllToken implements Comparable<ConllToken> {
     return this.id;
   }
 
+  public boolean hasLetterOrDigit() {
+    boolean result = false;
+
+    final String text = getText();
+    final int len = text.length();
+    for (int idx = 0; idx < len; ++idx) {
+      final char c = text.charAt(idx);
+      if (Character.isLetterOrDigit(c)) {
+        result = true;
+        break;
+      }
+    }
+
+    return result;
+  }
+
   public String getText() {
     String result = null;
 
@@ -53,6 +73,30 @@ public class ConllToken implements Comparable<ConllToken> {
     }
 
     return result;
+  }
+
+  public void setStartPos(int startPos) {
+    this.startPos = startPos;
+  }
+
+  public boolean hasStartPos() {
+    return startPos >= 0;
+  }    
+
+  public int getStartPos() {
+    return startPos;
+  }
+
+  public void setEndPos(int endPos) {
+    this.endPos = endPos;
+  }
+
+  public boolean hasEndPos() {
+    return endPos >= 0;
+  }    
+
+  public int getEndPos() {
+    return endPos;
   }
 
   public boolean hasData(ConllField field) {

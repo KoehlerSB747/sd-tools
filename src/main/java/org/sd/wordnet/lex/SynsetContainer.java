@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Container for synsets.
+ * Container for synsets corresponding to a single input token.
  * <p>
  * @author Spencer Koehler
  */

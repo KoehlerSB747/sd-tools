@@ -138,10 +138,6 @@ public class ExpandedWord {
     return tree.getData().word;
   }
 
-  public String getRootWordName() {
-    return tree.getData().word.getQualifiedWordName();
-  }
-
   public Tree<PointerData> getWordTree() {
     return tree;
   }
@@ -173,21 +169,6 @@ public class ExpandedWord {
     return _dotWriter;
   }
   //todo: create/return a graph representing the tree
-
-  public Tree<PointerData> getNode(String wordName) {
-    return nodeMap.get(wordName);
-  }
-
-  public int getDepth(String wordName) {
-    int result = -1;
-
-    final Tree<PointerData> ptrDataNode = nodeMap.get(wordName);
-    if (ptrDataNode != null) {
-      result = ptrDataNode.depth();
-    }
-
-    return result;
-  }
 
   /**
    * Get the path of pointers from root to the given wordName, or null if the

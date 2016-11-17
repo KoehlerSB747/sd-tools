@@ -61,6 +61,10 @@ public class NumericAnalysisObject extends AbstractAnalysisObject {
     this.intValue = null;
   }
 
+  public double getValue(double defaultValue) {
+    return (doubleValue != null) ? doubleValue : longValue != null ? longValue : intValue != null ? intValue : defaultValue;
+  }
+
   public boolean isInteger() {
     return intValue != null;
   }

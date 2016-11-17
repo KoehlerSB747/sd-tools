@@ -63,6 +63,10 @@ public class Synset {
     return result.toString();
   }
 
+  public Word getSynsetWord() {
+    return (words.size() > 0) ? words.get(0) : null;
+  }
+
   public boolean hasStringDecoder() {
     return decoder != null;
   }
