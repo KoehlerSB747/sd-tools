@@ -53,8 +53,13 @@ public class ConllTokenSorter {
   public String getText() {
     final StringBuilder result = new StringBuilder();
     for (ConllToken token : tokens) {
-      if (result.length() > 0) result.append(' ');
-      result.append(token.getText());
+      final String tokenText = token.getText();
+      if ("-RRB-".equals(tokenText)) result.append(") ");
+      else if ("-LRB-".equals(tokenText)) result.append(" (");
+      else {
+        if (result.length() > 0) result.append(' ');
+        result.append(token.getText());
+      }
     }
     return result.toString();
   }
