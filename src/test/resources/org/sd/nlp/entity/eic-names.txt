@@ -1,0 +1,2 @@
+631 Ella Almeda -LRB- Kimball -RRB- b. Oct.-, 1849; d. June 25,	<entities><name priority="200" pre="631" startPos="4" endPos="29">Ella Almeda Kimball</name><name priority="200" pre=") " startPos="36" endPos="44">b. Oct.-</name><name priority="200" pre="1849 ;" startPos="52" endPos="54">d.</name><name priority="200" pre="d." startPos="55" endPos="59">June</name></entities>
+1854.

@@ -21,6 +21,7 @@ package org.sd.token;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -39,14 +40,110 @@ public class TokenInfoContainer<T extends TokenInfo> {
     this.tokenInfoList = new TreeMap<Integer, List<T>>();
   }
 
+  public List<T> getAll() {
+    final List<T> result = new ArrayList<T>();
+    for (List<T> tokenInfos : tokenInfoList.values()) {
+      result.addAll(tokenInfos);
+    }
+    return result;
+  }
+
   public void add(T tokenInfo, int offset) {
-    final int endIndex = offset + tokenInfo.getTokenEnd();
+    boolean doAdd = true;
+
+    if (tokenInfo.hasPriority()) {
+      final List<T> overlaps = getPrioritizedOverlapsWith(tokenInfo, offset);
+      if (overlaps != null && overlaps.size() > 0) {
+        doAdd = false;
+        int keepVotes = 0;
+        int discardVotes = 0;
+        List<T> overlapsToRemove = null;
+
+        for (T overlap : overlaps) {
+          if (overlap.getPriority() > tokenInfo.getPriority()) {
+            // remove overlap, keep tokenInfo
+            if (overlapsToRemove == null) overlapsToRemove = new ArrayList<T>();
+            overlapsToRemove.add(overlap);
+            ++keepVotes;
+          }
+          else if (overlap.getPriority() < tokenInfo.getPriority()) {
+            // keep overlap, discard tokenInfo
+            ++discardVotes;
+          }
+          else {   // equal priority ==> keep both
+            // keep overlap, keep tokenInfo
+            ++keepVotes;
+          }
+        }
+
+        // make add decision to keep or discard new tokenInfo
+        if (keepVotes > 0 && discardVotes > 0) {
+          // new tokenInfo conflicts with currently prioritized, don't add
+          doAdd = false;
+        }
+        else if (keepVotes > 0) {
+          doAdd = true;
+
+          if (overlapsToRemove != null) {
+            for (T overlap : overlapsToRemove) {
+              remove(overlap);
+            }
+          }
+        }
+      }
+    }
+
+    if (doAdd) {
+      doAdd(tokenInfo, offset);
+    }
+  }
+
+  private final void doAdd(T tokenInfo, int offset) {
+    final int endIndex = tokenInfo.updateEndIndex(offset);
     List<T> tokenInfos = tokenInfoList.get(endIndex);
     if (tokenInfos == null) {
       tokenInfos = new ArrayList<T>();
       tokenInfoList.put(endIndex, tokenInfos);
     }
     tokenInfos.add(tokenInfo);
+  }
+
+  private final void remove(T tokenInfo) {
+    final int endIndex = tokenInfo.getEndIndex();
+    final List<T> tokenInfos = tokenInfoList.get(endIndex);
+    if (tokenInfos != null) {
+      tokenInfos.remove(tokenInfo);
+      if (tokenInfos.size() == 0) {
+        tokenInfoList.remove(endIndex);
+      }
+    }
+  }
+
+  private final List<T> getPrioritizedOverlapsWith(T tokenInfo, int offset) {
+    List<T> result = null;
+
+    final int startIndex = tokenInfo.getTokenStart() + offset;
+    final int endIndex = tokenInfo.getTokenEnd() + offset;
+
+    // for those that end after tokenInfo's start
+    for (Map.Entry<Integer, List<T>> entry = tokenInfoList.ceilingEntry(endIndex);
+         entry != null;
+         entry = tokenInfoList.higherEntry(entry.getKey())) {
+      final List<T> tokenInfos = entry.getValue();
+      for (T curTokenInfo : tokenInfos) {
+        if (!curTokenInfo.hasPriority()) continue;
+        final int curStartIndex = curTokenInfo.getStartIndex();
+        if (curStartIndex >= endIndex) continue;
+        final int curEndIndex = curTokenInfo.getEndIndex();
+        if ((curStartIndex >= startIndex && curStartIndex < endIndex) ||
+            (curEndIndex >= startIndex && curEndIndex < endIndex)) {
+          if (result == null) result = new ArrayList<T>();
+          result.add(curTokenInfo);
+        }
+      }
+    }
+
+    return result;
   }
 
   public T getFirst(int endPos) {

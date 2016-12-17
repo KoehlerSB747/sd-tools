@@ -1,0 +1,2 @@
+631 Ella Almeda (Kimball) b. Oct.-, 1849; d. June 25,	<entities><date priority="100" startPos="45" endPos="52" nd="1849-06-25" ed="1849-6-25%MonthDayYear#45,52?" modifier="d"/><date priority="100" startPos="29" endPos="40" nd="1849-10" ed="1849-10-%DayMonthYear#29,40" modifier="b"/><date priority="100" startPos="0" endPos="3" nd="0631" ed="631--%QualifiedYear#0,3"/></entities>
+1854.	<entities><date priority="100" startPos="0" endPos="4" nd="1854" ed="1854--%QualifiedYear#0,4"/></entities>

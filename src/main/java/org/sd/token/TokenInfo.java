@@ -34,16 +34,20 @@ public abstract class TokenInfo {
 
   private int tokenStart;
   private int tokenEnd;
+  private int priority;
   private String category;
+  private int endIndex;
 
   public TokenInfo() {
-    this(0, 0, null);
+    this(0, 0, 0, null);
   }
 
-  public TokenInfo(int tokenStart, int tokenEnd, String category) {
+  public TokenInfo(int tokenStart, int tokenEnd, int priority, String category) {
     this.tokenStart = tokenStart;
     this.tokenEnd = tokenEnd;
+    this.priority = priority;
     this.category = category;
+    this.endIndex = tokenEnd;
   }
 
   public int getTokenStart() {
@@ -62,11 +66,36 @@ public abstract class TokenInfo {
     this.tokenEnd = tokenEnd;
   }
 
+  public int getPriority() {
+    return priority;
+  }
+
+  public void setPriority(int priority) {
+    this.priority = priority;
+  }
+
+  public boolean hasPriority() {
+    return priority > 0;
+  }
+
   public String getCategory() {
     return category;
   }
 
   public void setCategory(String category) {
     this.category = category;
+  }
+
+  public int updateEndIndex(int offset) {
+    this.endIndex = this.tokenEnd + offset;
+    return this.endIndex;
+  }
+
+  public int getEndIndex() {
+    return endIndex;
+  }
+
+  public int getStartIndex() {
+    return this.tokenStart + (this.endIndex - this.tokenEnd);
   }
 }

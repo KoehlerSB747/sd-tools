@@ -120,6 +120,7 @@ public class XmlParseInputContext implements ParseInputContext {
     for (XmlInputDecoder.MarkerInfo tokenStart : paragraph.getTokenStarts()) {
       final TokenInfo tokenInfo =
         new ParseTokenInfo(tokenStart.getPos(), tokenStart.getOtherInfo().getPos(),
+                           0,  //todo: add priority
                            tokenStart.getCategory(), tokenStart.getAttributes());
       result.add(tokenInfo);
     }
@@ -134,6 +135,7 @@ public class XmlParseInputContext implements ParseInputContext {
     for (XmlInputDecoder.MarkerInfo breakMarker : paragraph.getBreakMarkers()) {
       final TokenInfo tokenInfo =
         new ParseTokenInfo(breakMarker.getPos(), breakMarker.getEndPos(),
+                           0,  //todo: add priority
                            breakMarker.getBreakType(), null);
       result.add(tokenInfo);
     }
@@ -145,8 +147,8 @@ public class XmlParseInputContext implements ParseInputContext {
   public static final class ParseTokenInfo extends TokenInfo {
     private Map<String, String> attributes;
 
-    public ParseTokenInfo(int tokenStart, int tokenEnd, String category, Map<String, String> attributes) {
-      super(tokenStart, tokenEnd, category);
+    public ParseTokenInfo(int tokenStart, int tokenEnd, int priority, String category, Map<String, String> attributes) {
+      super(tokenStart, tokenEnd, priority, category);
       this.attributes = attributes;
     }
 

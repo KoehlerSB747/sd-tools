@@ -739,6 +739,7 @@ public class AtnParseBasedTokenizer implements Tokenizer {
       super(
         tokenNode.getAttributeInt("start"),
         tokenNode.getAttributeInt("end"),
+        0,  //todo: add priority
         tokenNode.getTextContent());
       this.parse = null;
       this.wrappedTokenInfo = null;
@@ -748,6 +749,7 @@ public class AtnParseBasedTokenizer implements Tokenizer {
       super(
         parse.getStartIndex(),
         parse.getEndIndex(),
+        0,  //todo: add priority
         parse.getCategory());
       this.parse = parse;
       this.wrappedTokenInfo = null;
@@ -757,6 +759,7 @@ public class AtnParseBasedTokenizer implements Tokenizer {
       super(
         wrappedTokenInfo.getTokenStart(),
         wrappedTokenInfo.getTokenEnd(),
+        0,  //todo: add priority
         wrappedTokenInfo.getCategory());
       this.parse = null;
       this.wrappedTokenInfo = wrappedTokenInfo;
