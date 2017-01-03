@@ -58,14 +58,16 @@ public class EntityContainer {
     return entities.get(type);
   }
   
-  public void add(int id, String entitiesString, EntityLineAligner aligner) {
+  public List<Entity> add(long id, String entitiesString, EntityLineAligner aligner) {
     //assumptions: <container><entityName ...attributes...>entityText</entityName></container>
     final XmlStringBuilder xml = new XmlStringBuilder().setXmlString(entitiesString);
     final DomElement elt = xml.getXmlElement();
-    add(id, elt, aligner);
+    return add(id, elt, aligner);
   }
 
-  public void add(int id, DomElement elt, EntityLineAligner aligner) {
+  public List<Entity> add(long id, DomElement elt, EntityLineAligner aligner) {
+    List<Entity> result = null;
+
     final NodeList childNodes = elt.getChildNodes();
     final int numChildNodes = childNodes == null ? 0 : childNodes.getLength();
     for (int childNum = 0; childNum < numChildNodes; ++childNum) {
@@ -74,8 +76,13 @@ public class EntityContainer {
         final Entity entity = new Entity(id, child.asDomElement(), aligner);
         this.addEntity(entity);
         entity.setEntityContainer(this);
+
+        if (result == null) result = new ArrayList<Entity>();
+        result.add(entity);
       }
     }
+
+    return result;
   }
 
   private final void addEntity(Entity entity) {

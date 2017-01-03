@@ -182,8 +182,8 @@ public class FileContext implements InputContext {
   /**
    * Get an ID that identifies this InputContext within its container.
    */
-  public int getId() {
-    return 0;
+  public long getId() {
+    return 0L;
   }
 
   /**

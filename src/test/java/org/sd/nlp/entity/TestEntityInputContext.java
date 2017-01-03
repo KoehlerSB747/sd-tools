@@ -50,9 +50,9 @@ public class TestEntityInputContext extends TestCase {
 
     final List<Token> tokens = new ArrayList<Token>();
 
-    final Map<Integer, EntityContainer> entities = loader.getEntities();
-    for (Map.Entry<Integer, EntityContainer> entry : entities.entrySet()) {
-      final int lineNum = entry.getKey();
+    final Map<Long, EntityContainer> entities = loader.getEntities();
+    for (Map.Entry<Long, EntityContainer> entry : entities.entrySet()) {
+      final long lineNum = entry.getKey();
       final EntityContainer entityContainer = entry.getValue();
 
       final EntityInputContext inputContext = new EntityInputContext(lineNum, entityContainer);

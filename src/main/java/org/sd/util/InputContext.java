@@ -34,7 +34,7 @@ public interface InputContext {
   /**
    * Get an ID that identifies this InputContext within its container.
    */
-  public int getId();
+  public long getId();
 
   /**
    * Get the character startPosition of the other context's text within

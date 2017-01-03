@@ -453,10 +453,10 @@ public class ParseOutputCollector {
     private DomNode textNode;
     private String interpretation;
     private String style;
-    private int iterationId;
+    private long iterationId;
     private boolean wasInterpreted;
 
-    MarkupContainer(DomNode textNode, String interpretation, String style, int iterationId, boolean wasInterpreted) {
+    MarkupContainer(DomNode textNode, String interpretation, String style, long iterationId, boolean wasInterpreted) {
       this.textNode = textNode;
       this.interpretation = interpretation;
       this.style = style;

@@ -49,7 +49,7 @@ public class StringInputContext implements InputContext {
   /**
    * Get an ID that identifies this InputContext within its container.
    */
-  public int getId() {
+  public long getId() {
     return id;
   }
 

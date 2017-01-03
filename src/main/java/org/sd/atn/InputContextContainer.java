@@ -145,7 +145,7 @@ public class InputContextContainer extends PersistablePublishable {
    * @param dataOutput  the data output to write to.
    */
   protected void writeCurrentVersion(DataOutput dataOutput) throws IOException {
-    dataOutput.writeInt(inputContext.getId());
+    dataOutput.writeLong(inputContext.getId());
     MessageHelper.writeString(dataOutput, inputContext.getText());
     MessageHelper.writeString(dataOutput, getXPath());
     MessageHelper.writeString(dataOutput, getKey());

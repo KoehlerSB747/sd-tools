@@ -38,7 +38,7 @@ public class DomContext implements InputContext {
   public int getIterationId() {
     return iterationId;
   }
-  public int getId() {
+  public long getId() {
     return iterationId;
   }
 

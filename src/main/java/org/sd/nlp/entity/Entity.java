@@ -26,7 +26,7 @@ import org.sd.xml.DomElement;
  */
 public class Entity {
   
-  private int id;
+  private long id;
   private String type;
   private Map<String, String> attributes;
   private DomElement domElt;
@@ -37,11 +37,11 @@ public class Entity {
   private Integer _endPos;
   private Integer _priority;
 
-  public Entity(int id, DomElement domElt) {
+  public Entity(long id, DomElement domElt) {
     this(id, domElt, null);
   }
 
-  public Entity(int id, DomElement domElt, EntityLineAligner aligner) {
+  public Entity(long id, DomElement domElt, EntityLineAligner aligner) {
     this.id = id;
     this.domElt = domElt;
     this.aligner = aligner;
@@ -65,10 +65,10 @@ public class Entity {
       }
     }
 
-    if (!domElt.hasAttribute("id")) domElt.setAttribute("id", Integer.toString(id));
+    if (!domElt.hasAttribute("id")) domElt.setAttribute("id", Long.toString(id));
   }
 
-  public int getId() {
+  public long getId() {
     return id;
   }
 

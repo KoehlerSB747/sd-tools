@@ -42,8 +42,8 @@ public class ExtractedEntityLoader {
 
   private List<File> files;
   private String fileGroupName;
-  private TreeMap<Integer, String> inputLines;     // mapped by lineNum
-  private Map<Integer, EntityContainer> entities;  // mapped by lineNum
+  private TreeMap<Long, String> inputLines;     // mapped by lineNum
+  private Map<Long, EntityContainer> entities;  // mapped by lineNum
 
   public ExtractedEntityLoader() {
     this.files = null;
@@ -67,7 +67,8 @@ public class ExtractedEntityLoader {
     final String curGroupName = getGroupName(file);
     if (fileGroupName == null || curGroupName.equals(fileGroupName)) {
       if (fileGroupName == null) fileGroupName = curGroupName;
-      result = doLoad(file);
+      doLoad(file);
+      result = true;
     }
 
     return result;
@@ -101,29 +102,61 @@ public class ExtractedEntityLoader {
   /**
    * Get all (possibly null) input lines, referenced by line number.
    */
-  public TreeMap<Integer, String> getInputLines() {
+  public TreeMap<Long, String> getInputLines() {
     return inputLines;
   }
 
   /**
    * Get all (possibly null) entities referenced by line number.
    */
-  public Map<Integer, EntityContainer> getEntities() {
+  public Map<Long, EntityContainer> getEntities() {
     return entities;
   }
 
-  private final boolean doLoad(File file) throws IOException {
-    boolean result = true;
+  public List<Entity> addLine(long lineNum, String inputLine, String entitiesXmlString) {
+    List<Entity> result = null;
 
-    final boolean isFirst = (inputLines == null || inputLines.size() == 0);
+    final EntityLineAligner aligner = new EntityLineAligner(inputLine);
+    //NOTE: inputLine must be aligner's baseLine for correct entity positional data
+
+    // check/add lineNum to inputLine mapping
+    String curline = inputLines.get(lineNum);
+    if (curline == null) {
+      inputLines.put(lineNum, inputLine);
+    }
+    else {
+      aligner.setAltLine(curline);
+      if (FAIL_ON_MISMATCH) {
+        if (!aligner.aligns()) {
+          if (entitiesXmlString != null && !"".equals(entitiesXmlString)) {
+            throw new IllegalStateException("ERROR: mismatched lines '" + curline + "' -vs- '" + inputLine + "'");
+          }
+        }
+      }
+    }
+
+    // add entities
+    if (entitiesXmlString != null && !"".equals(entitiesXmlString)) {
+      EntityContainer entityContainer = entities.get(lineNum);
+      if (entityContainer == null) {
+        entityContainer = new EntityContainer();
+        entities.put(lineNum, entityContainer);
+      }
+      result = entityContainer.add(lineNum, entitiesXmlString, aligner);
+    }
+    
+    return result;
+  }
+
+  private final void doLoad(File file) throws IOException {
     if (inputLines == null) {
       this.files = new ArrayList<File>();
-      this.inputLines = new TreeMap<Integer, String>();
-      this.entities = new HashMap<Integer, EntityContainer>();
+      this.inputLines = new TreeMap<Long, String>();
+      this.entities = new HashMap<Long, EntityContainer>();
     }
     this.files.add(file);
 
-    int lineNum = 0;
+    long lineNum = 0;
     String line = null;
     final BufferedReader reader = FileUtil.getReader(file);
     try {
@@ -133,36 +166,8 @@ public class ExtractedEntityLoader {
         final String[] parts = line.split("\\t");
         final String inputLine = parts[0];
         final String entitiesString = (parts.length > 1) ? parts[1] : null;
-        final EntityLineAligner aligner = new EntityLineAligner(inputLine);
-        //NOTE: inputLine must be aligner's baseLine for correct entity positional data
 
-        // check/add lineNum to inputLine mapping
-        if (isFirst) {
-          inputLines.put(lineNum, inputLine);
-        }
-        else {
-          final String curline = inputLines.get(lineNum);
-          aligner.setAltLine(curline);
-          if (!aligner.aligns()) {
-            if (entitiesString != null && !"".equals(entitiesString)) {
-              System.out.println("WARNING: mismatched lines '" + curline + "' -vs- '" + inputLine + "'");
-              if (FAIL_ON_MISMATCH) {
-                result = false;
-                break;
-              }
-            }
-          }
-        }
-
-        // add entities
-        if (entitiesString != null && !"".equals(entitiesString)) {
-          EntityContainer entityContainer = entities.get(lineNum);
-          if (entityContainer == null) {
-            entityContainer = new EntityContainer();
-            entities.put(lineNum, entityContainer);
-          }
-          entityContainer.add(lineNum, entitiesString, aligner);
-        }
+        addLine(lineNum, inputLine, entitiesString);
 
         ++lineNum;
       }
@@ -170,8 +175,6 @@ public class ExtractedEntityLoader {
     finally {
       reader.close();
     }
-
-    return result;
   }
   
   /**

@@ -32,12 +32,12 @@ import org.sd.util.InputContext;
  */
 public class EntityInputContext implements ParseInputContext {
   
-  private int lineNum;
+  private long lineNum;
   private EntityContainer entityContainer;
   private List<TokenInfo> _tokenInfos;
   private List<TokenInfo> _hardBreaks;
 
-  public EntityInputContext(int lineNum, EntityContainer entityContainer) {
+  public EntityInputContext(long lineNum, EntityContainer entityContainer) {
     this.lineNum = lineNum;
     this.entityContainer = entityContainer;
     this._tokenInfos = null;
@@ -56,7 +56,7 @@ public class EntityInputContext implements ParseInputContext {
    * Get an ID that identifies this InputContext within its container.
    */
   @Override
-  public int getId() {
+  public long getId() {
     return lineNum;
   }
 
