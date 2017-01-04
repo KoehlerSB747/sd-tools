@@ -18,6 +18,7 @@ package org.sd.nlp.entity;
 
 import java.util.Map;
 import org.sd.xml.DomElement;
+import org.sd.xml.XmlStringBuilder;
 
 /**
  * Container for an extracted entity.
@@ -66,6 +67,33 @@ public class Entity {
     }
 
     if (!domElt.hasAttribute("id")) domElt.setAttribute("id", Long.toString(id));
+  }
+
+  public Entity(long id, String type, String text, Map<String, String> attributes) {
+    // Attributes:
+    //   startPos, endPos, priority, baseLine, altLine
+    //
+    //   NOTE: baseLine, altLine help for correlating across different entity extractors
+    //         baseLine defaults to "text" and with altLine forms the EntityLineAligner
+    this.id = id;
+    this.type = type;
+    this.text = text;
+    this.attributes = attributes;
+
+    this.domElt = buildDomElt(type, text, attributes);
+    this.aligner = buildAligner(text, attributes);
+  }
+
+  private final DomElement buildDomElt(String type, String text, Map<String, String> attributes) {
+    final XmlStringBuilder xmlBuilder = new XmlStringBuilder().addTagAndText(XmlStringBuilder.buildTagWithAttributes(type, attributes), text);
+    return xmlBuilder.getXmlElement();
+  }
+
+  private final EntityLineAligner buildAligner(String text, Map<String, String> attributes) {
+    String baseLine = attributes.get("baseLine");
+    if (baseLine == null) baseLine = text;
+    final String altLine = attributes.get("altLine");
+    return new EntityLineAligner(baseLine).setAltLine(altLine);
   }
 
   public long getId() {

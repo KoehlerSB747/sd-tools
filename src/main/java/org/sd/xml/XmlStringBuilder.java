@@ -158,6 +158,15 @@ public class XmlStringBuilder {
     if (ended || tagName == null) return null;
 
     final StringBuilder tag = new StringBuilder();
+    tag.append('<').append(buildTagWithAttributes(tagName, tagAttrs)).append('>');
+    return addXml(tag.toString());
+  }
+
+  /**
+   * Build a tag with attributes (without angle brackets).
+   */
+  public static final String buildTagWithAttributes(String tagName, Map<String, String> tagAttrs) {
+    final StringBuilder tag = new StringBuilder();
     tag.append('<').append(tagName);
     for(Map.Entry<String,String> entry : tagAttrs.entrySet())
     {
@@ -169,7 +178,7 @@ public class XmlStringBuilder {
         append('"');
     }
     tag.append('>');
-    return addXml(tag.toString());
+    return tag.toString();
   }
 
   /**
