@@ -85,7 +85,7 @@ public class EntityContainer {
     return result;
   }
 
-  private final void addEntity(Entity entity) {
+  public final void addEntity(Entity entity) {
     final String type = entity.getType();
     List<Entity> curEntities = entities.get(type);
     if (curEntities == null) {

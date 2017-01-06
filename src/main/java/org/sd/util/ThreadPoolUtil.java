@@ -93,6 +93,27 @@ public class ThreadPoolUtil {
   }
 
   /**
+   * Count the number of futures that are done.
+   *
+   * @param futures  The futures to check
+   *
+   * @return the number of non-null futures that are done.
+   */
+  public static final int countCompleted(List<Future<?>> futures) {
+    int result = 0;
+
+    if (futures != null) {
+      for (Future<?> future : futures) {
+        if (future != null && future.isDone()) {
+          ++result;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Wait until the futures are all done
    *
    * @param futures  The futures to wait for (ok if some are null)
