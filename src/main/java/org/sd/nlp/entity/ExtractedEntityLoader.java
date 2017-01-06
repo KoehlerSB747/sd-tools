@@ -48,8 +48,8 @@ public class ExtractedEntityLoader {
   public ExtractedEntityLoader() {
     this.files = null;
     this.fileGroupName = null;
-    this.inputLines = null;
-    this.entities = null;
+    this.inputLines = new TreeMap<Long, String>();
+    this.entities = new HashMap<Long, EntityContainer>();
   }
 
   /**
@@ -120,16 +120,18 @@ public class ExtractedEntityLoader {
     //NOTE: inputLine must be aligner's baseLine for correct entity positional data
 
     // check/add lineNum to inputLine mapping
-    String curline = inputLines.get(lineNum);
-    if (curline == null) {
-      inputLines.put(lineNum, inputLine);
-    }
-    else {
-      aligner.setAltLine(curline);
-      if (FAIL_ON_MISMATCH) {
-        if (!aligner.aligns()) {
-          if (entitiesXmlString != null && !"".equals(entitiesXmlString)) {
-            throw new IllegalStateException("ERROR: mismatched lines '" + curline + "' -vs- '" + inputLine + "'");
+    synchronized (inputLines) {
+      String curline = inputLines.get(lineNum);
+      if (curline == null) {
+        inputLines.put(lineNum, inputLine);
+      }
+      else {
+        aligner.setAltLine(curline);
+        if (FAIL_ON_MISMATCH) {
+          if (!aligner.aligns()) {
+            if (entitiesXmlString != null && !"".equals(entitiesXmlString)) {
+              throw new IllegalStateException("ERROR: mismatched lines '" + curline + "' -vs- '" + inputLine + "'");
+            }
           }
         }
       }
@@ -137,22 +139,22 @@ public class ExtractedEntityLoader {
 
     // add entities
     if (entitiesXmlString != null && !"".equals(entitiesXmlString)) {
-      EntityContainer entityContainer = entities.get(lineNum);
-      if (entityContainer == null) {
-        entityContainer = new EntityContainer();
-        entities.put(lineNum, entityContainer);
+      synchronized (entities) {
+        EntityContainer entityContainer = entities.get(lineNum);
+        if (entityContainer == null) {
+          entityContainer = new EntityContainer();
+          entities.put(lineNum, entityContainer);
+        }
+        result = entityContainer.add(lineNum, entitiesXmlString, aligner);
       }
-      result = entityContainer.add(lineNum, entitiesXmlString, aligner);
     }
     
     return result;
   }
 
   private final void doLoad(File file) throws IOException {
-    if (inputLines == null) {
+    if (files == null) {
       this.files = new ArrayList<File>();
-      this.inputLines = new TreeMap<Long, String>();
-      this.entities = new HashMap<Long, EntityContainer>();
     }
     this.files.add(file);
 
