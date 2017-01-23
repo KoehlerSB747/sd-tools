@@ -127,6 +127,24 @@ public class TestFileUtil extends TestCase {
                  FileUtil.getBasePath("/foo/bar/bash"));
   }
 
+  public void testIsParent() {
+    final File parent = new File("/a/b");
+    final File child1 = new File(parent, "c/d/e");
+    final File child2 = new File("/a/b/c/d");
+    assertTrue(FileUtil.isParent(parent, child1));
+    assertTrue(FileUtil.isParent(parent, child2));
+    assertFalse(FileUtil.isParent(child1, parent));
+    assertFalse(FileUtil.isParent(child2, parent));
+  }
+
+  public void testChangeRoot() {
+    final File oldRoot = new File("/a/b");
+    final File theFile = new File(oldRoot, "c/d/e");
+    final File newRoot = new File("/1/2");
+    assertEquals("/1/2/c/d/e", FileUtil.changeRoot(oldRoot, newRoot, theFile).getAbsolutePath());
+  }
+
+
   public static Test suite() {
     TestSuite suite = new TestSuite(TestFileUtil.class);
     return suite;

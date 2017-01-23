@@ -26,6 +26,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -1604,5 +1605,77 @@ public class FileUtil {
     }
 
     return result;
+  }
+
+  /**
+   * Determine whether the childFile is under the parentFile.
+   */
+  public static final boolean isParent(File parentFile, File childFile) {
+    boolean result = false;
+
+    for (File curParentFile = childFile.getParentFile(); curParentFile != null; curParentFile = curParentFile.getParentFile()) {
+      if (parentFile.equals(curParentFile)) {
+        result = true;
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Change the file to be rooted at the given location instead of its old root.
+   */
+  public static final File changeRoot(File oldRoot, File newRoot, File theFile) {
+    File result = null;
+
+    final String filePath = theFile.getAbsolutePath();
+    final String oldRootPath = oldRoot.getAbsolutePath();
+    if (filePath.startsWith(oldRootPath)) {
+      final String remainingPath = filePath.substring(oldRootPath.length() + 1);
+      result = new File(newRoot, remainingPath);
+    }
+
+    return result;
+  }
+
+
+  private static final PathLengthComparator PATH_LENGTH_COMPARATOR = new PathLengthComparator();
+
+  public static final Comparator<File> getPathLengthComparator() {
+    return PATH_LENGTH_COMPARATOR;
+  }
+
+  /**
+   * Comparator for sorting files from shortest to longest path length.
+   */
+  private static final class PathLengthComparator implements Comparator<File> {
+    // singleton pattern
+    private PathLengthComparator() {
+    }
+
+    public int compare(File file1, File file2) {
+      int result = 0;
+
+      if (file1 != file2) {
+        if (file1 == null) {
+          // push nulls to the end
+          result = 1;
+        }
+        else if (file2 == null) {
+          // push nulls to the end
+          result = -1;
+        }
+        else {
+          result = file1.getAbsoluteFile().toPath().getNameCount() - file2.getAbsoluteFile().toPath().getNameCount();
+        }
+      }
+
+      return result;
+    }
+
+    public boolean equals(Object obj) {
+      return this == obj;
+    }
   }
 }
