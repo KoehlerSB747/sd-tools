@@ -126,7 +126,7 @@ public class GenericParseResults {
     int result = 0;
 
     if (parses != null) {
-      for (List<GenericParse> parses : parses.values()) {
+      for (List<GenericParse> parses : this.parses.values()) {
         result += parses.size();
       }
     }
@@ -180,7 +180,7 @@ public class GenericParseResults {
 
     if (parses != null) {
       int num = 1;
-      for (List<GenericParse> parses : parses.values()) {
+      for (List<GenericParse> parses : this.parses.values()) {
         for (GenericParse parse : parses) {
           if (result.length() > 0) result.append("\n");
           result.append(num++).append('\t').append(parse.toString());
