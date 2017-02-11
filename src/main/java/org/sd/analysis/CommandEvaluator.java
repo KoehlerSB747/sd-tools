@@ -36,12 +36,20 @@ public class CommandEvaluator {
   
   private EvaluatorEnvironment env;
 
+  public CommandEvaluator() {
+    this.env = null;
+  }
+
   public CommandEvaluator(EvaluatorEnvironment env) {
     this.env = env;
   }
 
   public EvaluatorEnvironment getEnv() {
     return env;
+  }
+
+  public void setEnv(EvaluatorEnvironment env) {
+    this.env = env;
   }
 
   public DataProperties getDataProperties() {
