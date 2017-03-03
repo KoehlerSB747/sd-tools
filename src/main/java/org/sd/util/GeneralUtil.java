@@ -248,6 +248,24 @@ public class GeneralUtil {
     return result;
   }
   
+  public static interface CombinationCollector <E> {
+    public void addCombo(Collection<E> combo);
+  }
+
+  public static final class ListCombinationCollector <E> implements CombinationCollector <E> {
+    private List<Collection<E>> result;
+    public ListCombinationCollector() {
+      this.result = new ArrayList<Collection<E>>();
+    }
+    @Override
+    public void addCombo(Collection<E> combo) {
+      result.add(combo);
+    }
+    public List<Collection<E>> getResult() {
+      return result;
+    }
+  }
+
   /**
    * Utility function to combine elements from a list of collections.
    * <p>
@@ -268,16 +286,25 @@ public class GeneralUtil {
    * <p>
    */
   public static <E> List<Collection<E>> combine(List<Collection<E>> collections) {
+    if (collections == null) return null;
+    final ListCombinationCollector<E> resultCollector = new ListCombinationCollector<E>();
+    combine(collections, resultCollector);
+    return resultCollector.getResult();
+  }
+
+  public static <E> CombinationCollector<E> combine(List<Collection<E>> collections, CombinationCollector<E> resultCollector) {
     if (collections == null) {
       return null;
     }
-    List<Collection<E>> result = new ArrayList<Collection<E>>();
-    combineAux(collections, new ArrayList<E>(), result);
-    return result;
+    if (resultCollector == null) {
+      resultCollector = new ListCombinationCollector<E>();
+    }
+    combineAux(collections, new ArrayList<E>(), resultCollector);
+    return resultCollector;
   }
 
   /** Recursive auxiliary for combine(collections). */
-  private static <E> void combineAux(List<Collection<E>> collections, List<E> objectAccumulator, List<Collection<E>> resultList) {
+  private static <E> void combineAux(List<Collection<E>> collections, List<E> objectAccumulator, CombinationCollector<E> resultCollector) {
 
     int numCollections = collections.size();
 
@@ -295,13 +322,13 @@ public class GeneralUtil {
           List<E> nextAccumulator = new ArrayList<E>(objectAccumulator);
 
           nextAccumulator.add(curObject);
-          resultList.add(nextAccumulator);
+          resultCollector.addCombo(nextAccumulator);
         }
       }
       else {
         List<E> nextAccumulator = new ArrayList<E>(objectAccumulator);
         nextAccumulator.add(null);
-        resultList.add(nextAccumulator);
+        resultCollector.addCombo(nextAccumulator);
       }
       return;
     }
@@ -313,13 +340,13 @@ public class GeneralUtil {
         E curObject = it.next();
         List<E> nextAccumulator = new ArrayList<E>(objectAccumulator);
         nextAccumulator.add(curObject);
-        combineAux(remainder, nextAccumulator, resultList);
+        combineAux(remainder, nextAccumulator, resultCollector);
       }
     }
     else {
       List<E> nextAccumulator = new ArrayList<E>(objectAccumulator);
       nextAccumulator.add(null);
-      combineAux(remainder, nextAccumulator, resultList);
+      combineAux(remainder, nextAccumulator, resultCollector);
     }
   }
 

@@ -31,6 +31,7 @@ public class StatsHelper {
    * <p>
    * Reject the null hypothesis for a 2-tailed test at 95% confidence
    * if e.g. z > z(alpha/2)=1.96; or 2.75 for 99.7% confidence.
+   * (1.645 -- 90%, 1.96 -- 95%, 2.33 -- 98%, 2.575 -- 99%, 2.75 -- 99.7%)
    *
    * @param count1  The number of successful observations for variable1
    * @param n1  The total number of trials for variable1
